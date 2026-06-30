@@ -22,14 +22,15 @@ Browser → CloudFront → S3 (static clip-picker UI)
                           ├ runs the trained event detector (tiny CNN, CPU)
                           ├ builds + renders a coaching scorecard (JSON + PNG)
                           ├ calls Claude (Anthropic API) for a grounded explanation
-                          └ returns { scorecard JSON, scorecard PNG (base64), explanation }
+                          └ returns { scorecard JSON, scorecard PNG URL, explanation }
 ```
 
 No GPU. No always-on compute. AWS cost ≈ cents/mo (covered by the account's $250 promo credits).
 Claude runs on the **direct Anthropic API** (separate cents/mo bill) — **not Bedrock** (the AWS
 credits don't cover Bedrock).
 
-**Definition of done** is in §8. Work the phases in §5–§7 in order.
+**Definition of done** is in §8. Do the human prereqs (§5 / Phase 0) and the build phases (§6) in
+order; §7/§7b/§7c are reference (fallback, security, ops). Read the §11 landmines before you start.
 
 ---
 
@@ -141,6 +142,27 @@ the scorecard intact (`coaching_explain.py:48`). Good for resilience — but in 
 
 ---
 
+### 4b. Anthropic API integration details (verified against the Claude API reference)
+- **Model:** `claude-opus-4-8` is current and correct — **$5 / $25 per 1M tokens** (input/output),
+  1M context, 128K max output. Adaptive thinking only (`thinking: {type: "adaptive"}`); the old
+  `budget_tokens` form 400s on this model. The repo's existing `_run_anthropic` backend already
+  targets this model — don't "modernize" it without checking; just confirm it doesn't send
+  `budget_tokens`/`temperature` (both rejected on 4.8).
+- **Prompt caching reality check.** The KB is sent as a stable prefix with `cache_control` for cost
+  savings, BUT: the default cache TTL is **5 minutes** and the minimum cacheable prefix on Opus 4.8
+  is **4096 tokens**. So (a) the KB cache helps only within a burst of calls, **not between demos
+  minutes/hours apart**, and (b) if the KB is under ~4096 tokens it silently won't cache at all.
+  **Conclusion: don't rely on prompt caching to make repeat demos free — the S3 per-clip cache
+  (Phase F) is what guarantees $0 repeat cost.** Prompt caching is a nice-to-have on top.
+- **SDK timeout/retry.** The `anthropic` SDK defaults to a **10-minute timeout** and **2 automatic
+  retries** (429/5xx/connection errors, exponential backoff). Worst-case wall-clock is
+  `timeout × (retries+1)`. For Lambda: set a **short explicit client timeout** (e.g.
+  `Anthropic(timeout=30, max_retries=2)`) so a hung call can't blow the Lambda budget, and make sure
+  the **Lambda function timeout exceeds** the client's worst case. Short grounded explanations
+  return fast; no streaming needed at this size.
+- **Cost is trivial.** Explanations are a few hundred tokens in/out → well under a cent each, capped
+  by the Anthropic console limit. The Anthropic bill is separate from the AWS credits.
+
 ## 5. Prerequisites the human must complete (Phase 0)
 
 These are console/credential steps you cannot do from the CLI session. Generate the exact
@@ -202,7 +224,9 @@ def handler(event, _ctx):
         "scorecard": scorecard_dict,
         "explanation": scorecard_dict.get("llm_explanation"),
         "grounding": scorecard_dict.get("llm_grounding"),
-        "png_base64": base64.b64encode(png_bytes).decode(),
+        # PREFER returning a URL, not the bytes — see the 6 MB limit note below.
+        "png_url": png_s3_or_cloudfront_url,        # recommended
+        # "png_base64": base64.b64encode(png_bytes).decode(),  # only if PNG is small
     })
 
 def _resp(code, body):
@@ -213,12 +237,24 @@ def _resp(code, body):
 ```
 
 Implementation notes:
-- **Write to `/tmp` only** — Lambda's filesystem is read-only except `/tmp` (512 MB default; bump
-  if needed). The scripts write the scorecard JSON/PNG next to the parquet by default; point them at
-  `/tmp` (pass an out-dir, or copy logic from `scorecard_step.py`).
-- **Set the Anthropic key into the env before the import that needs it.** The handler reads the
-  secret (via the SAM-injected env var or the Secrets Manager extension) and ensures
-  `os.environ["ANTHROPIC_API_KEY"]` is set before `coaching_explain.explain` runs.
+- **⚠️ 6 MB response cap.** A Lambda (incl. Function URL) response payload is capped at **~6 MB**
+  (6,291,556 bytes), and the platform adds ~1 MB of overhead on top of your body. A base64'd
+  scorecard PNG (~33% inflation) is *probably* under that, but it's fragile. **Recommended pattern:**
+  write the PNG to the `motion-caddie-demo-assets` S3 bucket and return a **presigned GET URL** (or a
+  CloudFront URL if the bucket is fronted). This also dovetails with the per-clip caching in Phase F —
+  cache the PNG + explanation in S3 and the response is always tiny. Keep `png_base64` only as a
+  fallback for known-small images.
+- **Write to `/tmp` only** — Lambda's filesystem is read-only except `/tmp` (512 MB default; bump via
+  `EphemeralStorage` if a render needs more). The scripts write the scorecard JSON/PNG next to the
+  parquet by default; point them at `/tmp` (pass an out-dir, or copy logic from `scorecard_step.py`).
+- **Lazy / global model load.** Load the torch weight **once at module scope** (outside `handler`) so
+  warm invocations reuse it (~150 ms warm vs 10–25 s cold). Don't reload per request.
+- **Set the Anthropic key into the env before the import that needs it.** Fetch the secret **once at
+  cold start (module scope), not per invocation** — either via the **AWS Parameters & Secrets Lambda
+  Extension** (a layer that caches the secret locally so you avoid a Secrets Manager API call on
+  every request) or a single `boto3` `get_secret_value` cached in a module global. Then set
+  `os.environ["ANTHROPIC_API_KEY"]` before `coaching_explain.explain` runs (the `anthropic` SDK
+  reads that env var). Don't bake the key into an env-var literal in the template.
 - **Reuse `coaching_explain.explain()`** (it's importable, not just a CLI) — it does the
   feature-load → generate → grounding-verify → write-back in one call.
 - Add a tiny `GET /clips` route (or a static JSON) so the UI can list the curated clips.
@@ -259,26 +295,43 @@ explanation. Copy just those `<id>.parquet` files into `deploy/clips/`. Record t
 
 ### Phase D — SAM template (`template.yaml`)
 One stack, `sam delete`-able. Resources:
-- `AWS::Serverless::Function` — `PackageType: Image`, the Dockerfile above, **Function URL** enabled
-  (`AuthType` per §9 decision), memory ≈ 2048–3008 MB (torch needs headroom; more memory = more CPU =
-  faster cold start), timeout ≈ 60–120 s, ephemeral `/tmp` storage bumped if needed.
+- `AWS::Serverless::Function` — `PackageType: Image` (+ `Metadata.DockerContext`/`Dockerfile`
+  pointing at the Dockerfile above), `FunctionUrlConfig` (see CORS note below), memory ≈
+  2048–3008 MB (Lambda scales CPU with memory — up to 6 vCPU at 10 GB — so more memory ≈ faster
+  torch + faster cold start), timeout ≈ 60–120 s (Function URLs do **not** have API Gateway's 29 s
+  cap; Lambda max is 15 min, but keep it tight), ephemeral `/tmp` storage bumped via
+  `EphemeralStorage` if a render needs >512 MB.
+  - **`FunctionUrlConfig`** fields: `AuthType` (`NONE` + shared-token check, or `AWS_IAM` — §9),
+    `InvokeMode: BUFFERED` (default; fine), and a **`Cors`** block. ⚠️ **The static UI on CloudFront
+    calls the Function URL cross-origin**, so without `Cors` the browser blocks every request. Set
+    `Cors.AllowOrigins` to the CloudFront domain (or `*` for the demo) and `AllowMethods`/`AllowHeaders`.
+  - **Cold start:** a CPU-torch container cold-starts in ~10–25 s; warm ~150 ms. For a live
+    presentation, either **pre-warm** (hit the URL once before demoing) or set **provisioned
+    concurrency = 1** for the demo window (small cost, kills the cold-start risk on stage), then
+    remove it after. Don't leave provisioned concurrency on — it defeats scale-to-zero.
 - `AWS::SecretsManager::Secret` — `motion-caddie/anthropic-api-key` (value set out-of-band by human).
 - **Execution role** — least privilege: read **only** that one secret, write CloudWatch Logs,
-  read/write the explanation-cache S3 bucket. Nothing else.
+  read/write the explanation-cache S3 bucket. Nothing else. (SAM generates a basic role; add the
+  secret + bucket policies via the function's `Policies`.)
 - `AWS::S3::Bucket` ×2 — `motion-caddie-demo-web` (static UI) and `motion-caddie-demo-assets`
   (per-clip explanation cache + optional pre-rendered fallback).
-- `AWS::CloudFront::Distribution` — in front of the web bucket (OAC, not public bucket).
+- `AWS::CloudFront::Distribution` — in front of the web bucket via **Origin Access Control (OAC)**;
+  keep the bucket **private** (no public-read), grant CloudFront read via the bucket policy.
 - Inject the secret into the function (env var from Secrets Manager, or the AWS Parameters/Secrets
-  Lambda extension). `ALLOWED_CLIPS` env = the curated id list.
+  Lambda extension — see Phase A). `ALLOWED_CLIPS` env = the curated id list.
+- **ECR repo: don't hand-author it.** The SAM CLI creates and manages the ECR repository for an
+  `Image` function via a **companion stack** — run `sam deploy --guided` (it prompts to create the
+  repo) or `sam deploy --resolve-image-repos` for non-guided. Deleting the function later
+  auto-deletes the repo. (This is why §5.3's deployer policy grants `ecr:CreateRepository`.)
 - Build/deploy: `sam build && sam deploy --guided` (then non-guided with the saved `samconfig.toml`).
 
 ### Phase E — Deploy + smoke test
 ```bash
 sam build
 sam deploy --guided          # first time; pick region, stack name "motion-caddie"
-curl "$(FUNCTION_URL)?clip_id=1292"   # expect JSON with scorecard + explanation + png_base64
+curl "$(FUNCTION_URL)?clip_id=1292"   # expect JSON with scorecard + explanation + png_url
 ```
-Verify: 200, non-empty `explanation`, `grounding.grounded == true`, decode `png_base64` → valid PNG.
+Verify: 200, non-empty `explanation`, `grounding.grounded == true`, `png_url` fetches a valid PNG.
 
 ### Phase F — Frontend + polish
 - Minimal static UI (`deploy/web/index.html` + a little JS): clip-picker dropdown (the curated ids)
@@ -298,6 +351,58 @@ back pocket; the assets bucket already holds the cached outputs.
 
 ---
 
+## 7b. Security & cost-abuse exposure (read before choosing Function URL auth)
+A Function URL that triggers paid Claude calls is, in principle, a cost-DoS surface. For this app it
+is **largely self-limiting by design** — but only if you keep two controls:
+- **Spend is architecturally bounded.** The handler serves only `ALLOWED_CLIPS` and caches each
+  clip's explanation in S3 (Phase F). So the *total* number of Anthropic calls this endpoint can ever
+  make is **N (curated clips), once each** — every subsequent hit is a cache read at $0. A flood of
+  requests can't run up a token bill. **This only holds if both the allow-list and the S3 cache are
+  in place** — if you skip the cache, every request re-calls Claude. Don't skip it.
+- **Cap compute too.** Set **reserved concurrency** (e.g. 2–5) on the function — it's free and puts a
+  hard ceiling on simultaneous executions, so a burst can't run up Lambda/compute cost or exhaust the
+  account's 1000-concurrency pool. Excess requests are throttled (429), which is the desired behavior
+  for a demo.
+- **Auth choice (ties to §9):** for an internal capstone demo, `AuthType: NONE` + the allow-list +
+  cache + reserved concurrency is acceptable. If you want more: `AuthType: AWS_IAM` (teammates sign
+  requests — most secure, but the static UI then needs SigV4), or a shared secret header the handler
+  checks, or AWS WAF rate-based rules in front. Don't add a login system for a fixed-clip demo.
+- **Always on:** Budgets alert (§Phase F), Anthropic console hard cap, CloudTrail. The credits cover
+  AWS; the Anthropic cap is the backstop on token spend.
+
+## 7c. Local testing, observability & demo-day runbook
+
+**Local container test (do this before every deploy).** The AWS Lambda base image bundles the RIE, so
+no extra setup — just Docker running:
+```bash
+sam build
+# event.json mirrors a Function URL request:
+#   {"rawPath":"/","queryStringParameters":{"clip_id":"1292"},"requestContext":{"http":{"method":"GET"}}}
+sam local invoke MotionCaddieFunction -e event.json --env-vars env.json
+# env.json: {"MotionCaddieFunction": {"ANTHROPIC_API_KEY": "sk-ant-..."}}  (gitignore this)
+```
+Confirm: 200, non-empty `explanation`, `grounding.grounded == true`, a decodable PNG/URL. Test a
+clip **not** in `ALLOWED_CLIPS` → expect 400. (Alternatively run the image directly and `curl` the
+RIE at `localhost:9000/2015-03-31/functions/function/invocations`.)
+
+**Observability.**
+- CloudWatch Logs are automatic. On any Anthropic failure, log the SDK's `response._request_id` so
+  issues are traceable; **fail the request if the explanation is empty** (don't silently return a
+  textless scorecard — see §4).
+- Log one line per request with `clip_id` + `cache_hit` (S3 hit vs Anthropic call) so you can see the
+  spend pattern.
+- A CloudWatch **alarm on the function's `Errors` metric** (≥1 in 5 min) emails the team. X-Ray is
+  optional and overkill here.
+
+**Demo-day runbook (paste into the repo).**
+1. Confirm the Anthropic key isn't expired and the console cap isn't already hit.
+2. **Warm the function** ~1 min before presenting: `curl "$URL?clip_id=<known-good>"` once (or set
+   provisioned concurrency=1 for the session) so the first live click isn't a 10–25 s cold start.
+3. Click through 2–3 curated clips; verify PNG + grounded explanation render in the UI.
+4. If the live path misbehaves, switch to the **pre-rendered static fallback** (§7) — same clips,
+   zero compute.
+5. After the demo: remove provisioned concurrency if you set it.
+
 ## 8. Definition of done
 - [ ] `f_strict_grounding.json` backend flipped to `anthropic`; local `demo.py --golfdb-clip` produces a grounded explanation with **no** Codex CLI present.
 - [ ] Container builds, runs under `sam local invoke`, returns scorecard + PNG + non-empty grounded explanation.
@@ -305,21 +410,26 @@ back pocket; the assets bucket already holds the cached outputs.
 - [ ] Static UI on CloudFront lets you pick a clip and see PNG + explanation.
 - [ ] Per-clip explanation caching works (2nd call to same clip makes no Anthropic call).
 - [ ] Execution role is least-privilege (one secret, logs, one bucket); Budgets alert set.
+- [ ] `FunctionUrlConfig.Cors` set (UI fetches the URL from the browser, not just `curl`); reserved concurrency set as the compute cap (§7b).
 - [ ] Runbook + `sam delete` teardown documented; no secrets in git history.
 
 ## 9. Open decisions — confirm with the human before deploying
 - **Region** — default `us-east-1` (cheapest CloudFront). Keep Identity Center region consistent.
-- **Function URL auth** — `AuthType: NONE` + a shared token check (simplest for an internal demo) vs
-  `AWS_IAM` (teammates sign requests). Default to a shared token; it's internal-only.
+- **Function URL auth** — `NONE` vs `AWS_IAM` vs shared-token. See **§7b** for the full tradeoff;
+  for an internal demo, `NONE` + allow-list + S3 cache + reserved concurrency is acceptable. Default
+  to that unless the team wants `AWS_IAM`.
 - **Who can deploy** — all 3 teammates (Developer/`MotionCaddieDeployer`) or only the owner? (See
   `AWS_HOSTING_PLAN.md` §5.2.)
 - **Lambda memory/timeout** — start 2048 MB / 60 s; tune from cold-start + p95 latency.
+- **Reserved concurrency** — recommend 2–5 (§7b) as the compute spend cap; confirm it won't starve
+  any other function sharing the account's concurrency pool.
 
 ## 10. Cost & teardown
 - AWS side ≈ cents/mo (S3 + CloudFront + Lambda), covered by the shared **$250 credits**.
 - Anthropic ≈ cents/mo (short, cached, capped). Separate bill.
-- **Teardown:** `sam delete` the stack → empty + delete the two S3 buckets → delete the ECR repo →
-  rotate/revoke the Anthropic key → (end of capstone) remove Identity Center users.
+- **Teardown:** `sam delete` removes the stack **and** the SAM-managed ECR companion stack/repo →
+  empty + delete the two S3 buckets (non-empty buckets block deletion) → rotate/revoke the Anthropic
+  key → (end of capstone) remove Identity Center users.
 
 ---
 
@@ -338,3 +448,14 @@ back pocket; the assets bucket already holds the cached outputs.
    files exist, or store them in S3 and fetch at build.
 7. **`golfDB.pkl` path is `golfdb/golfDB.pkl`** (lowercase dir at repo root), loaded by `demo.py:52`.
 8. **Don't `git add -A`** in this repo — it has dozens of unrelated untracked files.
+9. **6 MB response limit** — don't return large base64 payloads; use S3 + presigned/CloudFront URLs
+   for the PNG (§Phase A). The platform adds ~1 MB overhead, so your usable body is smaller than 6 MB.
+10. **Cold start vs timeout** — set the function timeout *above* the worst cold start (10–25 s) or the
+    first request of the day 500s. Pre-warm or use provisioned concurrency for live demos.
+11. **CORS** — the CloudFront-hosted UI → Function URL is cross-origin. Set `FunctionUrlConfig.Cors`
+    or the browser silently blocks every fetch (works in `curl`, fails in the page). Easy to miss
+    because the backend smoke test (`curl`) passes.
+12. **ECR companion stack** — the SAM CLI manages the image repo in a *second* CloudFormation stack
+    (e.g. `<stack>-...`/`aws-sam-cli-managed-...`). The deployer's `cloudformation:*` is scoped to
+    `motion-caddie*`; if the companion stack name falls outside that prefix, widen the policy or run
+    the first `--guided` deploy as Admin, then narrow.
