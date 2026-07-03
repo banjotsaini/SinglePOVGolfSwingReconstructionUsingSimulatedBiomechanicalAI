@@ -61,7 +61,7 @@ Input: a golf swing. Output: a "coaching scorecard" — biomechanical indicators
 posture, weight shift, etc.) compared to tour ranges, plus a beginner-friendly **grounded** text
 explanation written by an LLM that is only allowed to describe measured numbers (no invented advice).
 
-The **full** pipeline (raw video → 2D MediaPipe → 3D MotionBERT → smoothing → events → scorecard)
+The **full** pipeline (raw video → 2D MediaPipe → 3D GolfPose MixSTE → events on raw 3D + One-Euro smoothing on the measurement branch → scorecard)
 needs a GPU and the heavy ML stack. **You are NOT deploying that.** You are deploying the
 **cached-clip demo path**, which starts from a *pre-computed* 3D pose file and is pure CPU. This is
 the entire reason the demo is cheap.
@@ -77,7 +77,7 @@ python Scripts/demo.py --golfdb-clip 1292
 ```
 
 **What `demo.py --golfdb-clip <id>` actually does** (`Scripts/demo.py:42`):
-1. Reads cached 3D parquet: `Data/eval_runs/motionbert_full_from_mediapipe_lite/<id>.parquet`
+1. Reads cached 3D parquet: `Data/eval_runs/golfpose3d_from_mediapipe_lite/<id>.parquet`
 2. Reads clip metadata (player/club/view) from `golfdb/golfDB.pkl`
 3. `scorecard_step.py` → event detector + `build_scorecard` + `render_scorecard` → JSON + PNG
 4. `coaching_explain.py` → LLM explanation written back into the scorecard JSON
@@ -86,8 +86,8 @@ python Scripts/demo.py --golfdb-clip 1292
 
 | Artifact | Local path | Size | Notes |
 |---|---|---|---|
-| Event-detector weight | `Models/event_detector_tcn.pt` | ~1.1 MB | `event_detector.py:22` `DEFAULT_WEIGHTS` |
-| 3D pose cache | `Data/eval_runs/motionbert_full_from_mediapipe_lite/<id>.parquet` | 131 MB all clips | **bake only the curated subset** (§6) |
+| Event-detector weight | `Models/event_detector_tcn.pt` | ~1.1 MB | `event_detector.py:22` `DEFAULT_WEIGHTS` — **MixSTE-retrained** (2026-06-30, PCE@5 0.865); regenerate via `train_event_detector.py --lifter golfpose3d_from_mediapipe_lite` |
+| 3D pose cache | `Data/eval_runs/golfpose3d_from_mediapipe_lite/<id>.parquet` | 131 MB all clips | **bake only the curated subset** (§6) |
 | Clip metadata | `golfdb/golfDB.pkl` | small | player/club/view header |
 | Scripts | `Scripts/*.py` | small | see import graph below |
 | Feature config | `Data/coaching/features/f_strict_grounding.json` | tiny | **flip backend → anthropic** (§4) |
@@ -198,7 +198,7 @@ from pathlib import Path
 ROOT = Path(os.environ.get("APP_ROOT", "/var/task"))
 sys.path.insert(0, str(ROOT / "Scripts"))
 
-CACHE = ROOT / "Data" / "eval_runs" / "motionbert_full_from_mediapipe_lite"
+CACHE = ROOT / "Data" / "eval_runs" / "golfpose3d_from_mediapipe_lite"
 ALLOWED = set(json.loads(os.environ.get("ALLOWED_CLIPS", "[]")))  # curated allow-list
 
 def handler(event, _ctx):
@@ -276,7 +276,7 @@ COPY Scripts/                         ${LAMBDA_TASK_ROOT}/Scripts/
 COPY Models/event_detector_tcn.pt     ${LAMBDA_TASK_ROOT}/Models/
 COPY golfdb/golfDB.pkl                ${LAMBDA_TASK_ROOT}/golfdb/
 COPY Data/coaching/features/          ${LAMBDA_TASK_ROOT}/Data/coaching/features/
-COPY deploy/clips/                    ${LAMBDA_TASK_ROOT}/Data/eval_runs/motionbert_full_from_mediapipe_lite/
+COPY deploy/clips/                    ${LAMBDA_TASK_ROOT}/Data/eval_runs/golfpose3d_from_mediapipe_lite/
 COPY deploy/app.py                    ${LAMBDA_TASK_ROOT}/
 
 CMD ["app.handler"]
@@ -342,6 +342,37 @@ Verify: 200, non-empty `explanation`, `grounding.grounded == true`, `png_url` fe
 - **AWS Budgets** alert (~$5–10/mo) to the team; short **runbook** + **teardown** steps (§10).
 
 ---
+
+### Phase G — `/chat` route (coaching Q&A chatbot)  ← added for the tool-calling chatbot
+The demo also ships a **multi-turn Q&A chatbot** (`Scripts/coaching_chat.py`) that uses **Anthropic
+tool calling**: the model fetches each swing number via read-only tools instead of being handed the
+scorecard, so every claim is grounded and auditable. The Lambda adapter is already written and
+offline-tested — **`deploy/chat_handler.py`** (+ `deploy/test_chat_handler.py`, 15 tests, no key).
+
+- **Route:** add a second path (or a `POST` branch in `app.py`) that calls
+  `chat_handler.handler(event)`. Request body: `{clip_id, question, history:[{role,content}], compare_clip_id?}`.
+  Response: `{answer, grounded, violations, tools_used, iterations, stop}`.
+- **Stateless & trust-bounded (P0 from the review):** the browser holds the transcript and posts it
+  back each turn. The handler treats that history as **untrusted plain text** — `_sanitize_history`
+  drops any client-supplied `tool_use`/`tool_result` blocks, so a forged history can't inject a fake
+  measurement. Every number in the new answer is re-fetched server-side this turn and re-verified by
+  `verify_chat_grounding`. Do **not** change this to trust client tool history.
+- **Cost caps (chat ≠ the cached clip path — it can't rely on the once-per-clip cache):** a turn is
+  several model round-trips, so spend is bounded by explicit caps, not caching:
+  `MAX_TOOL_ITERS=6` (in `coaching_chat.py`), `CHAT_MAX_HISTORY_MSGS`, `CHAT_MAX_QUESTION_CHARS`,
+  `CHAT_MAX_BODY_BYTES` (env-overridable in `chat_handler.py`), the `ALLOWED_CLIPS` allow-list, plus
+  the function's **reserved concurrency** (compute cap) and the **Anthropic console hard cap** (token
+  cap). Keep all of these; unlike `/clip`, there is no S3 cache backstop for arbitrary chat turns.
+- **Backend:** same `AnthropicBackend` (`claude-opus-4-8`), same `ANTHROPIC_API_KEY` from Secrets
+  Manager. Thinking is **off** by default for chat (short task; avoids the thinking-block-preservation
+  requirement and reduces truncation risk). No Codex in the runtime — tool use is native to the
+  Messages API.
+- **Scorecards:** the handler reads `Data/demo/<clip>/<clip>_scorecard.json` (built by the same
+  CPU-only demo path). Bake the curated clips' scorecards into the image, or build-on-first-hit to
+  `/tmp` and cache in the assets bucket like the PNGs.
+- **Local test before deploy:** `./.venv/Scripts/python.exe deploy/test_chat_handler.py` (offline),
+  then a live smoke with a key set: `POST` a couple of questions incl. a progression one
+  (`compare_clip_id`) and an unmeasured one; confirm `grounded:true` and a sensible refusal.
 
 ## 7. Cheaper fallback (presentation safety net)
 If the live Lambda path is flaky during a demo: run the pipeline locally for the curated clips, push
