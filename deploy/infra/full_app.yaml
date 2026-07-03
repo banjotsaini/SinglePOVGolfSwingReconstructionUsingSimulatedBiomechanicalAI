@@ -1,0 +1,460 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >
+  MotionCaddie full-app tier — async upload processing + data layer + auth.
+  Credit-preserving by construction: every resource scales to zero or is
+  request-priced, and every long-lived resource has a timeout / TTL / hard cap.
+  Pairs with the existing serverless demo stack (AWS_DEPLOY_HANDOFF.md); this is
+  the net-new infrastructure for real user uploads.
+
+# ---------------------------------------------------------------------------
+Parameters:
+  ProjectName:
+    Type: String
+    Default: motion-caddie
+  AlertEmail:
+    Type: String
+    Description: Email for CloudWatch alarms + budget alerts.
+  ProcessingImageUri:
+    Type: String
+    Default: ""
+    Description: >
+      ECR image URI for the CPU processing container (MediaPipe+MixSTE+scorecard).
+      Leave blank to synth the stack before the image exists; required to deploy.
+  MonthlyBudgetUSD:
+    Type: Number
+    Default: 40
+    Description: Monthly cost ceiling; alerts at 80% and 100% of this.
+  DbMinCapacity:
+    Type: Number
+    Default: 0
+    Description: Aurora Serverless v2 min ACU. 0 = auto-pause to $0 when idle.
+  DbMaxCapacity:
+    Type: Number
+    Default: 2
+    Description: Aurora Serverless v2 max ACU (hard cap on DB spend).
+  ProcessingTimeoutSeconds:
+    Type: Number
+    Default: 600
+    Description: Per-swing processing Lambda timeout (hard cap; < Lambda 900s max).
+  MaxProcessingConcurrency:
+    Type: Number
+    Default: 3
+    Description: Hard ceiling on concurrent GPU/CPU jobs (bounds burst spend).
+  EnableGpuWorker:
+    Type: String
+    Default: "false"
+    AllowedValues: ["true", "false"]
+    Description: Provision the optional SageMaker Async GPU endpoint (scale-to-zero).
+  GpuInstanceType:
+    Type: String
+    Default: ml.g4dn.xlarge
+    Description: Cheapest inference GPU (1x NVIDIA T4 16GB). Only used if EnableGpuWorker.
+  GpuModelImageUri:
+    Type: String
+    Default: "REPLACE_WITH_ECR_IMAGE_URI"
+    Description: ECR image for the SageMaker GPU model (required only if EnableGpuWorker=true).
+  GpuModelDataUrl:
+    Type: String
+    Default: "s3://REPLACE-ME/model.tar.gz"
+    Description: S3 URL of the packaged model artifact (required only if EnableGpuWorker=true).
+
+Conditions:
+  UseGpu: !Equals [!Ref EnableGpuWorker, "true"]
+
+# ---------------------------------------------------------------------------
+Resources:
+
+  # ---- Network (minimal: Aurora lives in a VPC; NO NAT/IGW = no idle cost) ----
+  Vpc:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.42.0.0/16
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags: [{ Key: Project, Value: !Ref ProjectName }]
+
+  PrivateSubnetA:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref Vpc
+      CidrBlock: 10.42.1.0/24
+      AvailabilityZone: !Select [0, !GetAZs ""]
+      Tags: [{ Key: Project, Value: !Ref ProjectName }]
+
+  PrivateSubnetB:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref Vpc
+      CidrBlock: 10.42.2.0/24
+      AvailabilityZone: !Select [1, !GetAZs ""]
+      Tags: [{ Key: Project, Value: !Ref ProjectName }]
+
+  DbSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Aurora access (Data API reaches it over the AWS backbone; no ingress needed)
+      VpcId: !Ref Vpc
+      Tags: [{ Key: Project, Value: !Ref ProjectName }]
+
+  DbSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupDescription: !Sub "${ProjectName} aurora subnets"
+      SubnetIds: [!Ref PrivateSubnetA, !Ref PrivateSubnetB]
+
+  # ---- Aurora Serverless v2 (PostgreSQL) — Data API + scale-to-zero ----
+  AuroraCluster:
+    Type: AWS::RDS::DBCluster
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
+    Properties:
+      Engine: aurora-postgresql
+      EngineVersion: "16.6"
+      DatabaseName: motioncaddie
+      MasterUsername: mc_admin
+      ManageMasterUserPassword: true            # RDS-managed secret, auto-rotated
+      EnableHttpEndpoint: true                  # RDS Data API — no VPC Lambda, no proxy, no idle pin
+      StorageEncrypted: true
+      BackupRetentionPeriod: 1                  # minimal (regenerable data)
+      DeletionProtection: false                 # capstone: teardownable
+      DBSubnetGroupName: !Ref DbSubnetGroup
+      VpcSecurityGroupIds: [!Ref DbSecurityGroup]
+      ServerlessV2ScalingConfiguration:
+        MinCapacity: !Ref DbMinCapacity         # 0 = auto-pause to $0 idle
+        MaxCapacity: !Ref DbMaxCapacity         # hard cap on DB spend
+        SecondsUntilAutoPause: 900              # idle timeout -> pause after 15 min
+      Tags: [{ Key: Project, Value: !Ref ProjectName }]
+
+  AuroraInstance:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      DBClusterIdentifier: !Ref AuroraCluster
+      DBInstanceClass: db.serverless
+      Engine: aurora-postgresql
+
+  # ---- Object storage: TTLs on both buckets, fully private ----
+  UploadsBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Delete
+    Properties:
+      BucketName: !Sub "${ProjectName}-uploads-${AWS::AccountId}"
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault: { SSEAlgorithm: AES256 }
+      NotificationConfiguration:
+        EventBridgeConfiguration: { EventBridgeEnabled: true }
+      LifecycleConfiguration:
+        Rules:
+          - Id: expire-raw-video                # raw video is PII -> short TTL
+            Status: Enabled
+            ExpirationInDays: 30
+            AbortIncompleteMultipartUpload: { DaysAfterInitiation: 1 }
+      Tags: [{ Key: Project, Value: !Ref ProjectName }]
+
+  ArtifactsBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Delete
+    Properties:
+      BucketName: !Sub "${ProjectName}-artifacts-${AWS::AccountId}"
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault: { SSEAlgorithm: AES256 }
+      LifecycleConfiguration:
+        Rules:
+          - Id: expire-regenerable-artifacts    # 3D/PNG/replay are regenerable
+            Status: Enabled
+            ExpirationInDays: 90
+      Tags: [{ Key: Project, Value: !Ref ProjectName }]
+
+  # ---- Ingest queue + DLQ: visibility timeout, retention, redrive cap ----
+  IngestDlq:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: !Sub "${ProjectName}-ingest-dlq"
+      MessageRetentionPeriod: 1209600           # 14 days
+      Tags: [{ Key: Project, Value: !Ref ProjectName }]
+
+  IngestQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: !Sub "${ProjectName}-ingest"
+      # visibility must exceed the processing timeout (6x is the AWS guidance)
+      VisibilityTimeout: !Ref ProcessingTimeoutSeconds
+      MessageRetentionPeriod: 345600            # 4 days
+      RedrivePolicy:
+        deadLetterTargetArn: !GetAtt IngestDlq.Arn
+        maxReceiveCount: 3                       # poison clips -> DLQ, not infinite retry
+      Tags: [{ Key: Project, Value: !Ref ProjectName }]
+
+  # EventBridge: S3 upload -> SQS (no circular bucket<->queue dependency)
+  UploadToQueueRule:
+    Type: AWS::Events::Rule
+    Properties:
+      Description: New upload -> ingest queue
+      EventPattern:
+        source: ["aws.s3"]
+        detail-type: ["Object Created"]
+        detail:
+          bucket:
+            name: [!Sub "${ProjectName}-uploads-${AWS::AccountId}"]
+      Targets:
+        - Id: ingest
+          Arn: !GetAtt IngestQueue.Arn
+
+  QueuePolicy:
+    Type: AWS::SQS::QueuePolicy
+    Properties:
+      Queues: [!Ref IngestQueue]
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal: { Service: events.amazonaws.com }
+            Action: sqs:SendMessage
+            Resource: !GetAtt IngestQueue.Arn
+            Condition:
+              ArnEquals: { aws:SourceArn: !GetAtt UploadToQueueRule.Arn }
+
+  # ---- Processing Lambda (CPU container): timeout + reserved-concurrency cap ----
+  ProcessingRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal: { Service: lambda.amazonaws.com }
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: processing-least-priv
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action: [s3:GetObject]
+                Resource: !Sub "arn:aws:s3:::${ProjectName}-uploads-${AWS::AccountId}/*"
+              - Effect: Allow
+                Action: [s3:PutObject]
+                Resource: !Sub "arn:aws:s3:::${ProjectName}-artifacts-${AWS::AccountId}/*"
+              - Effect: Allow
+                Action: [sqs:ReceiveMessage, sqs:DeleteMessage, sqs:GetQueueAttributes]
+                Resource: !GetAtt IngestQueue.Arn
+              - Effect: Allow
+                Action: [rds-data:ExecuteStatement, rds-data:BatchExecuteStatement]
+                Resource: !GetAtt AuroraCluster.DBClusterArn
+              - Effect: Allow
+                Action: [secretsmanager:GetSecretValue]
+                Resource: !GetAtt AuroraCluster.MasterUserSecret.SecretArn
+
+  ProcessingFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub "${ProjectName}-processing"
+      PackageType: Image
+      Code:
+        ImageUri: !Ref ProcessingImageUri
+      Role: !GetAtt ProcessingRole.Arn
+      Timeout: !Ref ProcessingTimeoutSeconds    # hard per-invocation timeout
+      MemorySize: 10240                         # max RAM = max CPU (torch/MixSTE on CPU)
+      EphemeralStorage: { Size: 2048 }          # /tmp for the render
+      ReservedConcurrentExecutions: !Ref MaxProcessingConcurrency  # hard spend ceiling
+      Environment:
+        Variables:
+          ARTIFACTS_BUCKET: !Ref ArtifactsBucket
+          DB_CLUSTER_ARN: !GetAtt AuroraCluster.DBClusterArn
+          DB_SECRET_ARN: !GetAtt AuroraCluster.MasterUserSecret.SecretArn
+      Tags: [{ Key: Project, Value: !Ref ProjectName }]
+
+  ProcessingEventSource:
+    Type: AWS::Lambda::EventSourceMapping
+    Properties:
+      EventSourceArn: !GetAtt IngestQueue.Arn
+      FunctionName: !Ref ProcessingFunction
+      BatchSize: 1
+      ScalingConfig:
+        MaximumConcurrency: !Ref MaxProcessingConcurrency
+
+  # ---- Auth: Cognito user pool (free tier), backs users/consents ----
+  UserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      UserPoolName: !Sub "${ProjectName}-users"
+      AutoVerifiedAttributes: [email]
+      Policies:
+        PasswordPolicy: { MinimumLength: 10, RequireNumbers: true, RequireLowercase: true }
+      UserPoolTags: { Project: !Ref ProjectName }
+
+  UserPoolClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      UserPoolId: !Ref UserPool
+      ClientName: !Sub "${ProjectName}-web"
+      ExplicitAuthFlows: [ALLOW_USER_SRP_AUTH, ALLOW_REFRESH_TOKEN_AUTH]
+      AccessTokenValidity: 60
+      IdTokenValidity: 60
+      TokenValidityUnits: { AccessToken: minutes, IdToken: minutes }
+
+  # ---- Alerts + budget guardrail ----
+  AlertTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: !Sub "${ProjectName}-alerts"
+
+  AlertSubscription:
+    Type: AWS::SNS::Subscription
+    Properties:
+      TopicArn: !Ref AlertTopic
+      Protocol: email
+      Endpoint: !Ref AlertEmail
+
+  ProcessingErrorAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmDescription: Processing Lambda errors
+      Namespace: AWS/Lambda
+      MetricName: Errors
+      Dimensions: [{ Name: FunctionName, Value: !Ref ProcessingFunction }]
+      Statistic: Sum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 1
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      AlarmActions: [!Ref AlertTopic]
+      TreatMissingData: notBreaching
+
+  DlqDepthAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmDescription: Messages landed in the DLQ (failed swings)
+      Namespace: AWS/SQS
+      MetricName: ApproximateNumberOfMessagesVisible
+      Dimensions: [{ Name: QueueName, Value: !GetAtt IngestDlq.QueueName }]
+      Statistic: Maximum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 1
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      AlarmActions: [!Ref AlertTopic]
+      TreatMissingData: notBreaching
+
+  MonthlyBudget:
+    Type: AWS::Budgets::Budget
+    Properties:
+      Budget:
+        BudgetName: !Sub "${ProjectName}-monthly"
+        BudgetType: COST
+        TimeUnit: MONTHLY
+        BudgetLimit: { Amount: !Ref MonthlyBudgetUSD, Unit: USD }
+      NotificationsWithSubscribers:
+        - Notification:
+            NotificationType: ACTUAL
+            ComparisonOperator: GREATER_THAN
+            Threshold: 80
+          Subscribers: [{ SubscriptionType: EMAIL, Address: !Ref AlertEmail }]
+        - Notification:
+            NotificationType: FORECASTED
+            ComparisonOperator: GREATER_THAN
+            Threshold: 100
+          Subscribers: [{ SubscriptionType: EMAIL, Address: !Ref AlertEmail }]
+
+  # ---- OPTIONAL GPU worker: SageMaker Async, autoscaled to zero (UseGpu) ----
+  GpuExecutionRole:
+    Type: AWS::IAM::Role
+    Condition: UseGpu
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal: { Service: sagemaker.amazonaws.com }
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonSageMakerFullAccess
+
+  GpuModel:
+    Type: AWS::SageMaker::Model
+    Condition: UseGpu
+    Properties:
+      ExecutionRoleArn: !GetAtt GpuExecutionRole.Arn
+      PrimaryContainer:
+        Image: !Ref GpuModelImageUri
+        ModelDataUrl: !Ref GpuModelDataUrl
+
+  GpuEndpointConfig:
+    Type: AWS::SageMaker::EndpointConfig
+    Condition: UseGpu
+    Properties:
+      ProductionVariants:
+        - VariantName: primary
+          ModelName: !GetAtt GpuModel.ModelName
+          InstanceType: !Ref GpuInstanceType
+          InitialInstanceCount: 1
+      AsyncInferenceConfig:                      # queue-based -> allows scale-to-zero
+        OutputConfig:
+          S3OutputPath: !Sub "s3://${ProjectName}-artifacts-${AWS::AccountId}/async-out/"
+        ClientConfig:
+          MaxConcurrentInvocationsPerInstance: 2
+
+  GpuEndpoint:
+    Type: AWS::SageMaker::Endpoint
+    Condition: UseGpu
+    Properties:
+      EndpointConfigName: !GetAtt GpuEndpointConfig.EndpointConfigName
+
+  GpuScalableTarget:
+    Type: AWS::ApplicationAutoScaling::ScalableTarget
+    Condition: UseGpu
+    Properties:
+      ServiceNamespace: sagemaker
+      ResourceId: !Sub "endpoint/${GpuEndpoint.EndpointName}/variant/primary"
+      ScalableDimension: sagemaker:variant:DesiredInstanceCount
+      MinCapacity: 0                             # <-- scale-to-zero: $0 GPU when idle
+      MaxCapacity: 2
+      RoleARN: !Sub "arn:aws:iam::${AWS::AccountId}:role/aws-service-role/sagemaker.application-autoscaling.amazonaws.com/AWSServiceRoleForApplicationAutoScaling_SageMakerEndpoint"
+
+  GpuScalingPolicy:
+    Type: AWS::ApplicationAutoScaling::ScalingPolicy
+    Condition: UseGpu
+    Properties:
+      PolicyName: backlog-scale
+      PolicyType: TargetTrackingScaling
+      ScalingTargetId: !Ref GpuScalableTarget
+      TargetTrackingScalingPolicyConfiguration:
+        TargetValue: 2                           # scale on queue backlog per instance
+        CustomizedMetricSpecification:
+          MetricName: ApproximateBacklogSizePerInstance
+          Namespace: AWS/SageMaker
+          Dimensions: [{ Name: EndpointName, Value: !GetAtt GpuEndpoint.EndpointName }]
+          Statistic: Average
+        ScaleInCooldown: 300                     # idle timeout before scaling back toward 0
+        ScaleOutCooldown: 60
+
+# ---------------------------------------------------------------------------
+Outputs:
+  UploadsBucketName:
+    Value: !Ref UploadsBucket
+  ArtifactsBucketName:
+    Value: !Ref ArtifactsBucket
+  IngestQueueUrl:
+    Value: !Ref IngestQueue
+  DbClusterArn:
+    Value: !GetAtt AuroraCluster.DBClusterArn
+  DbSecretArn:
+    Value: !GetAtt AuroraCluster.MasterUserSecret.SecretArn
+  UserPoolId:
+    Value: !Ref UserPool
+  GpuEndpointName:
+    Condition: UseGpu
+    Value: !GetAtt GpuEndpoint.EndpointName
