@@ -52,3 +52,26 @@ Scripts/REPORT_standalone.html
 
 # UE5 handoff zips (large, shared via Slack/Drive)
 motion_caddie_ue5_handoff*.zip
+
+# Raw GolfPose dataset (5.4 GB — not tracked in git)
+golfswing/
+
+# Large regenerable MediaPipe inference caches
+outputs/cache/mp_preds_*.csv
+
+# Large row-level output (regenerable from cache)
+outputs/baseline_mpjpe.csv
+
+# Claude Code session memory
+.claude/
+
+# Model/scorecard backups from the MixSTE swap (rollback artifacts, not source)
+Models/*.bak.pt
+Data/coaching/*_motionbert_bak/
+
+# Large local handoff bundle + zip (shared out-of-band, regenerable)
+motion_caddie_model_handoff_austin.zip
+Data/handoff/
+
+# Retired: Unreal Engine project (handoff dropped)
+Unreal/

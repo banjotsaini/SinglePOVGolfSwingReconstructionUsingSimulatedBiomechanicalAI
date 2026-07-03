@@ -1,0 +1,37 @@
+{
+  "noise_px": 10.0,
+  "mixste_nosmooth_deg": 10.8,
+  "best": {
+    "min_cutoff": 0.3,
+    "beta": 0.4,
+    "deg": 5.89,
+    "pct_better": 45.4
+  },
+  "grid_top5": [
+    {
+      "min_cutoff": 0.3,
+      "beta": 0.4,
+      "deg": 5.89
+    },
+    {
+      "min_cutoff": 0.5,
+      "beta": 0.2,
+      "deg": 5.9
+    },
+    {
+      "min_cutoff": 0.5,
+      "beta": 0.1,
+      "deg": 5.91
+    },
+    {
+      "min_cutoff": 0.2,
+      "beta": 0.4,
+      "deg": 5.91
+    },
+    {
+      "min_cutoff": 0.5,
+      "beta": 0.4,
+      "deg": 5.93
+    }
+  ]
+}

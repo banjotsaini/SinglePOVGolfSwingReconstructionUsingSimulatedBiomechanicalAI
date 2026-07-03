@@ -1,0 +1,15 @@
+{
+  "shoulder_line_deg": 2.27,
+  "hip_line_deg": 1.63,
+  "spine_tilt_deg": 1.73,
+  "left_arm_bend_deg": 4.99,
+  "right_arm_bend_deg": 4.28,
+  "left_knee_flex_deg": 1.89,
+  "right_knee_flex_deg": 2.07,
+  "_overall_mean_deg": 2.69,
+  "_meta": {
+    "backend": "golfpose_mixste",
+    "intervention": "none",
+    "n_swings": 8
+  }
+}

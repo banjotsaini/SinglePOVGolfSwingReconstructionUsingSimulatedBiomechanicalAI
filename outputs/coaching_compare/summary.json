@@ -1,0 +1,20 @@
+{
+  "clips": [
+    0,
+    2,
+    8,
+    10,
+    269,
+    830
+  ],
+  "per_axis_correction_mm": {
+    "X (left/right)": 0.0,
+    "Y (depth)": 0.0,
+    "Z (height)": 110.35
+  },
+  "indicator_mean_abs_delta_deg": {
+    "shoulder_turn": 0.0,
+    "hip_turn": 0.0,
+    "spine_tilt": 3.9585
+  }
+}

@@ -48,6 +48,8 @@ def display_name(model: str) -> str:
     if "golfpose3d_from_" in model:
         base = model.replace("golfpose3d_from_", "")
         return f"GolfPose 17+0 ← {pretty_2d(base)}"
+    if model == "event_cnn_from_motionbert_full":
+        return "LLM-Augmented Pipeline (1D-CNN ← MotionBERT-Full)"
     if model == "llm_augmented_projected":
         return "LLM-Augmented Pipeline"
     if model == "llm_codex_gpt5":
@@ -72,6 +74,7 @@ def pretty_2d(name: str) -> str:
 
 
 def family_of(model: str) -> str:
+    if model == "event_cnn_from_motionbert_full": return "LLM-Augmented"
     if model == "llm_augmented_projected": return "LLM-Augmented"
     if "llm_" in model: return "LLM"
     if "from_sapiens" in model and "motionbert_full" in model: return "MotionBERT-Full"
@@ -83,7 +86,7 @@ def family_of(model: str) -> str:
     return "2D-only"
 
 
-def build_leaderboard(include_projected: bool = True):
+def build_leaderboard(include_projected: bool = False):
     df = pd.read_parquet(METRICS_PARQUET)
     lb = df.groupby("model").agg(
         pce5=("pce_at_5", "mean"),

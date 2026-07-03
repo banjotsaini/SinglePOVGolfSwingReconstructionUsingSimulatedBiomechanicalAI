@@ -1,0 +1,78 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<title>Pipeline comparison — clip 1292</title>
+<style>
+  :root { color-scheme: dark; }
+  body { font-family: -apple-system, Segoe UI, Roboto, sans-serif; background:#111; color:#e8e8e8;
+         max-width:1180px; margin:0 auto; padding:24px; line-height:1.5; }
+  h1 { margin:0 0 2px; font-size:24px; } h2 { border-bottom:1px solid #333; padding-bottom:6px; margin-top:34px; }
+  .sub { color:#9aa0a6; margin:0 0 18px; }
+  .flow { background:#1b1b1b; border:1px solid #333; border-radius:8px; padding:12px 16px; font-size:14px; color:#bbb; }
+  .flow b { color:#7fd17f; }
+  .ctx { background:#16231a; border:1px solid #2a5; border-radius:8px; padding:12px 16px; margin:14px 0; font-size:14px; }
+  .ctx b { color:#8fe88f; }
+  .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  .card { background:#1b1b1b; border:1px solid #333; border-radius:8px; padding:14px; }
+  .base h3 { color:#8a8aff; } .impr h3 { color:#7fd17f; }
+  h3 { margin:0 0 8px; font-size:15px; }
+  video, img { width:100%; border-radius:8px; background:#000; }
+  table { width:100%; border-collapse:collapse; font-size:13px; }
+  th, td { padding:5px 8px; border-bottom:1px solid #2a2a2a; text-align:right; }
+  th:first-child, td:first-child { text-align:left; }
+  thead th { color:#9aa0a6; font-weight:600; }
+  ul { margin:6px 0; padding-left:18px; } li { margin-bottom:8px; }
+  .msg { color:#cdb; } .ok { color:#7fd17f; }
+  .note { color:#c9a227; font-size:13px; }
+  .legend span { display:inline-block; margin-right:16px; }
+  .dot-b { color:#8a8aff; } .dot-i { color:#7fd17f; }
+</style></head><body>
+
+<h1>End-to-end pipeline comparison — clip 1292</h1>
+<p class="sub">CHARLEY HULL &middot; driver &middot; face-on</p>
+
+<div class="flow">Pipeline: <b>Raw video</b> &rarr; <b>2D pose</b> (MediaPipe) &rarr;
+<b>3D lift</b> &rarr; <b>smoothing</b> &rarr; <b>coaching scorecard</b> &rarr; <b>analysis</b>.
+The two tracks diverge at the 3D-lift + smoothing stages.</div>
+
+<div class="ctx">
+<b>What "improved" means</b> — measured against GolfPose Vicon ground truth (held-out G5/G6):
+the current app's lifter (MotionBERT-Full) has <b>7.59&deg;</b> mean coaching-measurement error on clean input;
+the golf-fine-tuned <b>GolfPose MixSTE</b> has <b>2.83&deg;</b> (&minus;63%). Adding
+<b>One-Euro</b> temporal smoothing recovers a further <b>33&ndash;46%</b> of the error that 2D
+detection noise injects. Baseline = MotionBERT, no smoothing. Improved = MixSTE + One-Euro.
+<span class="legend"><br><span class="dot-b">&#9679; baseline</span><span class="dot-i">&#9679; improved</span></span>
+</div>
+
+<h2>1&ndash;3 &middot; Raw &rarr; 2D &rarr; 3D (video)</h2>
+<p class="sub">Top row: shared inputs (raw + 2D). Bottom row: the 3D divergence — jittery/compressed
+MotionBERT (red) vs cleaner MixSTE+One-Euro (green).</p>
+<video controls loop muted playsinline src="1292_pipeline_compare.mp4"></video>
+
+<h2>4 &middot; Coaching scorecard</h2>
+<p class="note">Per-clip caveat: GolfDB clips have <b>no 3D ground truth</b>, so for this one swing we
+can't declare either number "correct" — the accuracy claim is the Vicon <i>average</i> (above).
+Monocular 3D compresses depth-rotation, so absolute turn angles read low for <i>both</i> lifters;
+the scorecard reads them <i>relative</i> to a pro band built from the same pipeline. Expect the two
+lifters to disagree most on the depth-dependent rotation metrics.</p>
+<div class="grid2">
+  <div class="card base"><h3>BASELINE — MotionBERT, raw</h3>
+     <img src="scorecards/1292_baseline_scorecard.png" alt="baseline scorecard"></div>
+  <div class="card impr"><h3>IMPROVED — MixSTE + One-Euro</h3>
+     <img src="scorecards/1292_improved_scorecard.png" alt="improved scorecard"></div>
+</div>
+
+<h3 style="margin-top:18px">Measurement-by-measurement</h3>
+<table><thead><tr><th>Measurement</th><th>Baseline<br>(MotionBERT)</th><th>Improved<br>(MixSTE+1€)</th><th>&Delta;</th><th>Tour median</th></tr></thead><tbody><tr><td>shoulder_turn_top_deg</td><td>40.41</td><td>2.03</td><td>-38.38</td><td>53.7</td></tr><tr><td>hip_turn_top_deg</td><td>18.11</td><td>8.91</td><td>-9.20</td><td>30.5</td></tr><tr><td>x_factor_top_deg</td><td>22.3</td><td>-6.88</td><td>-29.18</td><td>21.9</td></tr><tr><td>hip_turn_impact_deg</td><td>46.7</td><td>0.9</td><td>-45.80</td><td>16.3</td></tr><tr><td>spine_tilt_address_deg</td><td>32.62</td><td>24.11</td><td>-8.51</td><td>27.6</td></tr><tr><td>spine_tilt_impact_deg</td><td>23.7</td><td>21.98</td><td>-1.72</td><td>23.4</td></tr><tr><td>posture_loss_deg</td><td>8.93</td><td>2.12</td><td>-6.81</td><td>5.3</td></tr><tr><td>head_sway_max_pct</td><td>57.61</td><td>43.31</td><td>-14.30</td><td>32.5</td></tr><tr><td>head_lift_max_pct</td><td>17.19</td><td>20.98</td><td>+3.79</td><td>16.5</td></tr><tr><td>left_arm_bend_top_deg</td><td>121.33</td><td>107.69</td><td>-13.64</td><td>128.1</td></tr><tr><td>right_arm_bend_top_deg</td><td>134.68</td><td>111.78</td><td>-22.90</td><td>114.1</td></tr><tr><td>lead_knee_flex_address_deg</td><td>157.79</td><td>158.32</td><td>+0.53</td><td>164.8</td></tr><tr><td>lead_knee_flex_impact_deg</td><td>167.69</td><td>168.83</td><td>+1.14</td><td>160.0</td></tr><tr><td>hip_lateral_shift_pct</td><td>0.16</td><td>0.47</td><td>+0.31</td><td>0.9</td></tr><tr><td>tempo_ratio</td><td>3.35</td><td>3.04</td><td>-0.31</td><td>3.4</td></tr></tbody></table>
+
+<h2>5 &middot; Coaching analysis</h2>
+<p class="note">LLM rewriter is offline in this environment (no API key) — shown below is the
+structured scorecard feedback that the LLM layer turns into prose. Same input, both tracks.</p>
+<div class="grid2">
+  <div class="card base"><h3>BASELINE analysis</h3><p>1 indicator(s) fall outside the typical tour range — see notes below.</p><ul><li><b>Weight shift</b> (impact, conf=high): you 0.2 vs tour 0.9 (p5)<br><span class="msg">Less lateral hip drive toward target than typical — possible reverse/limited weight shift.</span></li></ul></div>
+  <div class="card impr"><h3>IMPROVED analysis</h3><p>3 indicator(s) fall outside the typical tour range — see notes below.</p><ul><li><b>Shoulder turn</b> (top, conf=med): you 2.0 vs tour 53.7 (p1)<br><span class="msg">Restricted shoulder turn at the top — less than most tour swings (loses coil/power).</span></li><li><b>X-factor (shoulder-hip separation)</b> (top, conf=med): you -6.9 vs tour 21.9 (p5)<br><span class="msg">Low shoulder-hip separation at the top — less stored coil than typical tour swings.</span></li><li><b>Hip rotation at impact</b> (impact, conf=high): you 0.9 vs tour 16.3 (p3)<br><span class="msg">Hips less open at impact than typical — may indicate stalled rotation through the ball.</span></li></ul></div>
+</div>
+
+<p class="sub" style="margin-top:28px">Generated by <code>Scripts/build_compare_panel.py</code>.
+Video: <code>Scripts/render_pipeline_compare.py</code> &middot; Scorecards:
+<code>Scripts/make_compare_scorecards.py</code> &middot; Accuracy basis:
+<code>outputs/coaching_accuracy/FINDINGS.md</code>.</p>
+</body></html>

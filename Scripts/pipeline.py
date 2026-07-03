@@ -1,19 +1,22 @@
-"""End-to-end golf swing 3D mocap pipeline for Unreal Engine handoff.
+"""End-to-end golf swing 3D reconstruction pipeline.
 
 Run on a single phone video (or any mp4) and produce a folder containing:
 
   <stem>_landmarks_2d.csv     Per-frame COCO-17 2D landmarks (pixel coords)
   <stem>_landmarks_3d.csv     Per-frame H36M-17 3D positions (lifter output)
-  <stem>_animation.bvh        BioVision Hierarchy mocap file (UE5/Blender/MotionBuilder)
   <stem>_mocap.json           Canonical JSON with skeleton + frames + provenance
   <stem>_overlay.mp4          Visualization: 2D landmarks drawn on the original video
-  <stem>_preview_3d.html      Standalone 3D viewer (Three.js, opens in browser)
+  <stem>_preview_3d.html      Browser 3D replay (Three.js) — the player-facing viewer
+
+The 3D feeds the coaching scorecard; the browser replay is what the player sees.
+BVH mocap export (--bvh) is retained only for ad-hoc DCC use — the Unreal Engine
+handoff it was built for has been retired.
 
 Usage:
 
   python pipeline.py path/to/swing.mp4
   python pipeline.py path/to/swing.mp4 --backbone vitpose_base --lifter motionbert_full
-  python pipeline.py path/to/swing.mp4 --out-dir Data/handoff/swing_123 --no-overlay
+  python pipeline.py path/to/swing.mp4 --out-dir Data/out/swing_123 --no-overlay
 """
 from __future__ import annotations
 
@@ -276,20 +279,22 @@ def main():
                    help="Output dir. Default: Data/handoff/<video_stem>/")
     p.add_argument("--backbone", default="mediapipe_heavy",
                    help="2D pose backbone. Choices in adapters/__init__.py.")
-    p.add_argument("--lifter", default="motionbert_full",
-                   help="3D lifter: motionbert_full (default, best PCE), motionbert_lite (cheaper), golfpose3d")
+    p.add_argument("--lifter", default="golfpose3d",
+                   help="3D lifter: golfpose3d (default; golf-fine-tuned MixSTE, best coaching-angle accuracy), motionbert_full, motionbert_lite")
     p.add_argument("--cache-dir", default=None,
                    help="Where to cache adapter outputs. Default: <project>/Data/eval_runs")
     p.add_argument("--no-overlay", action="store_true",
                    help="Skip the 2D overlay MP4 (faster)")
     p.add_argument("--no-preview", action="store_true",
-                   help="Skip the 3D HTML preview")
+                   help="Skip the browser 3D replay (Three.js HTML)")
+    p.add_argument("--bvh", action="store_true",
+                   help="Also export BVH mocap (ad-hoc DCC use; UE5 handoff retired)")
     p.add_argument("--fps", type=float, default=None,
                    help="Override video FPS (e.g. slow-mo clips with fake fps metadata)")
     p.add_argument("--events", type=str, default=None,
                    help="Optional CSV of 8 comma-separated GolfDB-style swing event frame indices")
     p.add_argument("--smooth", choices=["none", "oneeuro", "savgol"], default="oneeuro",
-                   help="Temporal smoothing of 3D output before UE export (default: oneeuro)")
+                   help="Temporal smoothing of the 3D replay trajectory (default: oneeuro)")
     p.add_argument("--smooth-min-cutoff", type=float, default=1.0,
                    help="One Euro min_cutoff: lower = smoother slow phases (more lag)")
     p.add_argument("--smooth-beta", type=float, default=0.3,
@@ -334,7 +339,7 @@ def main():
     print(f"[pipeline] 3D output: shape {xyz_h36m.shape}, "
           f"range [{xyz_h36m.min():.3f}, {xyz_h36m.max():.3f}]")
 
-    # --- 2b. Smoothing (de-jitter before UE handoff) ---
+    # --- 2b. Smoothing (de-jitter the 3D trajectory) ---
     if args.smooth != "none" or not args.no_bone_lock:
         conf_h36m = _load_3d_conf_as_h36m(parquet_3d, xyz_h36m.shape[0])
         jitter_before = _mean_acceleration(xyz_h36m)
@@ -350,7 +355,7 @@ def main():
         print(f"[pipeline] smoothing: {args.smooth} (bone-lock {bone})  "
               f"jitter {jitter_before:.5f} -> {jitter_after:.5f}  ({pct:+.1f}%)")
 
-    # --- 3. UE5-format exports ---
+    # --- 3. 3D exports (CSV + canonical JSON; BVH is opt-in) ---
     full_lifter_name = f"{args.lifter}_from_{args.backbone}"
     paths = {}
     paths["csv_3d"]  = export_csv(xyz_h36m, out_dir / f"{video_path.stem}_landmarks_3d.csv",
@@ -362,7 +367,8 @@ def main():
                                     backbone_2d=args.backbone, lifter_3d=full_lifter_name,
                                     events_frame_indices=events_frame_indices,
                                     event_names=event_names)
-    paths["bvh"]     = export_bvh(xyz_h36m, out_dir / f"{video_path.stem}_animation.bvh", fps=fps)
+    if args.bvh:  # UE5 handoff retired; BVH only on request for ad-hoc DCC use
+        paths["bvh"] = export_bvh(xyz_h36m, out_dir / f"{video_path.stem}_animation.bvh", fps=fps)
     for k, v in paths.items():
         print(f"[pipeline] wrote {v.name}  ({v.stat().st_size//1024} KB)  [{k}]")
 
@@ -380,10 +386,10 @@ def main():
         print(f"[pipeline] wrote {html_path.name}")
 
     print(f"\n[pipeline] DONE. All files in: {out_dir}")
-    print("\nFor Team 2 UE5 ingestion:")
-    print(f"  - Recommended:   {paths['csv_3d'].name}  (open in Excel; import as DataTable in UE5)")
-    print(f"  - Canonical:     {paths['json'].name}  (richest metadata)")
-    print(f"  - Mocap standard: {paths['bvh'].name}  (drag into UE5 Mocap Plugin or Blender)")
+    print(f"  - 3D replay:   {video_path.stem}_preview_3d.html  (open in browser — player-facing)")
+    print(f"  - 3D data:     {paths['csv_3d'].name} / {paths['json'].name}  (feeds the coaching scorecard)")
+    if "bvh" in paths:
+        print(f"  - BVH mocap:   {paths['bvh'].name}  (ad-hoc DCC use; UE5 handoff retired)")
 
 
 if __name__ == "__main__":

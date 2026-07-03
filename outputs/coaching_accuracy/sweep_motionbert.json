@@ -1,0 +1,188 @@
+{
+  "0.0": {
+    "none": {
+      "shoulder_line_deg": 7.95,
+      "hip_line_deg": 8.04,
+      "spine_tilt_deg": 2.64,
+      "left_arm_bend_deg": 9.19,
+      "right_arm_bend_deg": 7.1,
+      "left_knee_flex_deg": 11.57,
+      "right_knee_flex_deg": 6.65,
+      "_overall": 7.59
+    },
+    "sg": {
+      "shoulder_line_deg": 7.95,
+      "hip_line_deg": 8.04,
+      "spine_tilt_deg": 2.64,
+      "left_arm_bend_deg": 9.19,
+      "right_arm_bend_deg": 7.1,
+      "left_knee_flex_deg": 11.57,
+      "right_knee_flex_deg": 6.65,
+      "_overall": 7.59
+    },
+    "oneeuro": {
+      "shoulder_line_deg": 8.08,
+      "hip_line_deg": 8.14,
+      "spine_tilt_deg": 2.69,
+      "left_arm_bend_deg": 9.27,
+      "right_arm_bend_deg": 7.12,
+      "left_knee_flex_deg": 11.52,
+      "right_knee_flex_deg": 6.6,
+      "_overall": 7.63
+    },
+    "bonelock": {
+      "shoulder_line_deg": 7.85,
+      "hip_line_deg": 8.09,
+      "spine_tilt_deg": 2.78,
+      "left_arm_bend_deg": 9.19,
+      "right_arm_bend_deg": 7.1,
+      "left_knee_flex_deg": 11.57,
+      "right_knee_flex_deg": 6.65,
+      "_overall": 7.6
+    },
+    "sg_bonelock": {
+      "shoulder_line_deg": 7.84,
+      "hip_line_deg": 8.09,
+      "spine_tilt_deg": 2.78,
+      "left_arm_bend_deg": 9.19,
+      "right_arm_bend_deg": 7.1,
+      "left_knee_flex_deg": 11.57,
+      "right_knee_flex_deg": 6.65,
+      "_overall": 7.6
+    },
+    "oneeuro_bonelock": {
+      "shoulder_line_deg": 7.93,
+      "hip_line_deg": 8.19,
+      "spine_tilt_deg": 2.84,
+      "left_arm_bend_deg": 9.27,
+      "right_arm_bend_deg": 7.12,
+      "left_knee_flex_deg": 11.52,
+      "right_knee_flex_deg": 6.6,
+      "_overall": 7.64
+    }
+  },
+  "6.0": {
+    "none": {
+      "shoulder_line_deg": 8.23,
+      "hip_line_deg": 5.48,
+      "spine_tilt_deg": 3.37,
+      "left_arm_bend_deg": 12.4,
+      "right_arm_bend_deg": 6.62,
+      "left_knee_flex_deg": 17.06,
+      "right_knee_flex_deg": 13.98,
+      "_overall": 9.59
+    },
+    "sg": {
+      "shoulder_line_deg": 8.16,
+      "hip_line_deg": 5.3,
+      "spine_tilt_deg": 3.34,
+      "left_arm_bend_deg": 12.3,
+      "right_arm_bend_deg": 6.51,
+      "left_knee_flex_deg": 17.02,
+      "right_knee_flex_deg": 13.91,
+      "_overall": 9.51
+    },
+    "oneeuro": {
+      "shoulder_line_deg": 8.14,
+      "hip_line_deg": 5.4,
+      "spine_tilt_deg": 3.32,
+      "left_arm_bend_deg": 12.28,
+      "right_arm_bend_deg": 6.21,
+      "left_knee_flex_deg": 16.95,
+      "right_knee_flex_deg": 13.75,
+      "_overall": 9.44
+    },
+    "bonelock": {
+      "shoulder_line_deg": 8.06,
+      "hip_line_deg": 5.49,
+      "spine_tilt_deg": 3.42,
+      "left_arm_bend_deg": 12.4,
+      "right_arm_bend_deg": 6.62,
+      "left_knee_flex_deg": 17.06,
+      "right_knee_flex_deg": 13.98,
+      "_overall": 9.58
+    },
+    "sg_bonelock": {
+      "shoulder_line_deg": 7.98,
+      "hip_line_deg": 5.33,
+      "spine_tilt_deg": 3.39,
+      "left_arm_bend_deg": 12.3,
+      "right_arm_bend_deg": 6.51,
+      "left_knee_flex_deg": 17.02,
+      "right_knee_flex_deg": 13.91,
+      "_overall": 9.49
+    },
+    "oneeuro_bonelock": {
+      "shoulder_line_deg": 7.96,
+      "hip_line_deg": 5.43,
+      "spine_tilt_deg": 3.36,
+      "left_arm_bend_deg": 12.28,
+      "right_arm_bend_deg": 6.21,
+      "left_knee_flex_deg": 16.95,
+      "right_knee_flex_deg": 13.75,
+      "_overall": 9.42
+    }
+  },
+  "12.0": {
+    "none": {
+      "shoulder_line_deg": 10.81,
+      "hip_line_deg": 8.84,
+      "spine_tilt_deg": 5.12,
+      "left_arm_bend_deg": 14.86,
+      "right_arm_bend_deg": 10.95,
+      "left_knee_flex_deg": 21.59,
+      "right_knee_flex_deg": 19.48,
+      "_overall": 13.09
+    },
+    "sg": {
+      "shoulder_line_deg": 10.34,
+      "hip_line_deg": 7.48,
+      "spine_tilt_deg": 4.9,
+      "left_arm_bend_deg": 14.3,
+      "right_arm_bend_deg": 10.34,
+      "left_knee_flex_deg": 21.15,
+      "right_knee_flex_deg": 18.88,
+      "_overall": 12.48
+    },
+    "oneeuro": {
+      "shoulder_line_deg": 9.92,
+      "hip_line_deg": 6.68,
+      "spine_tilt_deg": 4.71,
+      "left_arm_bend_deg": 13.9,
+      "right_arm_bend_deg": 9.46,
+      "left_knee_flex_deg": 20.79,
+      "right_knee_flex_deg": 18.46,
+      "_overall": 11.99
+    },
+    "bonelock": {
+      "shoulder_line_deg": 10.69,
+      "hip_line_deg": 8.73,
+      "spine_tilt_deg": 5.15,
+      "left_arm_bend_deg": 14.86,
+      "right_arm_bend_deg": 10.95,
+      "left_knee_flex_deg": 21.59,
+      "right_knee_flex_deg": 19.48,
+      "_overall": 13.06
+    },
+    "sg_bonelock": {
+      "shoulder_line_deg": 10.19,
+      "hip_line_deg": 7.38,
+      "spine_tilt_deg": 4.89,
+      "left_arm_bend_deg": 14.3,
+      "right_arm_bend_deg": 10.34,
+      "left_knee_flex_deg": 21.15,
+      "right_knee_flex_deg": 18.88,
+      "_overall": 12.45
+    },
+    "oneeuro_bonelock": {
+      "shoulder_line_deg": 9.75,
+      "hip_line_deg": 6.59,
+      "spine_tilt_deg": 4.66,
+      "left_arm_bend_deg": 13.9,
+      "right_arm_bend_deg": 9.46,
+      "left_knee_flex_deg": 20.79,
+      "right_knee_flex_deg": 18.46,
+      "_overall": 11.94
+    }
+  }
+}

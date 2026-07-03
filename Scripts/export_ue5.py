@@ -1,4 +1,10 @@
-"""Export cached 3D landmark parquet files into UE5-ingestible formats.
+"""3D landmark export + shared skeleton utilities.
+
+NOTE: the module name is legacy — the Unreal Engine handoff it was built for is
+retired. It is kept because 9 modules import its H36M-17 skeleton constants and
+parquet loaders (`load_3d_parquet_as_h36m`, `H36M17_NAMES/IDX/PARENTS`). The BVH
+export below is now opt-in only (`pipeline.py --bvh`). Renaming is deferred to avoid
+churning the importers.
 
 Three formats:
 
