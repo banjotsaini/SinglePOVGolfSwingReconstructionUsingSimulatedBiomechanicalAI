@@ -1,0 +1,117 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "CloudFormationStack",
+      "Effect": "Allow",
+      "Action": [
+        "cloudformation:CreateStack",
+        "cloudformation:UpdateStack",
+        "cloudformation:DeleteStack",
+        "cloudformation:DescribeStacks",
+        "cloudformation:DescribeStackEvents",
+        "cloudformation:DescribeStackResources",
+        "cloudformation:GetTemplate",
+        "cloudformation:ValidateTemplate",
+        "cloudformation:CreateChangeSet",
+        "cloudformation:ExecuteChangeSet",
+        "cloudformation:DescribeChangeSet",
+        "cloudformation:DeleteChangeSet",
+        "cloudformation:ListStackResources",
+        "cloudformation:GetTemplateSummary"
+      ],
+      "Resource": "arn:aws:cloudformation:us-east-1:*:stack/motion-caddie-app/*"
+    },
+    {
+      "Sid": "NetworkingMinimalVpc",
+      "Effect": "Allow",
+      "Action": [
+        "ec2:CreateVpc", "ec2:DeleteVpc", "ec2:ModifyVpcAttribute", "ec2:DescribeVpcs",
+        "ec2:CreateSubnet", "ec2:DeleteSubnet", "ec2:ModifySubnetAttribute", "ec2:DescribeSubnets",
+        "ec2:CreateSecurityGroup", "ec2:DeleteSecurityGroup", "ec2:DescribeSecurityGroups",
+        "ec2:AuthorizeSecurityGroupIngress", "ec2:RevokeSecurityGroupIngress",
+        "ec2:AuthorizeSecurityGroupEgress", "ec2:RevokeSecurityGroupEgress",
+        "ec2:CreateTags", "ec2:DeleteTags", "ec2:DescribeAvailabilityZones"
+      ],
+      "Resource": "*",
+      "Condition": { "StringEquals": { "aws:RequestedRegion": "us-east-1" } }
+    },
+    {
+      "Sid": "DataAndMessaging",
+      "Effect": "Allow",
+      "Action": [
+        "rds:CreateDBCluster", "rds:DeleteDBCluster", "rds:ModifyDBCluster", "rds:DescribeDBClusters",
+        "rds:CreateDBInstance", "rds:DeleteDBInstance", "rds:ModifyDBInstance", "rds:DescribeDBInstances",
+        "rds:CreateDBSubnetGroup", "rds:DeleteDBSubnetGroup", "rds:DescribeDBSubnetGroups",
+        "rds:AddTagsToResource", "rds:ListTagsForResource",
+        "sqs:CreateQueue", "sqs:DeleteQueue", "sqs:GetQueueAttributes", "sqs:SetQueueAttributes",
+        "sqs:GetQueueUrl", "sqs:TagQueue",
+        "sns:CreateTopic", "sns:DeleteTopic", "sns:Subscribe", "sns:Unsubscribe",
+        "sns:GetTopicAttributes", "sns:SetTopicAttributes", "sns:TagResource",
+        "events:PutRule", "events:DeleteRule", "events:PutTargets", "events:RemoveTargets",
+        "events:DescribeRule", "events:ListTargetsByRule"
+      ],
+      "Resource": "*",
+      "Condition": { "StringEquals": { "aws:RequestedRegion": "us-east-1" } }
+    },
+    {
+      "Sid": "ComputeAndAuth",
+      "Effect": "Allow",
+      "Action": [
+        "lambda:CreateFunction", "lambda:DeleteFunction", "lambda:UpdateFunctionCode",
+        "lambda:UpdateFunctionConfiguration", "lambda:GetFunction", "lambda:GetFunctionConfiguration",
+        "lambda:AddPermission", "lambda:RemovePermission", "lambda:TagResource",
+        "lambda:CreateEventSourceMapping", "lambda:DeleteEventSourceMapping",
+        "lambda:GetEventSourceMapping", "lambda:UpdateEventSourceMapping",
+        "cognito-idp:CreateUserPool", "cognito-idp:DeleteUserPool", "cognito-idp:UpdateUserPool",
+        "cognito-idp:DescribeUserPool", "cognito-idp:CreateUserPoolClient",
+        "cognito-idp:DeleteUserPoolClient", "cognito-idp:DescribeUserPoolClient",
+        "cognito-idp:TagResource"
+      ],
+      "Resource": "*",
+      "Condition": { "StringEquals": { "aws:RequestedRegion": "us-east-1" } }
+    },
+    {
+      "Sid": "ObservabilityAndBudget",
+      "Effect": "Allow",
+      "Action": [
+        "cloudwatch:PutMetricAlarm", "cloudwatch:DeleteAlarms", "cloudwatch:DescribeAlarms",
+        "logs:CreateLogGroup", "logs:DeleteLogGroup", "logs:DescribeLogGroups",
+        "logs:PutRetentionPolicy", "logs:TagResource",
+        "budgets:CreateBudget", "budgets:DeleteBudget", "budgets:ModifyBudget",
+        "budgets:DescribeBudget", "budgets:ViewBudget"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "S3Buckets",
+      "Effect": "Allow",
+      "Action": [
+        "s3:CreateBucket", "s3:DeleteBucket", "s3:PutBucketPolicy", "s3:DeleteBucketPolicy",
+        "s3:PutBucketTagging", "s3:PutLifecycleConfiguration", "s3:PutBucketPublicAccessBlock",
+        "s3:PutBucketNotification", "s3:PutEncryptionConfiguration", "s3:GetBucketLocation",
+        "s3:GetBucketPolicy", "s3:ListBucket"
+      ],
+      "Resource": [
+        "arn:aws:s3:::motion-caddie-uploads-*",
+        "arn:aws:s3:::motion-caddie-artifacts-*"
+      ]
+    },
+    {
+      "Sid": "IamRolesForStackOnly",
+      "Effect": "Allow",
+      "Action": [
+        "iam:CreateRole", "iam:DeleteRole", "iam:GetRole", "iam:TagRole",
+        "iam:PutRolePolicy", "iam:DeleteRolePolicy", "iam:GetRolePolicy",
+        "iam:AttachRolePolicy", "iam:DetachRolePolicy", "iam:ListRolePolicies",
+        "iam:ListAttachedRolePolicies", "iam:PassRole"
+      ],
+      "Resource": "arn:aws:iam::*:role/motion-caddie-app-*",
+      "Condition": {
+        "StringEqualsIfExists": {
+          "iam:PassedToService": [ "lambda.amazonaws.com", "sagemaker.amazonaws.com" ]
+        }
+      }
+    }
+  ]
+}
