@@ -1,0 +1,88 @@
+{
+  "clip_id": "269",
+  "placeholder": true,
+  "_note": "PLACEHOLDER variant (not pipeline output) so the demo shows three distinct results. Replace with real scorecard output when the model/data bundle is available.",
+  "metrics": [
+    {
+      "key": "tempo_ratio",
+      "label": "Tempo (back : down)",
+      "you": 3.08, "you_display": "3.08 : 1",
+      "tour": 3.4, "tour_display": "3.4 : 1",
+      "axis": [2.5, 4.5], "band": [3.1, 3.7],
+      "status": "watch",
+      "blurb": "How smooth your timing is from backswing to downswing."
+    },
+    {
+      "key": "shoulder_turn_top_deg",
+      "label": "Shoulder turn at top",
+      "you": 55.2, "you_display": "55.2°",
+      "tour": 53.7, "tour_display": "53.7°",
+      "axis": [25, 70], "band": [38, 60],
+      "status": "in",
+      "blurb": "How far your shoulders rotate away from the ball at the top."
+    },
+    {
+      "key": "x_factor_top_deg",
+      "label": "X-factor (coil)",
+      "you": 24.8, "you_display": "24.8°",
+      "tour": 21.9, "tour_display": "21.9°",
+      "axis": [10, 35], "band": [16, 26],
+      "status": "in",
+      "blurb": "The stretch between your shoulder turn and hip turn — stored power."
+    },
+    {
+      "key": "hip_turn_impact_deg",
+      "label": "Hip rotation at impact",
+      "you": 19.4, "you_display": "19.4°",
+      "tour": 16.3, "tour_display": "16.3°",
+      "axis": [5, 55], "band": [10, 24],
+      "status": "in",
+      "blurb": "How open your hips are to the target when the club meets the ball."
+    },
+    {
+      "key": "spine_tilt_address_deg",
+      "label": "Spine tilt at address",
+      "you": 29.1, "you_display": "29.1°",
+      "tour": 27.6, "tour_display": "27.6°",
+      "axis": [18, 40], "band": [24, 33],
+      "status": "in",
+      "blurb": "How much you bend forward from the hips at setup."
+    },
+    {
+      "key": "posture_loss_deg",
+      "label": "Posture change",
+      "you": 11.2, "you_display": "11.2°",
+      "tour": 5.3, "tour_display": "5.3°",
+      "axis": [0, 16], "band": [2, 10],
+      "status": "watch",
+      "blurb": "How much your spine angle shifts between address and impact."
+    },
+    {
+      "key": "head_sway_max_pct",
+      "label": "Head sway",
+      "you": 26.9, "you_display": "26.9%",
+      "tour": 32.5, "tour_display": "32.5%",
+      "axis": [10, 70], "band": [20, 40],
+      "status": "in",
+      "blurb": "How far your head drifts sideways during the swing (relative to body size)."
+    },
+    {
+      "key": "hip_lateral_shift_pct",
+      "label": "Weight shift (lateral)",
+      "you": 1.1, "you_display": "1.1%",
+      "tour": 0.9, "tour_display": "0.9%",
+      "axis": [0, 4], "band": [0.5, 1.6],
+      "status": "in",
+      "blurb": "How much your hips drive toward the target coming into impact."
+    },
+    {
+      "key": "left_arm_bend_top_deg",
+      "label": "Lead-arm extension",
+      "you": 118.9, "you_display": "118.9°",
+      "tour": 128.1, "tour_display": "128.1°",
+      "axis": [100, 150], "band": [122, 134],
+      "status": "low",
+      "blurb": "How straight your lead arm stays at the top — width and structure."
+    }
+  ]
+}

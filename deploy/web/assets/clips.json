@@ -1,0 +1,26 @@
+{
+  "_note": "Curated demo clips. 'placeholder: true' means the data files were seeded from the design-spec reference example, NOT the real pipeline — replace by running Scripts/demo.py per clip once the model/data bundle is available.",
+  "clips": [
+    {
+      "id": "830",
+      "title": "Sample swing A",
+      "view": "face-on",
+      "club": "driver",
+      "placeholder": true
+    },
+    {
+      "id": "269",
+      "title": "Sample swing B",
+      "view": "down-the-line",
+      "club": "driver",
+      "placeholder": true
+    },
+    {
+      "id": "0",
+      "title": "Sample swing C",
+      "view": "face-on",
+      "club": "driver",
+      "placeholder": true
+    }
+  ]
+}

@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MotionCaddie — see your swing the way you never have</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <span class="brand-mark">⛳</span>
+    <span class="brand-name">MotionCaddie</span>
+  </div>
+  <nav class="progress-nav" aria-label="Progress">
+    <span class="pstep" data-step="pick"><span class="pnum">1</span> Upload</span>
+    <span class="psep"></span>
+    <span class="pstep" data-step="analyze"><span class="pnum">2</span> Analyze</span>
+    <span class="psep"></span>
+    <span class="pstep" data-step="results"><span class="pnum">3</span> Results</span>
+  </nav>
+</header>
+
+<main>
+
+<!-- ============================== 1 · PICK ============================== -->
+<section id="screen-pick" class="screen">
+  <div class="hero">
+    <h1>See your swing the way you never have.</h1>
+    <p class="hero-sub">Upload one phone video and get a stabilized pose overlay,
+    a 3D replay you can spin around, and a plain-English read of your swing.</p>
+  </div>
+
+  <div class="sample-panel card">
+    <div class="sample-head">
+      <h2>Try it with a sample swing</h2>
+      <p class="muted">Uploads are coming soon — for this demo, pick one of our curated swings.</p>
+    </div>
+    <div id="clip-gallery" class="clip-gallery"><!-- clip cards injected by app.js --></div>
+    <button id="btn-analyze" class="btn-primary">Use this sample swing</button>
+  </div>
+
+  <div class="tips">
+    <div class="tip card">
+      <div class="tip-icon">📐</div>
+      <h3>Pick one angle</h3>
+      <p>Face-on or down-the-line, with the camera square to you.</p>
+    </div>
+    <div class="tip card">
+      <div class="tip-icon">🧍</div>
+      <h3>Fit your whole body</h3>
+      <p>Head to feet in frame, club included, for the full swing.</p>
+    </div>
+    <div class="tip card">
+      <div class="tip-icon">☀️</div>
+      <h3>Good, even light</h3>
+      <p>Daylight or bright range light — avoid strong backlight.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================= 2 · ANALYZE ============================ -->
+<section id="screen-analyze" class="screen" hidden>
+  <div class="analyze-panel card">
+    <h2>Reading your swing…</h2>
+    <ol id="analyze-steps" class="analyze-steps">
+      <li data-step="1"><span class="check"></span><div><strong>Reading your video</strong><span>Pulling frames from your clip</span></div></li>
+      <li data-step="2"><span class="check"></span><div><strong>Finding your body</strong><span>Placing 2D markers on every joint, every frame</span></div></li>
+      <li data-step="3"><span class="check"></span><div><strong>Steadying the motion</strong><span>Smoothing out jitter between frames</span></div></li>
+      <li data-step="4"><span class="check"></span><div><strong>Splitting the swing</strong><span>Detecting address, top, impact and follow-through</span></div></li>
+      <li data-step="5"><span class="check"></span><div><strong>Adding the depth</strong><span>Estimating the motion your flat video couldn't show</span></div></li>
+      <li data-step="6"><span class="check"></span><div><strong>Building your replay</strong><span>Rendering a 3D skeleton</span></div></li>
+      <li data-step="7"><span class="check"></span><div><strong>Reading your swing</strong><span>Translating the numbers into plain English</span></div></li>
+    </ol>
+  </div>
+</section>
+
+<!-- ============================= 3 · RESULTS ============================ -->
+<section id="screen-results" class="screen" hidden>
+  <div class="results-head">
+    <div>
+      <p class="results-clip-label" id="results-clip-label"></p>
+      <h2 id="results-headline"></h2>
+    </div>
+    <div class="view-toggle" role="tablist">
+      <button id="tab-plain" class="tab active" role="tab">Plain English</button>
+      <button id="tab-numbers" class="tab" role="tab">The numbers</button>
+    </div>
+  </div>
+
+  <div class="results-grid">
+    <div class="results-main">
+      <div id="view-plain" class="card view-panel"><!-- sections injected --></div>
+      <div id="view-numbers" class="card view-panel" hidden>
+        <div class="numbers-legend">
+          <span><i class="dot dot-in"></i> in tour range</span>
+          <span><i class="dot dot-watch"></i> worth a look</span>
+          <span><i class="dot dot-low"></i> low confidence</span>
+        </div>
+        <div id="metrics-table"><!-- metric rows injected --></div>
+      </div>
+    </div>
+
+    <aside class="results-media">
+      <div class="card media-card">
+        <h3>Pose overlay</h3>
+        <video id="overlay-video" controls muted loop playsinline></video>
+      </div>
+      <div class="card media-card">
+        <h3>3D replay <span class="muted small">— drag to spin</span></h3>
+        <canvas id="replay-canvas" width="480" height="420"></canvas>
+        <div class="replay-controls">
+          <button id="replay-play" class="btn-ghost" title="Play / pause">⏯</button>
+          <input id="replay-scrub" type="range" min="0" max="0" value="0" step="1">
+          <span id="replay-frame" class="muted small">0 / 0</span>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <div class="results-footer">
+    <button id="btn-restart" class="btn-secondary">← Try another swing</button>
+    <p class="muted small">MotionCaddie describes what was measured against the tour reference —
+    it never prescribes fixes. Demo build: pre-rendered results.</p>
+  </div>
+</section>
+
+</main>
+
+<script src="app.js"></script>
+</body>
+</html>
