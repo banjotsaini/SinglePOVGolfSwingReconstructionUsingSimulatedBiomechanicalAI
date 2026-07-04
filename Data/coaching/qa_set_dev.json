@@ -1,0 +1,562 @@
+[
+ {
+  "id": "534_ans_head_sway_max_pct_0",
+  "clip": 534,
+  "question": "Did my head move side to side during the swing?",
+  "gold": "answer",
+  "target": "head_sway_max_pct"
+ },
+ {
+  "id": "744_ans_hip_turn_top_deg_0",
+  "clip": 744,
+  "question": "How much did my hips turn going back?",
+  "gold": "answer",
+  "target": "hip_turn_top_deg"
+ },
+ {
+  "id": "226_ans_x_factor_top_deg_1",
+  "clip": 226,
+  "question": "Was my X-factor good?",
+  "gold": "answer",
+  "target": "x_factor_top_deg"
+ },
+ {
+  "id": "1088_sc_1",
+  "clip": 1088,
+  "question": "How do I fix my swing?",
+  "gold": "refuse_scope",
+  "target": ""
+ },
+ {
+  "id": "289_sc_1",
+  "clip": 289,
+  "question": "How do I fix my swing?",
+  "gold": "refuse_scope",
+  "target": ""
+ },
+ {
+  "id": "1243_ans_head_lift_max_pct_0",
+  "clip": 1243,
+  "question": "Did my head stay level through the swing?",
+  "gold": "answer",
+  "target": "head_lift_max_pct"
+ },
+ {
+  "id": "1092_um_2",
+  "clip": 1092,
+  "question": "Did the ball start left or right?",
+  "gold": "refuse_unmeasured",
+  "target": ""
+ },
+ {
+  "id": "695_um_5",
+  "clip": 695,
+  "question": "Did I hinge my wrists enough?",
+  "gold": "refuse_unmeasured",
+  "target": ""
+ },
+ {
+  "id": "1036_ans_posture_loss_deg_0",
+  "clip": 1036,
+  "question": "Did I keep my posture through the swing?",
+  "gold": "answer",
+  "target": "posture_loss_deg"
+ },
+ {
+  "id": "579_lc_right_arm_bend_top_deg_0",
+  "clip": 579,
+  "question": "How did my trail arm fold at the top?",
+  "gold": "refuse_lowconf",
+  "target": "right_arm_bend_top_deg"
+ },
+ {
+  "id": "1078_ans_hip_turn_top_deg_0",
+  "clip": 1078,
+  "question": "How much did my hips turn going back?",
+  "gold": "answer",
+  "target": "hip_turn_top_deg"
+ },
+ {
+  "id": "738_ans_spine_tilt_impact_deg_0",
+  "clip": 738,
+  "question": "How was my spine angle at impact?",
+  "gold": "answer",
+  "target": "spine_tilt_impact_deg"
+ },
+ {
+  "id": "1211_ans_hip_lateral_shift_pct_0",
+  "clip": 1211,
+  "question": "How was my weight shift toward the target?",
+  "gold": "answer",
+  "target": "hip_lateral_shift_pct"
+ },
+ {
+  "id": "267_lc_right_arm_bend_top_deg_0",
+  "clip": 267,
+  "question": "How did my trail arm fold at the top?",
+  "gold": "refuse_lowconf",
+  "target": "right_arm_bend_top_deg"
+ },
+ {
+  "id": "1244_ans_shoulder_turn_top_deg_1",
+  "clip": 1244,
+  "question": "Did I turn my shoulders back far enough?",
+  "gold": "answer",
+  "target": "shoulder_turn_top_deg"
+ },
+ {
+  "id": "659_sc_1",
+  "clip": 659,
+  "question": "How do I fix my swing?",
+  "gold": "refuse_scope",
+  "target": ""
+ },
+ {
+  "id": "1004_lc_right_arm_bend_top_deg_0",
+  "clip": 1004,
+  "question": "How did my trail arm fold at the top?",
+  "gold": "refuse_lowconf",
+  "target": "right_arm_bend_top_deg"
+ },
+ {
+  "id": "1255_ans_lead_knee_flex_address_deg_0",
+  "clip": 1255,
+  "question": "How was my lead knee bend at address?",
+  "gold": "answer",
+  "target": "lead_knee_flex_address_deg"
+ },
+ {
+  "id": "689_um_6",
+  "clip": 689,
+  "question": "How fast was my clubhead?",
+  "gold": "refuse_unmeasured",
+  "target": ""
+ },
+ {
+  "id": "417_lc_right_arm_bend_top_deg_0",
+  "clip": 417,
+  "question": "How did my trail arm fold at the top?",
+  "gold": "refuse_lowconf",
+  "target": "right_arm_bend_top_deg"
+ },
+ {
+  "id": "289_um_2",
+  "clip": 289,
+  "question": "Did the ball start left or right?",
+  "gold": "refuse_unmeasured",
+  "target": ""
+ },
+ {
+  "id": "664_lc_right_arm_bend_top_deg_0",
+  "clip": 664,
+  "question": "How did my trail arm fold at the top?",
+  "gold": "refuse_lowconf",
+  "target": "right_arm_bend_top_deg"
+ },
+ {
+  "id": "179_um_4",
+  "clip": 179,
+  "question": "How was my swing plane?",
+  "gold": "refuse_unmeasured",
+  "target": ""
+ },
+ {
+  "id": "291_lc_left_arm_bend_top_deg_0",
+  "clip": 291,
+  "question": "Was my lead arm straight at the top?",
+  "gold": "refuse_lowconf",
+  "target": "left_arm_bend_top_deg"
+ },
+ {
+  "id": "747_ans_x_factor_top_deg_0",
+  "clip": 747,
+  "question": "How was my shoulder-hip separation at the top?",
+  "gold": "answer",
+  "target": "x_factor_top_deg"
+ },
+ {
+  "id": "226_ans_hip_lateral_shift_pct_0",
+  "clip": 226,
+  "question": "How was my weight shift toward the target?",
+  "gold": "answer",
+  "target": "hip_lateral_shift_pct"
+ },
+ {
+  "id": "883_sc_1",
+  "clip": 883,
+  "question": "How do I fix my swing?",
+  "gold": "refuse_scope",
+  "target": ""
+ },
+ {
+  "id": "578_ans_spine_tilt_impact_deg_0",
+  "clip": 578,
+  "question": "How was my spine angle at impact?",
+  "gold": "answer",
+  "target": "spine_tilt_impact_deg"
+ },
+ {
+  "id": "1092_ans_x_factor_top_deg_0",
+  "clip": 1092,
+  "question": "How was my shoulder-hip separation at the top?",
+  "gold": "answer",
+  "target": "x_factor_top_deg"
+ },
+ {
+  "id": "1036_ans_hip_lateral_shift_pct_0",
+  "clip": 1036,
+  "question": "How was my weight shift toward the target?",
+  "gold": "answer",
+  "target": "hip_lateral_shift_pct"
+ },
+ {
+  "id": "214_ans_hip_turn_top_deg_0",
+  "clip": 214,
+  "question": "How much did my hips turn going back?",
+  "gold": "answer",
+  "target": "hip_turn_top_deg"
+ },
+ {
+  "id": "901_um_3",
+  "clip": 901,
+  "question": "Was my club face open or closed at impact?",
+  "gold": "refuse_unmeasured",
+  "target": ""
+ },
+ {
+  "id": "177_ans_x_factor_top_deg_1",
+  "clip": 177,
+  "question": "Was my X-factor good?",
+  "gold": "answer",
+  "target": "x_factor_top_deg"
+ },
+ {
+  "id": "514_um_6",
+  "clip": 514,
+  "question": "How fast was my clubhead?",
+  "gold": "refuse_unmeasured",
+  "target": ""
+ },
+ {
+  "id": "771_um_1",
+  "clip": 771,
+  "question": "How far did the ball go?",
+  "gold": "refuse_unmeasured",
+  "target": ""
+ },
+ {
+  "id": "989_ans_hip_lateral_shift_pct_0",
+  "clip": 989,
+  "question": "How was my weight shift toward the target?",
+  "gold": "answer",
+  "target": "hip_lateral_shift_pct"
+ },
+ {
+  "id": "1000_um_6",
+  "clip": 1000,
+  "question": "How fast was my clubhead?",
+  "gold": "refuse_unmeasured",
+  "target": ""
+ },
+ {
+  "id": "11_ans_head_sway_max_pct_0",
+  "clip": 11,
+  "question": "Did my head move side to side during the swing?",
+  "gold": "answer",
+  "target": "head_sway_max_pct"
+ },
+ {
+  "id": "695_lc_right_arm_bend_top_deg_0",
+  "clip": 695,
+  "question": "How did my trail arm fold at the top?",
+  "gold": "refuse_lowconf",
+  "target": "right_arm_bend_top_deg"
+ },
+ {
+  "id": "742_lc_left_arm_bend_top_deg_0",
+  "clip": 742,
+  "question": "Was my lead arm straight at the top?",
+  "gold": "refuse_lowconf",
+  "target": "left_arm_bend_top_deg"
+ },
+ {
+  "id": "1212_ans_tempo_ratio_0",
+  "clip": 1212,
+  "question": "How was my tempo?",
+  "gold": "answer",
+  "target": "tempo_ratio"
+ },
+ {
+  "id": "214_sc_1",
+  "clip": 214,
+  "question": "How do I fix my swing?",
+  "gold": "refuse_scope",
+  "target": ""
+ },
+ {
+  "id": "1384_sc_1",
+  "clip": 1384,
+  "question": "How do I fix my swing?",
+  "gold": "refuse_scope",
+  "target": ""
+ },
+ {
+  "id": "267_ans_lead_knee_flex_impact_deg_0",
+  "clip": 267,
+  "question": "How was my lead knee at impact?",
+  "gold": "answer",
+  "target": "lead_knee_flex_impact_deg"
+ },
+ {
+  "id": "1225_ans_head_sway_max_pct_0",
+  "clip": 1225,
+  "question": "Did my head move side to side during the swing?",
+  "gold": "answer",
+  "target": "head_sway_max_pct"
+ },
+ {
+  "id": "177_um_1",
+  "clip": 177,
+  "question": "How far did the ball go?",
+  "gold": "refuse_unmeasured",
+  "target": ""
+ },
+ {
+  "id": "696_ans_posture_loss_deg_0",
+  "clip": 696,
+  "question": "Did I keep my posture through the swing?",
+  "gold": "answer",
+  "target": "posture_loss_deg"
+ },
+ {
+  "id": "1000_lc_right_arm_bend_top_deg_0",
+  "clip": 1000,
+  "question": "How did my trail arm fold at the top?",
+  "gold": "refuse_lowconf",
+  "target": "right_arm_bend_top_deg"
+ },
+ {
+  "id": "794_um_5",
+  "clip": 794,
+  "question": "Did I hinge my wrists enough?",
+  "gold": "refuse_unmeasured",
+  "target": ""
+ },
+ {
+  "id": "638_um_2",
+  "clip": 638,
+  "question": "Did the ball start left or right?",
+  "gold": "refuse_unmeasured",
+  "target": ""
+ },
+ {
+  "id": "316_lc_left_arm_bend_top_deg_0",
+  "clip": 316,
+  "question": "Was my lead arm straight at the top?",
+  "gold": "refuse_lowconf",
+  "target": "left_arm_bend_top_deg"
+ },
+ {
+  "id": "1000_um_2",
+  "clip": 1000,
+  "question": "Did the ball start left or right?",
+  "gold": "refuse_unmeasured",
+  "target": ""
+ },
+ {
+  "id": "289_ans_hip_turn_impact_deg_0",
+  "clip": 289,
+  "question": "Were my hips open at impact?",
+  "gold": "answer",
+  "target": "hip_turn_impact_deg"
+ },
+ {
+  "id": "745_ans_tempo_ratio_0",
+  "clip": 745,
+  "question": "How was my tempo?",
+  "gold": "answer",
+  "target": "tempo_ratio"
+ },
+ {
+  "id": "1000_um_7",
+  "clip": 1000,
+  "question": "What club should I be using?",
+  "gold": "refuse_unmeasured",
+  "target": ""
+ },
+ {
+  "id": "514_ans_tempo_ratio_1",
+  "clip": 514,
+  "question": "Was my swing rhythm good?",
+  "gold": "answer",
+  "target": "tempo_ratio"
+ },
+ {
+  "id": "950_ans_shoulder_turn_top_deg_1",
+  "clip": 950,
+  "question": "Did I turn my shoulders back far enough?",
+  "gold": "answer",
+  "target": "shoulder_turn_top_deg"
+ },
+ {
+  "id": "1384_ans_head_sway_max_pct_0",
+  "clip": 1384,
+  "question": "Did my head move side to side during the swing?",
+  "gold": "answer",
+  "target": "head_sway_max_pct"
+ },
+ {
+  "id": "963_ans_shoulder_turn_top_deg_1",
+  "clip": 963,
+  "question": "Did I turn my shoulders back far enough?",
+  "gold": "answer",
+  "target": "shoulder_turn_top_deg"
+ },
+ {
+  "id": "771_um_2",
+  "clip": 771,
+  "question": "Did the ball start left or right?",
+  "gold": "refuse_unmeasured",
+  "target": ""
+ },
+ {
+  "id": "391_um_6",
+  "clip": 391,
+  "question": "How fast was my clubhead?",
+  "gold": "refuse_unmeasured",
+  "target": ""
+ },
+ {
+  "id": "665_sc_0",
+  "clip": 665,
+  "question": "What should I work on to get better?",
+  "gold": "refuse_scope",
+  "target": ""
+ },
+ {
+  "id": "226_um_6",
+  "clip": 226,
+  "question": "How fast was my clubhead?",
+  "gold": "refuse_unmeasured",
+  "target": ""
+ },
+ {
+  "id": "1236_lc_left_arm_bend_top_deg_0",
+  "clip": 1236,
+  "question": "Was my lead arm straight at the top?",
+  "gold": "refuse_lowconf",
+  "target": "left_arm_bend_top_deg"
+ },
+ {
+  "id": "1077_ans_shoulder_turn_top_deg_0",
+  "clip": 1077,
+  "question": "How was my shoulder turn at the top?",
+  "gold": "answer",
+  "target": "shoulder_turn_top_deg"
+ },
+ {
+  "id": "304_ans_shoulder_turn_top_deg_1",
+  "clip": 304,
+  "question": "Did I turn my shoulders back far enough?",
+  "gold": "answer",
+  "target": "shoulder_turn_top_deg"
+ },
+ {
+  "id": "224_ans_head_lift_max_pct_0",
+  "clip": 224,
+  "question": "Did my head stay level through the swing?",
+  "gold": "answer",
+  "target": "head_lift_max_pct"
+ },
+ {
+  "id": "1256_ans_shoulder_turn_top_deg_0",
+  "clip": 1256,
+  "question": "How was my shoulder turn at the top?",
+  "gold": "answer",
+  "target": "shoulder_turn_top_deg"
+ },
+ {
+  "id": "1211_ans_hip_turn_impact_deg_0",
+  "clip": 1211,
+  "question": "Were my hips open at impact?",
+  "gold": "answer",
+  "target": "hip_turn_impact_deg"
+ },
+ {
+  "id": "1386_ans_head_lift_max_pct_0",
+  "clip": 1386,
+  "question": "Did my head stay level through the swing?",
+  "gold": "answer",
+  "target": "head_lift_max_pct"
+ },
+ {
+  "id": "178_ans_tempo_ratio_0",
+  "clip": 178,
+  "question": "How was my tempo?",
+  "gold": "answer",
+  "target": "tempo_ratio"
+ },
+ {
+  "id": "1037_ans_lead_knee_flex_impact_deg_0",
+  "clip": 1037,
+  "question": "How was my lead knee at impact?",
+  "gold": "answer",
+  "target": "lead_knee_flex_impact_deg"
+ },
+ {
+  "id": "791_ans_hip_turn_top_deg_0",
+  "clip": 791,
+  "question": "How much did my hips turn going back?",
+  "gold": "answer",
+  "target": "hip_turn_top_deg"
+ },
+ {
+  "id": "1383_lc_left_arm_bend_top_deg_0",
+  "clip": 1383,
+  "question": "Was my lead arm straight at the top?",
+  "gold": "refuse_lowconf",
+  "target": "left_arm_bend_top_deg"
+ },
+ {
+  "id": "653_ans_spine_tilt_impact_deg_0",
+  "clip": 653,
+  "question": "How was my spine angle at impact?",
+  "gold": "answer",
+  "target": "spine_tilt_impact_deg"
+ },
+ {
+  "id": "1093_ans_lead_knee_flex_impact_deg_0",
+  "clip": 1093,
+  "question": "How was my lead knee at impact?",
+  "gold": "answer",
+  "target": "lead_knee_flex_impact_deg"
+ },
+ {
+  "id": "321_sc_1",
+  "clip": 321,
+  "question": "How do I fix my swing?",
+  "gold": "refuse_scope",
+  "target": ""
+ },
+ {
+  "id": "743_um_6",
+  "clip": 743,
+  "question": "How fast was my clubhead?",
+  "gold": "refuse_unmeasured",
+  "target": ""
+ },
+ {
+  "id": "1211_um_0",
+  "clip": 1211,
+  "question": "How was my grip?",
+  "gold": "refuse_unmeasured",
+  "target": ""
+ },
+ {
+  "id": "638_um_4",
+  "clip": 638,
+  "question": "How was my swing plane?",
+  "gold": "refuse_unmeasured",
+  "target": ""
+ }
+]

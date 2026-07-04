@@ -1,0 +1,1738 @@
+{
+ "n_clips_evaluated": 100,
+ "deterministic": {
+  "leakage_total": 0,
+  "leakage_rate": 0.0,
+  "prescriptive_total": 0,
+  "prescriptive_rate": 0.0,
+  "coverage_mean": 0.917,
+  "flesch_mean": 70.2,
+  "flesch_min": 58.5
+ },
+ "grounding_judge": {
+  "n_judged": 25,
+  "grounded_rate": 0.32
+ },
+ "consistency": {
+  "n_clips": 10,
+  "mean_jaccard": 0.824,
+  "per_clip": [
+   {
+    "clip_id": 172,
+    "runs": 3,
+    "mean_jaccard": 1.0
+   },
+   {
+    "clip_id": 962,
+    "runs": 3,
+    "mean_jaccard": 0.833
+   },
+   {
+    "clip_id": 669,
+    "runs": 3,
+    "mean_jaccard": 0.759
+   },
+   {
+    "clip_id": 137,
+    "runs": 3,
+    "mean_jaccard": 0.762
+   },
+   {
+    "clip_id": 835,
+    "runs": 3,
+    "mean_jaccard": 0.879
+   },
+   {
+    "clip_id": 1239,
+    "runs": 3,
+    "mean_jaccard": 0.758
+   },
+   {
+    "clip_id": 1118,
+    "runs": 3,
+    "mean_jaccard": 0.847
+   },
+   {
+    "clip_id": 2,
+    "runs": 3,
+    "mean_jaccard": 0.8
+   },
+   {
+    "clip_id": 1372,
+    "runs": 3,
+    "mean_jaccard": 0.679
+   },
+   {
+    "clip_id": 329,
+    "runs": 3,
+    "mean_jaccard": 0.926
+   }
+  ]
+ },
+ "per_clip": [
+  {
+   "leakage_metrics": [],
+   "leakage_count": 0,
+   "prescriptive_hits": [],
+   "prescriptive_count": 0,
+   "flagged_metrics": [
+    "hip_lateral_shift_pct"
+   ],
+   "flagged_covered": [
+    "hip_lateral_shift_pct"
+   ],
+   "coverage": 1.0,
+   "flesch_reading_ease": 72.6,
+   "word_count": 145,
+   "clip_id": 172
+  },
+  {
+   "leakage_metrics": [],
+   "leakage_count": 0,
+   "prescriptive_hits": [],
+   "prescriptive_count": 0,
+   "flagged_metrics": [],
+   "flagged_covered": [],
+   "coverage": null,
+   "flesch_reading_ease": 68.7,
+   "word_count": 126,
+   "clip_id": 962
+  },
+  {
+   "leakage_metrics": [],
+   "leakage_count": 0,
+   "prescriptive_hits": [],
+   "prescriptive_count": 0,
+   "flagged_metrics": [
+    "tempo_ratio"
+   ],
+   "flagged_covered": [
+    "tempo_ratio"
+   ],
+   "coverage": 1.0,
+   "flesch_reading_ease": 71.7,
+   "word_count": 131,
+   "clip_id": 669
+  },
+  {
+   "leakage_metrics": [],
+   "leakage_count": 0,
+   "prescriptive_hits": [],
+   "prescriptive_count": 0,
+   "flagged_metrics": [
+    "tempo_ratio"
+   ],
+   "flagged_covered": [
+    "tempo_ratio"
+   ],
+   "coverage": 1.0,
+   "flesch_reading_ease": 73.5,
+   "word_count": 129,
+   "clip_id": 137
+  },
+  {
+   "leakage_metrics": [],
+   "leakage_count": 0,
+   "prescriptive_hits": [],
+   "prescriptive_count": 0,
+   "flagged_metrics": [
+    "hip_turn_impact_deg",
+    "posture_loss_deg",
+    "hip_lateral_shift_pct"
+   ],
+   "flagged_covered": [
+    "hip_turn_impact_deg",
+    "posture_loss_deg"
+   ],
+   "coverage": 0.6666666666666666,
+   "flesch_reading_ease": 77.6,
+   "word_count": 153,
+   "clip_id": 835
+  },
+  {
+   "leakage_metrics": [],
+   "leakage_count": 0,
+   "prescriptive_hits": [],
+   "prescriptive_count": 0,
+   "flagged_metrics": [
+    "hip_turn_impact_deg"
+   ],
+   "flagged_covered": [
+    "hip_turn_impact_deg"
+   ],
+   "coverage": 1.0,
+   "flesch_reading_ease": 76.8,
+   "word_count": 156,
+   "clip_id": 1239
+  },
+  {
+   "leakage_metrics": [],
+   "leakage_count": 0,
+   "prescriptive_hits": [],
+   "prescriptive_count": 0,
+   "flagged_metrics": [],
+   "flagged_covered": [],
+   "coverage": null,
+   "flesch_reading_ease": 72.1,
+   "word_count": 147,
+   "clip_id": 1118
+  },
+  {
+   "leakage_metrics": [],
+   "leakage_count": 0,
+   "prescriptive_hits": [],
+   "prescriptive_count": 0,
+   "flagged_metrics": [],
+   "flagged_covered": [],
+   "coverage": null,
+   "flesch_reading_ease": 70.9,
+   "word_count": 150,
+   "clip_id": 2
+  },
+  {
+   "leakage_metrics": [],
+   "leakage_count": 0,
+   "prescriptive_hits": [],
+   "prescriptive_count": 0,
+   "flagged_metrics": [
+    "head_sway_max_pct"
+   ],
+   "flagged_covered": [
+    "head_sway_max_pct"
+   ],
+   "coverage": 1.0,
+   "flesch_reading_ease": 67.0,
+   "word_count": 153,
+   "clip_id": 1372
+  },
+  {
+   "leakage_metrics": [],
+   "leakage_count": 0,
+   "prescriptive_hits": [],
+   "prescriptive_count": 0,
+   "flagged_metrics": [],
+   "flagged_covered": [],
+   "coverage": null,
+   "flesch_reading_ease": 71.1,
+   "word_count": 128,
+   "clip_id": 329
+  },
+  {
+   "leakage_metrics": [],
+   "leakage_count": 0,
+   "prescriptive_hits": [],
+   "prescriptive_count": 0,
+   "flagged_metrics": [],
+   "flagged_covered": [],
+   "coverage": null,
+   "flesch_reading_ease": 68.4,
+   "word_count": 141,
+   "clip_id": 1133
+  },
+  {
+   "leakage_metrics": [],
+   "leakage_count": 0,
+   "prescriptive_hits": [],
+   "prescriptive_count": 0,
+   "flagged_metrics": [
+    "hip_turn_impact_deg",
+    "hip_lateral_shift_pct"
+   ],
+   "flagged_covered": [
+    "hip_turn_impact_deg",
+    "hip_lateral_shift_pct"
+   ],
+   "coverage": 1.0,
+   "flesch_reading_ease": 70.9,
+   "word_count": 158,
+   "clip_id": 236
+  },
+  {
+   "leakage_metrics": [],
+   "leakage_count": 0,
+   "prescriptive_hits": [],
+   "prescriptive_count": 0,
+   "flagged_metrics": [],
+   "flagged_covered": [],
+   "coverage": null,
+   "flesch_reading_ease": 66.0,
+   "word_count": 164,
+   "clip_id": 159
+  },
+  {
+   "leakage_metrics": [],
+   "leakage_count": 0,
+   "prescriptive_hits": [],
+   "prescriptive_count": 0,
+   "flagged_metrics": [
+    "x_factor_top_deg"
+   ],
+   "flagged_covered": [
+    "x_factor_top_deg"
+   ],
+   "coverage": 1.0,
+   "flesch_reading_ease": 73.7,
+   "word_count": 163,
+   "clip_id": 1316
+  },
+  {
+   "leakage_metrics": [],
+   "leakage_count": 0,
+   "prescriptive_hits": [],
+   "prescriptive_count": 0,
+   "flagged_metrics": [],
+   "flagged_covered": [],
+   "coverage": null,
+   "flesch_reading_ease": 69.7,
+   "word_count": 138,
+   "clip_id": 147
+  },
+  {
+   "leakage_metrics": [],
+   "leakage_count": 0,
+   "prescriptive_hits": [],
+   "prescriptive_count": 0,
+   "flagged_metrics": [
+    "hip_lateral_shift_pct"
+   ],
+   "flagged_covered": [
+    "hip_lateral_shift_pct"
+   ],
+   "coverage": 1.0,
+   "flesch_reading_ease": 69.0,
+   "word_count": 130,
+   "clip_id": 812
+  },
+  {
+   "leakage_metrics": [],
+   "leakage_count": 0,
+   "prescriptive_hits": [],
+   "prescriptive_count": 0,
+   "flagged_metrics": [
+    "x_factor_top_deg",
+    "hip_lateral_shift_pct"
+   ],
+   "flagged_covered": [
+    "x_factor_top_deg",
+    "hip_lateral_shift_pct"
+   ],
+   "coverage": 1.0,
+   "flesch_reading_ease": 69.3,
+   "word_count": 170,
+   "clip_id": 1153
+  },
+  {
+   "leakage_metrics": [],
+   "leakage_count": 0,
+   "prescriptive_hits": [],
+   "prescriptive_count": 0,
+   "flagged_metrics": [],
+   "flagged_covered": [],
+   "coverage": null,
+   "flesch_reading_ease": 63.1,
+   "word_count": 127,
+   "clip_id": 1259
+  },
+  {
+   "leakage_metrics": [],
+   "leakage_count": 0,
+   "prescriptive_hits": [],
+   "prescriptive_count": 0,
+   "flagged_metrics": [
+    "hip_lateral_shift_pct"
+   ],
+   "flagged_covered": [
+    "hip_lateral_shift_pct"
+   ],
+   "coverage": 1.0,
+   "flesch_reading_ease": 70.8,
+   "word_count": 154,
+   "clip_id": 979
+  },
+  {
+   "leakage_metrics": [],
+   "leakage_count": 0,
+   "prescriptive_hits": [],
+   "prescriptive_count": 0,
+   "flagged_metrics": [],
+   "flagged_covered": [],
+   "coverage": null,
+   "flesch_reading_ease": 61.6,
+   "word_count": 155,
+   "clip_id": 687
+  },
+  {
+   "leakage_metrics": [],
+   "leakage_count": 0,
+   "prescriptive_hits": [],
+   "prescriptive_count": 0,
+   "flagged_metrics": [
+    "shoulder_turn_top_deg",
+    "posture_loss_deg",
+    "hip_lateral_shift_pct"
+   ],
+   "flagged_covered": [
+    "shoulder_turn_top_deg",
+    "posture_loss_deg"
+   ],
+   "coverage": 0.6666666666666666,
+   "flesch_reading_ease": 71.1,
+   "word_count": 122,
+   "clip_id": 1094
+  },
+  {
+   "leakage_metrics": [],
+   "leakage_count": 0,
+   "prescriptive_hits": [],
+   "prescriptive_count": 0,
+   "flagged_metrics": [
+    "x_factor_top_deg",
+    "hip_turn_impact_deg",
+    "head_lift_max_pct"
+   ],
+   "flagged_covered": [
+    "x_factor_top_deg",
+    "hip_turn_impact_deg",
+    "head_lift_max_pct"
+   ],
+   "coverage": 1.0,
+   "flesch_reading_ease": 61.9,
+   "word_count": 150,
+   "clip_id": 699
+  },
+  {
+   "leakage_metrics": [],
+   "leakage_count": 0,
+   "prescriptive_hits": [],
+   "prescriptive_count": 0,
+   "flagged_metrics": [],
+   "flagged_covered": [],
+   "coverage": null,
+   "flesch_reading_ease": 69.8,
+   "word_count": 127,
+   "clip_id": 1187
+  },
+  {
+   "leakage_metrics": [],
+   "leakage_count": 0,
+   "prescriptive_hits": [],
+   "prescriptive_count": 0,
+   "flagged_metrics": [],
+   "flagged_covered": [],
+   "coverage": null,
+   "flesch_reading_ease": 71.9,
+   "word_count": 137,
+   "clip_id": 215
+  },
+  {
+   "leakage_metrics": [],
+   "leakage_count": 0,
+   "prescriptive_hits": [],
+   "prescriptive_count": 0,
+   "flagged_metrics": [],
+   "flagged_covered": [],
+   "coverage": null,
+   "flesch_reading_ease": 69.7,
+   "word_count": 171,
+   "clip_id": 1170
+  },
+  {
+   "leakage_metrics": [],
+   "leakage_count": 0,
+   "prescriptive_hits": [],
+   "prescriptive_count": 0,
+   "flagged_metrics": [],
+   "flagged_covered": [],
+   "coverage": null,
+   "flesch_reading_ease": 72.1,
+   "word_count": 161,
+   "clip_id": 357
+  },
+  {
+   "leakage_metrics": [],
+   "leakage_count": 0,
+   "prescriptive_hits": [],
+   "prescriptive_count": 0,
+   "flagged_metrics": [
+    "shoulder_turn_top_deg",
+    "head_lift_max_pct"
+   ],
+   "flagged_covered": [
+    "shoulder_turn_top_deg",
+    "head_lift_max_pct"
+   ],
+   "coverage": 1.0,
+   "flesch_reading_ease": 75.2,
+   "word_count": 137,
+   "clip_id": 1235
+  },
+  {
+   "leakage_metrics": [],
+   "leakage_count": 0,
+   "prescriptive_hits": [],
+   "prescriptive_count": 0,
+   "flagged_metrics": [],
+   "flagged_covered": [],
+   "coverage": null,
+   "flesch_reading_ease": 68.4,
+   "word_count": 131,
+   "clip_id": 1320
+  },
+  {
+   "leakage_metrics": [],
+   "leakage_count": 0,
+   "prescriptive_hits": [],
+   "prescriptive_count": 0,
+   "flagged_metrics": [
+    "hip_lateral_shift_pct",
+    "tempo_ratio"
+   ],
+   "flagged_covered": [
+    "tempo_ratio"
+   ],
+   "coverage": 0.5,
+   "flesch_reading_ease": 63.2,
+   "word_count": 131,
+   "clip_id": 837
+  },
+  {
+   "leakage_metrics": [],
+   "leakage_count": 0,
+   "prescriptive_hits": [],
+   "prescriptive_count": 0,
+   "flagged_metrics": [
+    "hip_turn_impact_deg"
+   ],
+   "flagged_covered": [
+    "hip_turn_impact_deg"
+   ],
+   "coverage": 1.0,
+   "flesch_reading_ease": 75.8,
+   "word_count": 127,
+   "clip_id": 610
+  },
+  {
+   "leakage_metrics": [],
+   "leakage_count": 0,
+   "prescriptive_hits": [],
+   "prescriptive_count": 0,
+   "flagged_metrics": [
+    "hip_turn_impact_deg"
+   ],
+   "flagged_covered": [
+    "hip_turn_impact_deg"
+   ],
+   "coverage": 1.0,
+   "flesch_reading_ease": 67.9,
+   "word_count": 145,
+   "clip_id": 1228
+  },
+  {
+   "leakage_metrics": [],
+   "leakage_count": 0,
+   "prescriptive_hits": [],
+   "prescriptive_count": 0,
+   "flagged_metrics": [
+    "x_factor_top_deg"
+   ],
+   "flagged_covered": [
+    "x_factor_top_deg"
+   ],
+   "coverage": 1.0,
+   "flesch_reading_ease": 75.6,
+   "word_count": 132,
+   "clip_id": 503
+  },
+  {
+   "leakage_metrics": [],
+   "leakage_count": 0,
+   "prescriptive_hits": [],
+   "prescriptive_count": 0,
+   "flagged_metrics": [
+    "posture_loss_deg"
+   ],
+   "flagged_covered": [
+    "posture_loss_deg"
+   ],
+   "coverage": 1.0,
+   "flesch_reading_ease": 78.5,
+   "word_count": 127,
+   "clip_id": 116
+  },
+  {
+   "leakage_metrics": [],
+   "leakage_count": 0,
+   "prescriptive_hits": [],
+   "prescriptive_count": 0,
+   "flagged_metrics": [],
+   "flagged_covered": [],
+   "coverage": null,
+   "flesch_reading_ease": 68.7,
+   "word_count": 115,
+   "clip_id": 1119
+  },
+  {
+   "leakage_metrics": [],
+   "leakage_count": 0,
+   "prescriptive_hits": [],
+   "prescriptive_count": 0,
+   "flagged_metrics": [
+    "x_factor_top_deg",
+    "hip_lateral_shift_pct",
+    "tempo_ratio"
+   ],
+   "flagged_covered": [
+    "x_factor_top_deg",
+    "hip_lateral_shift_pct"
+   ],
+   "coverage": 0.6666666666666666,
+   "flesch_reading_ease": 66.6,
+   "word_count": 157,
+   "clip_id": 50
+  },
+  {
+   "leakage_metrics": [],
+   "leakage_count": 0,
+   "prescriptive_hits": [],
+   "prescriptive_count": 0,
+   "flagged_metrics": [
+    "hip_turn_impact_deg",
+    "tempo_ratio"
+   ],
+   "flagged_covered": [
+    "hip_turn_impact_deg",
+    "tempo_ratio"
+   ],
+   "coverage": 1.0,
+   "flesch_reading_ease": 72.9,
+   "word_count": 151,
+   "clip_id": 786
+  },
+  {
+   "leakage_metrics": [],
+   "leakage_count": 0,
+   "prescriptive_hits": [],
+   "prescriptive_count": 0,
+   "flagged_metrics": [
+    "x_factor_top_deg"
+   ],
+   "flagged_covered": [
+    "x_factor_top_deg"
+   ],
+   "coverage": 1.0,
+   "flesch_reading_ease": 70.7,
+   "word_count": 139,
+   "clip_id": 773
+  },
+  {
+   "leakage_metrics": [],
+   "leakage_count": 0,
+   "prescriptive_hits": [],
+   "prescriptive_count": 0,
+   "flagged_metrics": [],
+   "flagged_covered": [],
+   "coverage": null,
+   "flesch_reading_ease": 65.0,
+   "word_count": 145,
+   "clip_id": 761
+  },
+  {
+   "leakage_metrics": [],
+   "leakage_count": 0,
+   "prescriptive_hits": [],
+   "prescriptive_count": 0,
+   "flagged_metrics": [],
+   "flagged_covered": [],
+   "coverage": null,
+   "flesch_reading_ease": 67.3,
+   "word_count": 136,
+   "clip_id": 599
+  },
+  {
+   "leakage_metrics": [],
+   "leakage_count": 0,
+   "prescriptive_hits": [],
+   "prescriptive_count": 0,
+   "flagged_metrics": [],
+   "flagged_covered": [],
+   "coverage": null,
+   "flesch_reading_ease": 76.8,
+   "word_count": 149,
+   "clip_id": 63
+  },
+  {
+   "leakage_metrics": [],
+   "leakage_count": 0,
+   "prescriptive_hits": [],
+   "prescriptive_count": 0,
+   "flagged_metrics": [],
+   "flagged_covered": [],
+   "coverage": null,
+   "flesch_reading_ease": 68.0,
+   "word_count": 147,
+   "clip_id": 685
+  },
+  {
+   "leakage_metrics": [],
+   "leakage_count": 0,
+   "prescriptive_hits": [],
+   "prescriptive_count": 0,
+   "flagged_metrics": [],
+   "flagged_covered": [],
+   "coverage": null,
+   "flesch_reading_ease": 69.2,
+   "word_count": 155,
+   "clip_id": 1172
+  },
+  {
+   "leakage_metrics": [],
+   "leakage_count": 0,
+   "prescriptive_hits": [],
+   "prescriptive_count": 0,
+   "flagged_metrics": [
+    "shoulder_turn_top_deg"
+   ],
+   "flagged_covered": [
+    "shoulder_turn_top_deg"
+   ],
+   "coverage": 1.0,
+   "flesch_reading_ease": 76.8,
+   "word_count": 157,
+   "clip_id": 590
+  },
+  {
+   "leakage_metrics": [],
+   "leakage_count": 0,
+   "prescriptive_hits": [],
+   "prescriptive_count": 0,
+   "flagged_metrics": [],
+   "flagged_covered": [],
+   "coverage": null,
+   "flesch_reading_ease": 68.9,
+   "word_count": 142,
+   "clip_id": 326
+  },
+  {
+   "leakage_metrics": [],
+   "leakage_count": 0,
+   "prescriptive_hits": [],
+   "prescriptive_count": 0,
+   "flagged_metrics": [],
+   "flagged_covered": [],
+   "coverage": null,
+   "flesch_reading_ease": 64.4,
+   "word_count": 126,
+   "clip_id": 343
+  },
+  {
+   "leakage_metrics": [],
+   "leakage_count": 0,
+   "prescriptive_hits": [],
+   "prescriptive_count": 0,
+   "flagged_metrics": [
+    "hip_lateral_shift_pct",
+    "tempo_ratio"
+   ],
+   "flagged_covered": [
+    "hip_lateral_shift_pct",
+    "tempo_ratio"
+   ],
+   "coverage": 1.0,
+   "flesch_reading_ease": 69.4,
+   "word_count": 149,
+   "clip_id": 615
+  },
+  {
+   "leakage_metrics": [],
+   "leakage_count": 0,
+   "prescriptive_hits": [],
+   "prescriptive_count": 0,
+   "flagged_metrics": [],
+   "flagged_covered": [],
+   "coverage": null,
+   "flesch_reading_ease": 68.1,
+   "word_count": 149,
+   "clip_id": 593
+  },
+  {
+   "leakage_metrics": [],
+   "leakage_count": 0,
+   "prescriptive_hits": [],
+   "prescriptive_count": 0,
+   "flagged_metrics": [],
+   "flagged_covered": [],
+   "coverage": null,
+   "flesch_reading_ease": 72.0,
+   "word_count": 140,
+   "clip_id": 252
+  },
+  {
+   "leakage_metrics": [],
+   "leakage_count": 0,
+   "prescriptive_hits": [],
+   "prescriptive_count": 0,
+   "flagged_metrics": [],
+   "flagged_covered": [],
+   "coverage": null,
+   "flesch_reading_ease": 67.1,
+   "word_count": 131,
+   "clip_id": 947
+  },
+  {
+   "leakage_metrics": [],
+   "leakage_count": 0,
+   "prescriptive_hits": [],
+   "prescriptive_count": 0,
+   "flagged_metrics": [],
+   "flagged_covered": [],
+   "coverage": null,
+   "flesch_reading_ease": 63.6,
+   "word_count": 112,
+   "clip_id": 1142
+  },
+  {
+   "leakage_metrics": [],
+   "leakage_count": 0,
+   "prescriptive_hits": [],
+   "prescriptive_count": 0,
+   "flagged_metrics": [
+    "x_factor_top_deg"
+   ],
+   "flagged_covered": [
+    "x_factor_top_deg"
+   ],
+   "coverage": 1.0,
+   "flesch_reading_ease": 73.6,
+   "word_count": 130,
+   "clip_id": 1339
+  },
+  {
+   "leakage_metrics": [],
+   "leakage_count": 0,
+   "prescriptive_hits": [],
+   "prescriptive_count": 0,
+   "flagged_metrics": [
+    "hip_lateral_shift_pct"
+   ],
+   "flagged_covered": [
+    "hip_lateral_shift_pct"
+   ],
+   "coverage": 1.0,
+   "flesch_reading_ease": 72.7,
+   "word_count": 175,
+   "clip_id": 1292
+  },
+  {
+   "leakage_metrics": [],
+   "leakage_count": 0,
+   "prescriptive_hits": [],
+   "prescriptive_count": 0,
+   "flagged_metrics": [],
+   "flagged_covered": [],
+   "coverage": null,
+   "flesch_reading_ease": 58.5,
+   "word_count": 161,
+   "clip_id": 626
+  },
+  {
+   "leakage_metrics": [],
+   "leakage_count": 0,
+   "prescriptive_hits": [],
+   "prescriptive_count": 0,
+   "flagged_metrics": [
+    "head_sway_max_pct",
+    "tempo_ratio"
+   ],
+   "flagged_covered": [
+    "head_sway_max_pct",
+    "tempo_ratio"
+   ],
+   "coverage": 1.0,
+   "flesch_reading_ease": 71.7,
+   "word_count": 150,
+   "clip_id": 244
+  },
+  {
+   "leakage_metrics": [],
+   "leakage_count": 0,
+   "prescriptive_hits": [],
+   "prescriptive_count": 0,
+   "flagged_metrics": [
+    "posture_loss_deg",
+    "hip_lateral_shift_pct"
+   ],
+   "flagged_covered": [
+    "posture_loss_deg"
+   ],
+   "coverage": 0.5,
+   "flesch_reading_ease": 71.4,
+   "word_count": 141,
+   "clip_id": 674
+  },
+  {
+   "leakage_metrics": [],
+   "leakage_count": 0,
+   "prescriptive_hits": [],
+   "prescriptive_count": 0,
+   "flagged_metrics": [
+    "x_factor_top_deg",
+    "tempo_ratio"
+   ],
+   "flagged_covered": [
+    "x_factor_top_deg",
+    "tempo_ratio"
+   ],
+   "coverage": 1.0,
+   "flesch_reading_ease": 69.6,
+   "word_count": 165,
+   "clip_id": 667
+  },
+  {
+   "leakage_metrics": [],
+   "leakage_count": 0,
+   "prescriptive_hits": [],
+   "prescriptive_count": 0,
+   "flagged_metrics": [],
+   "flagged_covered": [],
+   "coverage": null,
+   "flesch_reading_ease": 65.0,
+   "word_count": 160,
+   "clip_id": 415
+  },
+  {
+   "leakage_metrics": [],
+   "leakage_count": 0,
+   "prescriptive_hits": [],
+   "prescriptive_count": 0,
+   "flagged_metrics": [],
+   "flagged_covered": [],
+   "coverage": null,
+   "flesch_reading_ease": 65.5,
+   "word_count": 134,
+   "clip_id": 589
+  },
+  {
+   "leakage_metrics": [],
+   "leakage_count": 0,
+   "prescriptive_hits": [],
+   "prescriptive_count": 0,
+   "flagged_metrics": [],
+   "flagged_covered": [],
+   "coverage": null,
+   "flesch_reading_ease": 71.0,
+   "word_count": 168,
+   "clip_id": 908
+  },
+  {
+   "leakage_metrics": [],
+   "leakage_count": 0,
+   "prescriptive_hits": [],
+   "prescriptive_count": 0,
+   "flagged_metrics": [
+    "head_lift_max_pct"
+   ],
+   "flagged_covered": [
+    "head_lift_max_pct"
+   ],
+   "coverage": 1.0,
+   "flesch_reading_ease": 70.7,
+   "word_count": 165,
+   "clip_id": 1125
+  },
+  {
+   "leakage_metrics": [],
+   "leakage_count": 0,
+   "prescriptive_hits": [],
+   "prescriptive_count": 0,
+   "flagged_metrics": [],
+   "flagged_covered": [],
+   "coverage": null,
+   "flesch_reading_ease": 62.4,
+   "word_count": 142,
+   "clip_id": 523
+  },
+  {
+   "leakage_metrics": [],
+   "leakage_count": 0,
+   "prescriptive_hits": [],
+   "prescriptive_count": 0,
+   "flagged_metrics": [],
+   "flagged_covered": [],
+   "coverage": null,
+   "flesch_reading_ease": 72.4,
+   "word_count": 153,
+   "clip_id": 362
+  },
+  {
+   "leakage_metrics": [],
+   "leakage_count": 0,
+   "prescriptive_hits": [],
+   "prescriptive_count": 0,
+   "flagged_metrics": [
+    "shoulder_turn_top_deg",
+    "x_factor_top_deg",
+    "posture_loss_deg",
+    "head_sway_max_pct",
+    "head_lift_max_pct"
+   ],
+   "flagged_covered": [
+    "shoulder_turn_top_deg",
+    "head_sway_max_pct",
+    "head_lift_max_pct"
+   ],
+   "coverage": 0.6,
+   "flesch_reading_ease": 73.5,
+   "word_count": 153,
+   "clip_id": 713
+  },
+  {
+   "leakage_metrics": [],
+   "leakage_count": 0,
+   "prescriptive_hits": [],
+   "prescriptive_count": 0,
+   "flagged_metrics": [
+    "hip_turn_impact_deg"
+   ],
+   "flagged_covered": [
+    "hip_turn_impact_deg"
+   ],
+   "coverage": 1.0,
+   "flesch_reading_ease": 65.9,
+   "word_count": 175,
+   "clip_id": 178
+  },
+  {
+   "leakage_metrics": [],
+   "leakage_count": 0,
+   "prescriptive_hits": [],
+   "prescriptive_count": 0,
+   "flagged_metrics": [
+    "tempo_ratio"
+   ],
+   "flagged_covered": [
+    "tempo_ratio"
+   ],
+   "coverage": 1.0,
+   "flesch_reading_ease": 74.3,
+   "word_count": 136,
+   "clip_id": 861
+  },
+  {
+   "leakage_metrics": [],
+   "leakage_count": 0,
+   "prescriptive_hits": [],
+   "prescriptive_count": 0,
+   "flagged_metrics": [
+    "head_lift_max_pct",
+    "hip_lateral_shift_pct"
+   ],
+   "flagged_covered": [
+    "head_lift_max_pct",
+    "hip_lateral_shift_pct"
+   ],
+   "coverage": 1.0,
+   "flesch_reading_ease": 71.7,
+   "word_count": 168,
+   "clip_id": 725
+  },
+  {
+   "leakage_metrics": [],
+   "leakage_count": 0,
+   "prescriptive_hits": [],
+   "prescriptive_count": 0,
+   "flagged_metrics": [
+    "posture_loss_deg",
+    "head_sway_max_pct",
+    "head_lift_max_pct"
+   ],
+   "flagged_covered": [
+    "posture_loss_deg",
+    "head_sway_max_pct",
+    "head_lift_max_pct"
+   ],
+   "coverage": 1.0,
+   "flesch_reading_ease": 75.1,
+   "word_count": 152,
+   "clip_id": 54
+  },
+  {
+   "leakage_metrics": [],
+   "leakage_count": 0,
+   "prescriptive_hits": [],
+   "prescriptive_count": 0,
+   "flagged_metrics": [
+    "x_factor_top_deg"
+   ],
+   "flagged_covered": [
+    "x_factor_top_deg"
+   ],
+   "coverage": 1.0,
+   "flesch_reading_ease": 73.0,
+   "word_count": 131,
+   "clip_id": 1252
+  },
+  {
+   "leakage_metrics": [],
+   "leakage_count": 0,
+   "prescriptive_hits": [],
+   "prescriptive_count": 0,
+   "flagged_metrics": [
+    "x_factor_top_deg"
+   ],
+   "flagged_covered": [
+    "x_factor_top_deg"
+   ],
+   "coverage": 1.0,
+   "flesch_reading_ease": 70.9,
+   "word_count": 146,
+   "clip_id": 883
+  },
+  {
+   "leakage_metrics": [],
+   "leakage_count": 0,
+   "prescriptive_hits": [],
+   "prescriptive_count": 0,
+   "flagged_metrics": [
+    "head_sway_max_pct"
+   ],
+   "flagged_covered": [
+    "head_sway_max_pct"
+   ],
+   "coverage": 1.0,
+   "flesch_reading_ease": 72.5,
+   "word_count": 119,
+   "clip_id": 1005
+  },
+  {
+   "leakage_metrics": [],
+   "leakage_count": 0,
+   "prescriptive_hits": [],
+   "prescriptive_count": 0,
+   "flagged_metrics": [
+    "x_factor_top_deg",
+    "posture_loss_deg",
+    "head_sway_max_pct",
+    "head_lift_max_pct"
+   ],
+   "flagged_covered": [
+    "x_factor_top_deg",
+    "posture_loss_deg"
+   ],
+   "coverage": 0.5,
+   "flesch_reading_ease": 64.8,
+   "word_count": 142,
+   "clip_id": 1388
+  },
+  {
+   "leakage_metrics": [],
+   "leakage_count": 0,
+   "prescriptive_hits": [],
+   "prescriptive_count": 0,
+   "flagged_metrics": [],
+   "flagged_covered": [],
+   "coverage": null,
+   "flesch_reading_ease": 64.3,
+   "word_count": 124,
+   "clip_id": 450
+  },
+  {
+   "leakage_metrics": [],
+   "leakage_count": 0,
+   "prescriptive_hits": [],
+   "prescriptive_count": 0,
+   "flagged_metrics": [
+    "hip_turn_impact_deg",
+    "hip_lateral_shift_pct"
+   ],
+   "flagged_covered": [
+    "hip_turn_impact_deg",
+    "hip_lateral_shift_pct"
+   ],
+   "coverage": 1.0,
+   "flesch_reading_ease": 69.6,
+   "word_count": 144,
+   "clip_id": 1229
+  },
+  {
+   "leakage_metrics": [],
+   "leakage_count": 0,
+   "prescriptive_hits": [],
+   "prescriptive_count": 0,
+   "flagged_metrics": [],
+   "flagged_covered": [],
+   "coverage": null,
+   "flesch_reading_ease": 68.4,
+   "word_count": 178,
+   "clip_id": 927
+  },
+  {
+   "leakage_metrics": [],
+   "leakage_count": 0,
+   "prescriptive_hits": [],
+   "prescriptive_count": 0,
+   "flagged_metrics": [],
+   "flagged_covered": [],
+   "coverage": null,
+   "flesch_reading_ease": 72.3,
+   "word_count": 130,
+   "clip_id": 42
+  },
+  {
+   "leakage_metrics": [],
+   "leakage_count": 0,
+   "prescriptive_hits": [],
+   "prescriptive_count": 0,
+   "flagged_metrics": [
+    "hip_lateral_shift_pct"
+   ],
+   "flagged_covered": [],
+   "coverage": 0.0,
+   "flesch_reading_ease": 69.4,
+   "word_count": 159,
+   "clip_id": 1104
+  },
+  {
+   "leakage_metrics": [],
+   "leakage_count": 0,
+   "prescriptive_hits": [],
+   "prescriptive_count": 0,
+   "flagged_metrics": [
+    "posture_loss_deg",
+    "head_sway_max_pct"
+   ],
+   "flagged_covered": [
+    "posture_loss_deg",
+    "head_sway_max_pct"
+   ],
+   "coverage": 1.0,
+   "flesch_reading_ease": 73.0,
+   "word_count": 141,
+   "clip_id": 1373
+  },
+  {
+   "leakage_metrics": [],
+   "leakage_count": 0,
+   "prescriptive_hits": [],
+   "prescriptive_count": 0,
+   "flagged_metrics": [
+    "x_factor_top_deg",
+    "posture_loss_deg",
+    "head_sway_max_pct",
+    "head_lift_max_pct",
+    "hip_lateral_shift_pct"
+   ],
+   "flagged_covered": [
+    "x_factor_top_deg",
+    "posture_loss_deg"
+   ],
+   "coverage": 0.4,
+   "flesch_reading_ease": 71.1,
+   "word_count": 119,
+   "clip_id": 297
+  },
+  {
+   "leakage_metrics": [],
+   "leakage_count": 0,
+   "prescriptive_hits": [],
+   "prescriptive_count": 0,
+   "flagged_metrics": [],
+   "flagged_covered": [],
+   "coverage": null,
+   "flesch_reading_ease": 65.8,
+   "word_count": 138,
+   "clip_id": 1327
+  },
+  {
+   "leakage_metrics": [],
+   "leakage_count": 0,
+   "prescriptive_hits": [],
+   "prescriptive_count": 0,
+   "flagged_metrics": [],
+   "flagged_covered": [],
+   "coverage": null,
+   "flesch_reading_ease": 73.6,
+   "word_count": 106,
+   "clip_id": 1273
+  },
+  {
+   "leakage_metrics": [],
+   "leakage_count": 0,
+   "prescriptive_hits": [],
+   "prescriptive_count": 0,
+   "flagged_metrics": [],
+   "flagged_covered": [],
+   "coverage": null,
+   "flesch_reading_ease": 67.8,
+   "word_count": 126,
+   "clip_id": 225
+  },
+  {
+   "leakage_metrics": [],
+   "leakage_count": 0,
+   "prescriptive_hits": [],
+   "prescriptive_count": 0,
+   "flagged_metrics": [
+    "shoulder_turn_top_deg"
+   ],
+   "flagged_covered": [
+    "shoulder_turn_top_deg"
+   ],
+   "coverage": 1.0,
+   "flesch_reading_ease": 79.1,
+   "word_count": 113,
+   "clip_id": 1209
+  },
+  {
+   "leakage_metrics": [],
+   "leakage_count": 0,
+   "prescriptive_hits": [],
+   "prescriptive_count": 0,
+   "flagged_metrics": [],
+   "flagged_covered": [],
+   "coverage": null,
+   "flesch_reading_ease": 72.7,
+   "word_count": 176,
+   "clip_id": 73
+  },
+  {
+   "leakage_metrics": [],
+   "leakage_count": 0,
+   "prescriptive_hits": [],
+   "prescriptive_count": 0,
+   "flagged_metrics": [],
+   "flagged_covered": [],
+   "coverage": null,
+   "flesch_reading_ease": 63.6,
+   "word_count": 124,
+   "clip_id": 166
+  },
+  {
+   "leakage_metrics": [],
+   "leakage_count": 0,
+   "prescriptive_hits": [],
+   "prescriptive_count": 0,
+   "flagged_metrics": [
+    "hip_turn_impact_deg"
+   ],
+   "flagged_covered": [
+    "hip_turn_impact_deg"
+   ],
+   "coverage": 1.0,
+   "flesch_reading_ease": 67.4,
+   "word_count": 161,
+   "clip_id": 818
+  },
+  {
+   "leakage_metrics": [],
+   "leakage_count": 0,
+   "prescriptive_hits": [],
+   "prescriptive_count": 0,
+   "flagged_metrics": [
+    "x_factor_top_deg"
+   ],
+   "flagged_covered": [
+    "x_factor_top_deg"
+   ],
+   "coverage": 1.0,
+   "flesch_reading_ease": 77.5,
+   "word_count": 134,
+   "clip_id": 1043
+  },
+  {
+   "leakage_metrics": [],
+   "leakage_count": 0,
+   "prescriptive_hits": [],
+   "prescriptive_count": 0,
+   "flagged_metrics": [],
+   "flagged_covered": [],
+   "coverage": null,
+   "flesch_reading_ease": 68.6,
+   "word_count": 147,
+   "clip_id": 653
+  },
+  {
+   "leakage_metrics": [],
+   "leakage_count": 0,
+   "prescriptive_hits": [],
+   "prescriptive_count": 0,
+   "flagged_metrics": [],
+   "flagged_covered": [],
+   "coverage": null,
+   "flesch_reading_ease": 64.5,
+   "word_count": 161,
+   "clip_id": 631
+  },
+  {
+   "leakage_metrics": [],
+   "leakage_count": 0,
+   "prescriptive_hits": [],
+   "prescriptive_count": 0,
+   "flagged_metrics": [
+    "x_factor_top_deg"
+   ],
+   "flagged_covered": [
+    "x_factor_top_deg"
+   ],
+   "coverage": 1.0,
+   "flesch_reading_ease": 72.1,
+   "word_count": 162,
+   "clip_id": 509
+  },
+  {
+   "leakage_metrics": [],
+   "leakage_count": 0,
+   "prescriptive_hits": [],
+   "prescriptive_count": 0,
+   "flagged_metrics": [],
+   "flagged_covered": [],
+   "coverage": null,
+   "flesch_reading_ease": 69.5,
+   "word_count": 128,
+   "clip_id": 629
+  },
+  {
+   "leakage_metrics": [],
+   "leakage_count": 0,
+   "prescriptive_hits": [],
+   "prescriptive_count": 0,
+   "flagged_metrics": [
+    "tempo_ratio"
+   ],
+   "flagged_covered": [
+    "tempo_ratio"
+   ],
+   "coverage": 1.0,
+   "flesch_reading_ease": 68.4,
+   "word_count": 131,
+   "clip_id": 821
+  },
+  {
+   "leakage_metrics": [],
+   "leakage_count": 0,
+   "prescriptive_hits": [],
+   "prescriptive_count": 0,
+   "flagged_metrics": [],
+   "flagged_covered": [],
+   "coverage": null,
+   "flesch_reading_ease": 75.6,
+   "word_count": 140,
+   "clip_id": 1084
+  },
+  {
+   "leakage_metrics": [],
+   "leakage_count": 0,
+   "prescriptive_hits": [],
+   "prescriptive_count": 0,
+   "flagged_metrics": [
+    "shoulder_turn_top_deg"
+   ],
+   "flagged_covered": [
+    "shoulder_turn_top_deg"
+   ],
+   "coverage": 1.0,
+   "flesch_reading_ease": 68.3,
+   "word_count": 173,
+   "clip_id": 79
+  },
+  {
+   "leakage_metrics": [],
+   "leakage_count": 0,
+   "prescriptive_hits": [],
+   "prescriptive_count": 0,
+   "flagged_metrics": [
+    "x_factor_top_deg",
+    "hip_lateral_shift_pct"
+   ],
+   "flagged_covered": [
+    "x_factor_top_deg",
+    "hip_lateral_shift_pct"
+   ],
+   "coverage": 1.0,
+   "flesch_reading_ease": 72.6,
+   "word_count": 142,
+   "clip_id": 1282
+  },
+  {
+   "leakage_metrics": [],
+   "leakage_count": 0,
+   "prescriptive_hits": [],
+   "prescriptive_count": 0,
+   "flagged_metrics": [
+    "x_factor_top_deg",
+    "hip_lateral_shift_pct"
+   ],
+   "flagged_covered": [
+    "x_factor_top_deg",
+    "hip_lateral_shift_pct"
+   ],
+   "coverage": 1.0,
+   "flesch_reading_ease": 70.6,
+   "word_count": 166,
+   "clip_id": 619
+  },
+  {
+   "leakage_metrics": [],
+   "leakage_count": 0,
+   "prescriptive_hits": [],
+   "prescriptive_count": 0,
+   "flagged_metrics": [],
+   "flagged_covered": [],
+   "coverage": null,
+   "flesch_reading_ease": 78.1,
+   "word_count": 137,
+   "clip_id": 381
+  },
+  {
+   "leakage_metrics": [],
+   "leakage_count": 0,
+   "prescriptive_hits": [],
+   "prescriptive_count": 0,
+   "flagged_metrics": [],
+   "flagged_covered": [],
+   "coverage": null,
+   "flesch_reading_ease": 79.3,
+   "word_count": 129,
+   "clip_id": 745
+  },
+  {
+   "leakage_metrics": [],
+   "leakage_count": 0,
+   "prescriptive_hits": [],
+   "prescriptive_count": 0,
+   "flagged_metrics": [
+    "x_factor_top_deg"
+   ],
+   "flagged_covered": [
+    "x_factor_top_deg"
+   ],
+   "coverage": 1.0,
+   "flesch_reading_ease": 70.3,
+   "word_count": 161,
+   "clip_id": 1148
+  },
+  {
+   "leakage_metrics": [],
+   "leakage_count": 0,
+   "prescriptive_hits": [],
+   "prescriptive_count": 0,
+   "flagged_metrics": [
+    "tempo_ratio"
+   ],
+   "flagged_covered": [
+    "tempo_ratio"
+   ],
+   "coverage": 1.0,
+   "flesch_reading_ease": 73.8,
+   "word_count": 125,
+   "clip_id": 859
+  },
+  {
+   "leakage_metrics": [],
+   "leakage_count": 0,
+   "prescriptive_hits": [],
+   "prescriptive_count": 0,
+   "flagged_metrics": [
+    "tempo_ratio"
+   ],
+   "flagged_covered": [
+    "tempo_ratio"
+   ],
+   "coverage": 1.0,
+   "flesch_reading_ease": 69.1,
+   "word_count": 138,
+   "clip_id": 1351
+  }
+ ],
+ "judged": [
+  {
+   "clip_id": 172,
+   "grounded": false,
+   "n_unsupported": 1,
+   "unsupported": [
+    "\"...rather than turning as much through the strike.\""
+   ]
+  },
+  {
+   "clip_id": 962,
+   "grounded": false,
+   "n_unsupported": 1,
+   "unsupported": [
+    "No confident measurements were flagged here."
+   ]
+  },
+  {
+   "clip_id": 669,
+   "grounded": false,
+   "n_unsupported": 1,
+   "unsupported": [
+    "The main standout was tempo, or the overall rhythm of the swing."
+   ]
+  },
+  {
+   "clip_id": 137,
+   "grounded": false,
+   "n_unsupported": 2,
+   "unsupported": [
+    "Your posture, head movement, and side-to-side shift stayed in a tour-like window.",
+    "The main standout was tempo, or the timing of the swing."
+   ]
+  },
+  {
+   "clip_id": 835,
+   "grounded": true,
+   "n_unsupported": 0,
+   "unsupported": []
+  },
+  {
+   "clip_id": 1239,
+   "grounded": false,
+   "n_unsupported": 3,
+   "unsupported": [
+    "\"your spine tilt\" being in range is not supported overall, because spine_tilt_address_deg is out of range even though spine_tilt_impact_deg is in range.",
+    "\"lead-knee position\" being in range is not supported overall, because lead_knee_flex_address_deg is out of range even though lead_knee_flex_impact_deg is in range.",
+    "\"small hip shift at impact\" is not directly supported by the named metric, because hip_lateral_shift_pct is given without an impact-specific label."
+   ]
+  },
+  {
+   "clip_id": 1118,
+   "grounded": false,
+   "n_unsupported": 1,
+   "unsupported": [
+    "\"your spine tilt stayed in range\""
+   ]
+  },
+  {
+   "clip_id": 2,
+   "grounded": true,
+   "n_unsupported": 0,
+   "unsupported": []
+  },
+  {
+   "clip_id": 1372,
+   "grounded": false,
+   "n_unsupported": 1,
+   "unsupported": [
+    "The metrics do not show that the excess head sway happened specifically during the backswing."
+   ]
+  },
+  {
+   "clip_id": 329,
+   "grounded": false,
+   "n_unsupported": 1,
+   "unsupported": [
+    "There also weren\u2019t any confidently flagged body-motion issues in this set."
+   ]
+  },
+  {
+   "clip_id": 1133,
+   "grounded": true,
+   "n_unsupported": 0,
+   "unsupported": []
+  },
+  {
+   "clip_id": 236,
+   "grounded": false,
+   "n_unsupported": 1,
+   "unsupported": [
+    "so your body looked more square to the target at that point."
+   ]
+  },
+  {
+   "clip_id": 159,
+   "grounded": false,
+   "n_unsupported": 1,
+   "unsupported": [
+    "Overall, the measured motion paints a steady, well-organized swing shape with no confidently measured movements standing out as outside the tour range."
+   ]
+  },
+  {
+   "clip_id": 1316,
+   "grounded": true,
+   "n_unsupported": 0,
+   "unsupported": []
+  },
+  {
+   "clip_id": 147,
+   "grounded": false,
+   "n_unsupported": 2,
+   "unsupported": [
+    "which gives the swing a centered, connected look.",
+    "Your setup and movement through the shot also looked steady by the measured numbers."
+   ]
+  },
+  {
+   "clip_id": 812,
+   "grounded": false,
+   "n_unsupported": 1,
+   "unsupported": [
+    "\"head movement ... looked comfortably in range\" is not supported, because head_lift_max_pct was out of range (6.63 vs tour median 16.5, in_range=False)."
+   ]
+  },
+  {
+   "clip_id": 1153,
+   "grounded": false,
+   "n_unsupported": 1,
+   "unsupported": [
+    "your lower body showed more lateral shift than rotation through the strike"
+   ]
+  },
+  {
+   "clip_id": 1259,
+   "grounded": false,
+   "n_unsupported": 1,
+   "unsupported": [
+    "There also were not any clear flagged body-motion patterns in the confident measurements, which means this swing showed several tour-range pieces working together rather than one obvious move standing out."
+   ]
+  },
+  {
+   "clip_id": 979,
+   "grounded": false,
+   "n_unsupported": 2,
+   "unsupported": [
+    "your head movement stayed within the typical range.",
+    "your lower body motion looked more like a slide than a turn through the strike."
+   ]
+  },
+  {
+   "clip_id": 687,
+   "grounded": false,
+   "n_unsupported": 1,
+   "unsupported": [
+    "Nothing confidently measured stood out as clearly outside that tour-style window, which is a strong starting point."
+   ]
+  },
+  {
+   "clip_id": 1094,
+   "grounded": true,
+   "n_unsupported": 0,
+   "unsupported": []
+  },
+  {
+   "clip_id": 699,
+   "grounded": true,
+   "n_unsupported": 0,
+   "unsupported": []
+  },
+  {
+   "clip_id": 1187,
+   "grounded": false,
+   "n_unsupported": 2,
+   "unsupported": [
+    "There were no clear flagged patterns in the confidently measured numbers, so this swing mostly reads as being within the tour-style window rather than standing out for one big move.",
+    "There were no clear flagged patterns in the confidently measured numbers."
+   ]
+  },
+  {
+   "clip_id": 215,
+   "grounded": true,
+   "n_unsupported": 0,
+   "unsupported": []
+  },
+  {
+   "clip_id": 1170,
+   "grounded": true,
+   "n_unsupported": 0,
+   "unsupported": []
+  }
+ ]
+}

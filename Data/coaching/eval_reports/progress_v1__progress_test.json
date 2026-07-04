@@ -1,0 +1,1832 @@
+{
+ "feature_id": "progress_v1",
+ "task": "progress",
+ "split": "test",
+ "weights": {
+  "grounded": 0.45,
+  "coverage": 0.25,
+  "nonprescriptive": 0.15,
+  "readable": 0.15
+ },
+ "n_evaluated": 200,
+ "n_requested": 200,
+ "scores": {
+  "composite": 0.9583,
+  "grounded_rate": 1.0,
+  "coverage_mean": 0.998,
+  "nonprescriptive_rate": 1.0,
+  "readable_rate": 0.725,
+  "n_pairs_with_change": 199
+ },
+ "passes_0.8": true,
+ "config": {
+  "id": "progress_v1",
+  "description": "Progress narration baseline: Codex + KB + structured delta grounding.",
+  "backend": "codex",
+  "model": null,
+  "rules_append": null,
+  "rules_override": null
+ },
+ "per_pair": [
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 6,
+   "prescriptive_count": 0,
+   "flesch": 55.1,
+   "pair": "246_247"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 9,
+   "prescriptive_count": 0,
+   "flesch": 57.4,
+   "pair": "513_734"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 6,
+   "prescriptive_count": 0,
+   "flesch": 81.2,
+   "pair": "1397_1399"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 8,
+   "prescriptive_count": 0,
+   "flesch": 88.6,
+   "pair": "750_1301"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 9,
+   "prescriptive_count": 0,
+   "flesch": 60.7,
+   "pair": "403_1105"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 7,
+   "prescriptive_count": 0,
+   "flesch": 67.6,
+   "pair": "448_1146"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 10,
+   "prescriptive_count": 0,
+   "flesch": 64.6,
+   "pair": "20_280"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 7,
+   "prescriptive_count": 0,
+   "flesch": 42.5,
+   "pair": "505_506"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 8,
+   "prescriptive_count": 0,
+   "flesch": 84.6,
+   "pair": "504_507"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 7,
+   "prescriptive_count": 0,
+   "flesch": 84.6,
+   "pair": "1396_1399"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 5,
+   "prescriptive_count": 0,
+   "flesch": 78.6,
+   "pair": "63_552"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 9,
+   "prescriptive_count": 0,
+   "flesch": 50.5,
+   "pair": "561_565"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 9,
+   "prescriptive_count": 0,
+   "flesch": 88.7,
+   "pair": "1081_1329"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 8,
+   "prescriptive_count": 0,
+   "flesch": 86.6,
+   "pair": "203_1099"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 8,
+   "prescriptive_count": 0,
+   "flesch": 63.3,
+   "pair": "359_812"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 9,
+   "prescriptive_count": 0,
+   "flesch": 66.8,
+   "pair": "449_1146"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 11,
+   "prescriptive_count": 0,
+   "flesch": 60.1,
+   "pair": "440_447"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 6,
+   "prescriptive_count": 0,
+   "flesch": 59.3,
+   "pair": "510_1086"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 5,
+   "prescriptive_count": 0,
+   "flesch": 62.2,
+   "pair": "331_1246"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 7,
+   "prescriptive_count": 0,
+   "flesch": 86.0,
+   "pair": "562_564"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 8,
+   "prescriptive_count": 0,
+   "flesch": 66.8,
+   "pair": "824_1302"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 6,
+   "prescriptive_count": 0,
+   "flesch": 67.6,
+   "pair": "62_63"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 10,
+   "prescriptive_count": 0,
+   "flesch": 60.0,
+   "pair": "706_976"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 5,
+   "prescriptive_count": 0,
+   "flesch": 70.1,
+   "pair": "120_121"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 12,
+   "prescriptive_count": 0,
+   "flesch": 57.6,
+   "pair": "437_444"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 4,
+   "prescriptive_count": 0,
+   "flesch": 85.4,
+   "pair": "895_896"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 11,
+   "prescriptive_count": 0,
+   "flesch": 53.8,
+   "pair": "136_205"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 9,
+   "prescriptive_count": 0,
+   "flesch": 62.3,
+   "pair": "589_1250"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 5,
+   "prescriptive_count": 0,
+   "flesch": 75.3,
+   "pair": "76_77"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 6,
+   "prescriptive_count": 0,
+   "flesch": 90.5,
+   "pair": "812_980"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 5,
+   "prescriptive_count": 0,
+   "flesch": 58.7,
+   "pair": "330_1246"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 10,
+   "prescriptive_count": 0,
+   "flesch": 64.0,
+   "pair": "563_565"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 11,
+   "prescriptive_count": 0,
+   "flesch": 90.0,
+   "pair": "705_976"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 11,
+   "prescriptive_count": 0,
+   "flesch": 61.9,
+   "pair": "38_976"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 2,
+   "prescriptive_count": 0,
+   "flesch": 79.9,
+   "pair": "431_1381"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 11,
+   "prescriptive_count": 0,
+   "flesch": 90.1,
+   "pair": "139_204"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 4,
+   "prescriptive_count": 0,
+   "flesch": 47.5,
+   "pair": "524_525"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 9,
+   "prescriptive_count": 0,
+   "flesch": 55.2,
+   "pair": "731_732"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 5,
+   "prescriptive_count": 0,
+   "flesch": 62.1,
+   "pair": "711_712"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 7,
+   "prescriptive_count": 0,
+   "flesch": 64.6,
+   "pair": "202_203"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 7,
+   "prescriptive_count": 0,
+   "flesch": 67.5,
+   "pair": "510_1087"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 8,
+   "prescriptive_count": 0,
+   "flesch": 81.5,
+   "pair": "705_899"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 5,
+   "prescriptive_count": 0,
+   "flesch": 76.3,
+   "pair": "20_826"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 5,
+   "prescriptive_count": 0,
+   "flesch": 64.3,
+   "pair": "812_979"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 12,
+   "prescriptive_count": 0,
+   "flesch": 91.7,
+   "pair": "438_447"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 11,
+   "prescriptive_count": 0,
+   "flesch": 88.9,
+   "pair": "512_678"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 9,
+   "prescriptive_count": 0,
+   "flesch": 85.5,
+   "pair": "136_204"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 6,
+   "prescriptive_count": 0,
+   "flesch": 65.4,
+   "pair": "122_124"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 9,
+   "prescriptive_count": 0,
+   "flesch": 55.8,
+   "pair": "691_692"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 8,
+   "prescriptive_count": 0,
+   "flesch": 62.0,
+   "pair": "279_280"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 8,
+   "prescriptive_count": 0,
+   "flesch": 58.5,
+   "pair": "359_813"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 9,
+   "prescriptive_count": 0,
+   "flesch": 86.0,
+   "pair": "449_1145"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 4,
+   "prescriptive_count": 0,
+   "flesch": 80.8,
+   "pair": "1307_1308"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 8,
+   "prescriptive_count": 0,
+   "flesch": 69.6,
+   "pair": "561_564"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 9,
+   "prescriptive_count": 0,
+   "flesch": 67.5,
+   "pair": "974_1222"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 8,
+   "prescriptive_count": 0,
+   "flesch": 85.9,
+   "pair": "197_1081"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 5,
+   "prescriptive_count": 0,
+   "flesch": 88.6,
+   "pair": "942_944"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 5,
+   "prescriptive_count": 0,
+   "flesch": 72.1,
+   "pair": "753_980"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 9,
+   "prescriptive_count": 0,
+   "flesch": 56.7,
+   "pair": "8_1301"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 5,
+   "prescriptive_count": 0,
+   "flesch": 89.6,
+   "pair": "38_705"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 11,
+   "prescriptive_count": 0,
+   "flesch": 57.7,
+   "pair": "139_141"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 10,
+   "prescriptive_count": 0,
+   "flesch": 79.9,
+   "pair": "1081_1330"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 10,
+   "prescriptive_count": 0,
+   "flesch": 58.4,
+   "pair": "360_979"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 8,
+   "prescriptive_count": 0,
+   "flesch": 66.5,
+   "pair": "679_733"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 7,
+   "prescriptive_count": 0,
+   "flesch": 62.1,
+   "pair": "624_625"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 9,
+   "prescriptive_count": 0,
+   "flesch": 40.2,
+   "pair": "942_943"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 10,
+   "prescriptive_count": 0,
+   "flesch": 56.4,
+   "pair": "431_1111"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 6,
+   "prescriptive_count": 0,
+   "flesch": 54.9,
+   "pair": "197_1381"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 5,
+   "prescriptive_count": 0,
+   "flesch": 80.3,
+   "pair": "402_403"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 6,
+   "prescriptive_count": 0,
+   "flesch": 50.3,
+   "pair": "1397_1398"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 8,
+   "prescriptive_count": 0,
+   "flesch": 61.3,
+   "pair": "706_1073"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 11,
+   "prescriptive_count": 0,
+   "flesch": 52.9,
+   "pair": "139_1250"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 12,
+   "prescriptive_count": 0,
+   "flesch": 82.9,
+   "pair": "202_1098"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 10,
+   "prescriptive_count": 0,
+   "flesch": 62.6,
+   "pair": "202_590"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 6,
+   "prescriptive_count": 0,
+   "flesch": 61.1,
+   "pair": "705_1074"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 11,
+   "prescriptive_count": 0,
+   "flesch": 73.4,
+   "pair": "678_733"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 7,
+   "prescriptive_count": 0,
+   "flesch": 75.1,
+   "pair": "1317_1318"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 6,
+   "prescriptive_count": 0,
+   "flesch": 60.4,
+   "pair": "973_1221"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 7,
+   "prescriptive_count": 0,
+   "flesch": 63.3,
+   "pair": "359_980"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 10,
+   "prescriptive_count": 0,
+   "flesch": 60.8,
+   "pair": "205_1249"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 7,
+   "prescriptive_count": 0,
+   "flesch": 89.4,
+   "pair": "863_864"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 11,
+   "prescriptive_count": 0,
+   "flesch": 66.0,
+   "pair": "138_140"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 7,
+   "prescriptive_count": 0,
+   "flesch": 60.6,
+   "pair": "458_459"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 6,
+   "prescriptive_count": 0,
+   "flesch": 47.1,
+   "pair": "511_1086"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 7,
+   "prescriptive_count": 0,
+   "flesch": 81.0,
+   "pair": "561_563"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 7,
+   "prescriptive_count": 0,
+   "flesch": 82.0,
+   "pair": "941_1022"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 12,
+   "prescriptive_count": 0,
+   "flesch": 55.7,
+   "pair": "444_445"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 5,
+   "prescriptive_count": 0,
+   "flesch": 71.1,
+   "pair": "973_974"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 9,
+   "prescriptive_count": 0,
+   "flesch": 44.2,
+   "pair": "439_447"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 7,
+   "prescriptive_count": 0,
+   "flesch": 60.0,
+   "pair": "749_824"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 5,
+   "prescriptive_count": 0,
+   "flesch": 70.7,
+   "pair": "574_575"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 8,
+   "prescriptive_count": 0,
+   "flesch": 69.4,
+   "pair": "1164_1165"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 6,
+   "prescriptive_count": 0,
+   "flesch": 62.9,
+   "pair": "1308_1398"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 10,
+   "prescriptive_count": 0,
+   "flesch": 56.8,
+   "pair": "62_911"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 7,
+   "prescriptive_count": 0,
+   "flesch": 54.4,
+   "pair": "114_115"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 6,
+   "prescriptive_count": 0,
+   "flesch": 87.1,
+   "pair": "754_979"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 7,
+   "prescriptive_count": 0,
+   "flesch": 69.2,
+   "pair": "448_1145"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 7,
+   "prescriptive_count": 0,
+   "flesch": 56.4,
+   "pair": "197_1112"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 10,
+   "prescriptive_count": 0,
+   "flesch": 63.2,
+   "pair": "37_900"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 10,
+   "prescriptive_count": 0,
+   "flesch": 60.1,
+   "pair": "512_734"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 6,
+   "prescriptive_count": 0,
+   "flesch": 55.6,
+   "pair": "203_591"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 5,
+   "prescriptive_count": 0,
+   "flesch": 82.8,
+   "pair": "77_864"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 7,
+   "prescriptive_count": 0,
+   "flesch": 59.8,
+   "pair": "403_1106"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 8,
+   "prescriptive_count": 0,
+   "flesch": 84.6,
+   "pair": "504_506"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 5,
+   "prescriptive_count": 0,
+   "flesch": 75.3,
+   "pair": "733_734"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 0.875,
+   "n_meaningful": 8,
+   "prescriptive_count": 0,
+   "flesch": 67.4,
+   "pair": "944_1022"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 8,
+   "prescriptive_count": 0,
+   "flesch": 80.2,
+   "pair": "202_1099"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 3,
+   "prescriptive_count": 0,
+   "flesch": 74.7,
+   "pair": "432_1381"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 8,
+   "prescriptive_count": 0,
+   "flesch": 65.4,
+   "pair": "124_943"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 8,
+   "prescriptive_count": 0,
+   "flesch": 91.0,
+   "pair": "1307_1399"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 9,
+   "prescriptive_count": 0,
+   "flesch": 60.8,
+   "pair": "753_992"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 5,
+   "prescriptive_count": 0,
+   "flesch": 82.1,
+   "pair": "1398_1399"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 8,
+   "prescriptive_count": 0,
+   "flesch": 65.3,
+   "pair": "754_992"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 5,
+   "prescriptive_count": 0,
+   "flesch": 86.2,
+   "pair": "1354_1355"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 12,
+   "prescriptive_count": 0,
+   "flesch": 45.8,
+   "pair": "140_1249"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 12,
+   "prescriptive_count": 0,
+   "flesch": 61.7,
+   "pair": "444_446"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 10,
+   "prescriptive_count": 0,
+   "flesch": 63.6,
+   "pair": "136_1250"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 9,
+   "prescriptive_count": 0,
+   "flesch": 90.6,
+   "pair": "749_886"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 6,
+   "prescriptive_count": 0,
+   "flesch": 63.5,
+   "pair": "824_1378"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 5,
+   "prescriptive_count": 0,
+   "flesch": 87.3,
+   "pair": "2_3"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 4,
+   "prescriptive_count": 0,
+   "flesch": 84.6,
+   "pair": "45_46"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 9,
+   "prescriptive_count": 0,
+   "flesch": 51.7,
+   "pair": "62_552"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 7,
+   "prescriptive_count": 0,
+   "flesch": 90.7,
+   "pair": "513_679"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 10,
+   "prescriptive_count": 0,
+   "flesch": 48.0,
+   "pair": "1111_1113"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 8,
+   "prescriptive_count": 0,
+   "flesch": 45.2,
+   "pair": "1118_1164"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 0.7272727272727273,
+   "n_meaningful": 11,
+   "prescriptive_count": 0,
+   "flesch": 65.8,
+   "pair": "437_439"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 5,
+   "prescriptive_count": 0,
+   "flesch": 77.5,
+   "pair": "1301_1302"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 4,
+   "prescriptive_count": 0,
+   "flesch": 70.8,
+   "pair": "19_827"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 6,
+   "prescriptive_count": 0,
+   "flesch": 69.6,
+   "pair": "331_1245"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 8,
+   "prescriptive_count": 0,
+   "flesch": 66.6,
+   "pair": "1307_1397"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 9,
+   "prescriptive_count": 0,
+   "flesch": 84.1,
+   "pair": "974_1221"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 8,
+   "prescriptive_count": 0,
+   "flesch": 64.5,
+   "pair": "1105_1106"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 7,
+   "prescriptive_count": 0,
+   "flesch": 59.5,
+   "pair": "510_511"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 7,
+   "prescriptive_count": 0,
+   "flesch": 80.6,
+   "pair": "813_980"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 10,
+   "prescriptive_count": 0,
+   "flesch": 79.7,
+   "pair": "911_912"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 6,
+   "prescriptive_count": 0,
+   "flesch": 69.1,
+   "pair": "124_1022"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 8,
+   "prescriptive_count": 0,
+   "flesch": 55.2,
+   "pair": "732_1099"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 8,
+   "prescriptive_count": 0,
+   "flesch": 70.7,
+   "pair": "330_1245"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 6,
+   "prescriptive_count": 0,
+   "flesch": 62.2,
+   "pair": "897_898"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 7,
+   "prescriptive_count": 0,
+   "flesch": 63.1,
+   "pair": "1396_1398"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 8,
+   "prescriptive_count": 0,
+   "flesch": 66.9,
+   "pair": "63_268"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 5,
+   "prescriptive_count": 0,
+   "flesch": 61.5,
+   "pair": "439_445"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 9,
+   "prescriptive_count": 0,
+   "flesch": 59.6,
+   "pair": "824_1379"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 6,
+   "prescriptive_count": 0,
+   "flesch": 52.8,
+   "pair": "279_826"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 7,
+   "prescriptive_count": 0,
+   "flesch": 60.0,
+   "pair": "434_443"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 9,
+   "prescriptive_count": 0,
+   "flesch": 60.3,
+   "pair": "551_911"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 8,
+   "prescriptive_count": 0,
+   "flesch": 60.4,
+   "pair": "360_754"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 8,
+   "prescriptive_count": 0,
+   "flesch": 67.4,
+   "pair": "1329_1381"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 7,
+   "prescriptive_count": 0,
+   "flesch": 83.4,
+   "pair": "513_733"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 7,
+   "prescriptive_count": 0,
+   "flesch": 60.0,
+   "pair": "432_1329"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 11,
+   "prescriptive_count": 0,
+   "flesch": 49.2,
+   "pair": "138_141"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 11,
+   "prescriptive_count": 0,
+   "flesch": 49.6,
+   "pair": "678_734"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 7,
+   "prescriptive_count": 0,
+   "flesch": 50.0,
+   "pair": "443_445"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 5,
+   "prescriptive_count": 0,
+   "flesch": 59.4,
+   "pair": "598_599"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 6,
+   "prescriptive_count": 0,
+   "flesch": 79.4,
+   "pair": "1145_1146"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 9,
+   "prescriptive_count": 0,
+   "flesch": 86.2,
+   "pair": "562_565"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 11,
+   "prescriptive_count": 0,
+   "flesch": 85.4,
+   "pair": "552_912"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 9,
+   "prescriptive_count": 0,
+   "flesch": 59.8,
+   "pair": "38_1073"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 7,
+   "prescriptive_count": 0,
+   "flesch": 70.9,
+   "pair": "532_533"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 7,
+   "prescriptive_count": 0,
+   "flesch": 72.2,
+   "pair": "1203_1204"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 9,
+   "prescriptive_count": 0,
+   "flesch": 57.1,
+   "pair": "563_564"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 7,
+   "prescriptive_count": 0,
+   "flesch": 33.6,
+   "pair": "203_732"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 8,
+   "prescriptive_count": 0,
+   "flesch": 55.0,
+   "pair": "63_912"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 10,
+   "prescriptive_count": 0,
+   "flesch": 83.8,
+   "pair": "137_138"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 4,
+   "prescriptive_count": 0,
+   "flesch": 71.0,
+   "pair": "754_980"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 5,
+   "prescriptive_count": 0,
+   "flesch": 58.6,
+   "pair": "137_589"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 7,
+   "prescriptive_count": 0,
+   "flesch": 62.5,
+   "pair": "1307_1398"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 8,
+   "prescriptive_count": 0,
+   "flesch": 56.9,
+   "pair": "1118_1165"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 9,
+   "prescriptive_count": 0,
+   "flesch": 88.4,
+   "pair": "512_733"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 8,
+   "prescriptive_count": 0,
+   "flesch": 32.9,
+   "pair": "590_1098"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 6,
+   "prescriptive_count": 0,
+   "flesch": 71.2,
+   "pair": "19_826"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 9,
+   "prescriptive_count": 0,
+   "flesch": 63.0,
+   "pair": "202_591"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 7,
+   "prescriptive_count": 0,
+   "flesch": 89.1,
+   "pair": "941_944"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 7,
+   "prescriptive_count": 0,
+   "flesch": 89.3,
+   "pair": "1245_1246"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 6,
+   "prescriptive_count": 0,
+   "flesch": 59.6,
+   "pair": "973_1222"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 9,
+   "prescriptive_count": 0,
+   "flesch": 57.7,
+   "pair": "561_562"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 5,
+   "prescriptive_count": 0,
+   "flesch": 84.1,
+   "pair": "20_827"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 8,
+   "prescriptive_count": 0,
+   "flesch": 56.1,
+   "pair": "1221_1222"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 5,
+   "prescriptive_count": 0,
+   "flesch": 90.9,
+   "pair": "1233_1234"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 6,
+   "prescriptive_count": 0,
+   "flesch": 54.3,
+   "pair": "1111_1112"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 11,
+   "prescriptive_count": 0,
+   "flesch": 61.8,
+   "pair": "513_678"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": null,
+   "n_meaningful": 0,
+   "prescriptive_count": 0,
+   "flesch": 66.8,
+   "pair": "119_120"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 10,
+   "prescriptive_count": 0,
+   "flesch": 66.7,
+   "pair": "512_513"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 8,
+   "prescriptive_count": 0,
+   "flesch": 56.7,
+   "pair": "434_445"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 8,
+   "prescriptive_count": 0,
+   "flesch": 85.1,
+   "pair": "564_565"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 3,
+   "prescriptive_count": 0,
+   "flesch": 69.1,
+   "pair": "826_827"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 6,
+   "prescriptive_count": 0,
+   "flesch": 86.2,
+   "pair": "19_280"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 5,
+   "prescriptive_count": 0,
+   "flesch": 84.6,
+   "pair": "280_827"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 4,
+   "prescriptive_count": 0,
+   "flesch": 75.2,
+   "pair": "1086_1087"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 9,
+   "prescriptive_count": 0,
+   "flesch": 65.1,
+   "pair": "402_1105"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 8,
+   "prescriptive_count": 0,
+   "flesch": 56.5,
+   "pair": "590_732"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 6,
+   "prescriptive_count": 0,
+   "flesch": 83.5,
+   "pair": "279_827"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 5,
+   "prescriptive_count": 0,
+   "flesch": 73.8,
+   "pair": "119_121"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 8,
+   "prescriptive_count": 0,
+   "flesch": 80.8,
+   "pair": "280_826"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 9,
+   "prescriptive_count": 0,
+   "flesch": 53.0,
+   "pair": "732_1098"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 11,
+   "prescriptive_count": 0,
+   "flesch": 39.8,
+   "pair": "437_445"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 7,
+   "prescriptive_count": 0,
+   "flesch": 65.6,
+   "pair": "1073_1074"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 9,
+   "prescriptive_count": 0,
+   "flesch": 82.0,
+   "pair": "38_900"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 11,
+   "prescriptive_count": 0,
+   "flesch": 60.4,
+   "pair": "899_975"
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_meaningful": 8,
+   "prescriptive_count": 0,
+   "flesch": 94.2,
+   "pair": "19_279"
+  }
+ ]
+}

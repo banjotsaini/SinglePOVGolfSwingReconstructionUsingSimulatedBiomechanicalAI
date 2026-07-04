@@ -1,0 +1,172 @@
+{
+ "meta": {
+  "clip_id": 818,
+  "player": "RICKIE FOWLER",
+  "club": "driver",
+  "view": "other"
+ },
+ "events": {
+  "address": 317,
+  "toe_up": 329,
+  "mid_backswing": 333,
+  "top": 339,
+  "mid_downswing": 343,
+  "impact": 346,
+  "mid_follow_through": 349,
+  "finish": 367
+ },
+ "indicators": {
+  "shoulder_turn_top_deg": {
+   "value": 28.68,
+   "percentile": 16,
+   "pro_median": 53.7,
+   "pro_band": [
+    37.5,
+    68.1
+   ],
+   "confidence_tier": "med"
+  },
+  "hip_turn_top_deg": {
+   "value": 14.28,
+   "percentile": 13,
+   "pro_median": 30.5,
+   "pro_band": [
+    21.2,
+    40.6
+   ],
+   "confidence_tier": "high"
+  },
+  "x_factor_top_deg": {
+   "value": 14.4,
+   "percentile": 35,
+   "pro_median": 21.9,
+   "pro_band": [
+    9.7,
+    30.8
+   ],
+   "confidence_tier": "med"
+  },
+  "hip_turn_impact_deg": {
+   "value": 11.97,
+   "percentile": 38,
+   "pro_median": 16.3,
+   "pro_band": [
+    7.1,
+    26.3
+   ],
+   "confidence_tier": "high"
+  },
+  "spine_tilt_address_deg": {
+   "value": 33.04,
+   "percentile": 81,
+   "pro_median": 27.6,
+   "pro_band": [
+    22.9,
+    31.7
+   ],
+   "confidence_tier": "high"
+  },
+  "spine_tilt_impact_deg": {
+   "value": 29.83,
+   "percentile": 79,
+   "pro_median": 23.4,
+   "pro_band": [
+    18.3,
+    28.4
+   ],
+   "confidence_tier": "med"
+  },
+  "posture_loss_deg": {
+   "value": 3.21,
+   "percentile": 32,
+   "pro_median": 5.3,
+   "pro_band": [
+    2.4,
+    8.9
+   ],
+   "confidence_tier": "med"
+  },
+  "head_sway_max_pct": {
+   "value": 10.95,
+   "percentile": 6,
+   "pro_median": 32.5,
+   "pro_band": [
+    23.6,
+    44.2
+   ],
+   "confidence_tier": "med"
+  },
+  "head_lift_max_pct": {
+   "value": 11.51,
+   "percentile": 23,
+   "pro_median": 16.5,
+   "pro_band": [
+    11.9,
+    23.2
+   ],
+   "confidence_tier": "med"
+  },
+  "left_arm_bend_top_deg": {
+   "value": 139.19,
+   "percentile": 68,
+   "pro_median": 128.1,
+   "pro_band": [
+    110.8,
+    143.5
+   ],
+   "confidence_tier": "low"
+  },
+  "right_arm_bend_top_deg": {
+   "value": 104.1,
+   "percentile": 35,
+   "pro_median": 114.1,
+   "pro_band": [
+    97.2,
+    129.0
+   ],
+   "confidence_tier": "low"
+  },
+  "lead_knee_flex_address_deg": {
+   "value": 144.8,
+   "percentile": 9,
+   "pro_median": 164.8,
+   "pro_band": [
+    158.6,
+    170.3
+   ],
+   "confidence_tier": "med"
+  },
+  "lead_knee_flex_impact_deg": {
+   "value": 128.89,
+   "percentile": 9,
+   "pro_median": 160.0,
+   "pro_band": [
+    152.6,
+    166.2
+   ],
+   "confidence_tier": "med"
+  },
+  "hip_lateral_shift_pct": {
+   "value": 0.99,
+   "percentile": 57,
+   "pro_median": 0.9,
+   "pro_band": [
+    0.5,
+    1.3
+   ],
+   "confidence_tier": "high"
+  },
+  "tempo_ratio": {
+   "value": 3.14,
+   "percentile": 34,
+   "pro_median": 3.4,
+   "pro_band": [
+    3.0,
+    4.1
+   ],
+   "confidence_tier": "high"
+  }
+ },
+ "feedback": [],
+ "summary": "All confidently-measured indicators fall within the tour-pro range. Clean, repeatable mechanics."
+}

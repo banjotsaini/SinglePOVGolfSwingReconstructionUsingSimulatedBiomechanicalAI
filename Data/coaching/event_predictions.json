@@ -1,0 +1,158 @@
+[
+ {
+  "clip_id": 1292,
+  "player": "CHARLEY HULL",
+  "view": "face-on",
+  "n_frames": 399,
+  "predicted": [
+   50,
+   128,
+   155,
+   211,
+   234,
+   259,
+   274,
+   354
+  ],
+  "ground_truth": [
+   37,
+   122,
+   155,
+   203,
+   232,
+   259,
+   276,
+   363
+  ]
+ },
+ {
+  "clip_id": 234,
+  "player": "BEN CURTIS",
+  "view": "down-the-line",
+  "n_frames": 296,
+  "predicted": [
+   6,
+   52,
+   71,
+   100,
+   119,
+   132,
+   140,
+   226
+  ],
+  "ground_truth": [
+   4,
+   57,
+   76,
+   100,
+   120,
+   131,
+   139,
+   200
+  ]
+ },
+ {
+  "clip_id": 916,
+  "player": "MARK WILSON",
+  "view": "down-the-line",
+  "n_frames": 286,
+  "predicted": [
+   30,
+   95,
+   116,
+   153,
+   166,
+   179,
+   187,
+   252
+  ],
+  "ground_truth": [
+   45,
+   94,
+   121,
+   154,
+   165,
+   178,
+   186,
+   252
+  ]
+ },
+ {
+  "clip_id": 0,
+  "player": "SANDRA GAL",
+  "view": "down-the-line",
+  "n_frames": 138,
+  "predicted": [
+   50,
+   63,
+   68,
+   82,
+   87,
+   90,
+   93,
+   111
+  ],
+  "ground_truth": [
+   47,
+   65,
+   68,
+   82,
+   87,
+   90,
+   93,
+   106
+  ]
+ },
+ {
+  "clip_id": 7,
+  "player": "NICK WATNEY",
+  "view": "down-the-line",
+  "n_frames": 279,
+  "predicted": [
+   42,
+   87,
+   105,
+   145,
+   166,
+   179,
+   188,
+   248
+  ],
+  "ground_truth": [
+   43,
+   92,
+   108,
+   145,
+   167,
+   178,
+   187,
+   245
+  ]
+ },
+ {
+  "clip_id": 459,
+  "player": "BILLY HURLEY III",
+  "view": "down-the-line",
+  "n_frames": 316,
+  "predicted": [
+   64,
+   100,
+   117,
+   147,
+   166,
+   179,
+   187,
+   256
+  ],
+  "ground_truth": [
+   62,
+   100,
+   120,
+   151,
+   166,
+   177,
+   185,
+   255
+  ]
+ }
+]

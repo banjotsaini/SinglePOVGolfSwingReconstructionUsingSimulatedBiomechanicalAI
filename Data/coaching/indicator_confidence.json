@@ -1,0 +1,81 @@
+{
+ "_source": "Austin Lee Phase-2 driver EDA (pose_consistency_by_player_view.csv)",
+ "_caveat": "Reliability prior from 3 players / 86 driver clips; not a population statistic.",
+ "indicators": {
+  "shoulder_turn_top_deg": {
+   "confidence": 0.644,
+   "tier": "med",
+   "worst_joint_z_std": 0.0595
+  },
+  "hip_turn_top_deg": {
+   "confidence": 1.0,
+   "tier": "high",
+   "worst_joint_z_std": 0.0141
+  },
+  "x_factor_top_deg": {
+   "confidence": 0.644,
+   "tier": "med",
+   "worst_joint_z_std": 0.0595
+  },
+  "hip_turn_impact_deg": {
+   "confidence": 1.0,
+   "tier": "high",
+   "worst_joint_z_std": 0.0083
+  },
+  "spine_tilt_address_deg": {
+   "confidence": 0.828,
+   "tier": "high",
+   "worst_joint_z_std": 0.0362
+  },
+  "spine_tilt_impact_deg": {
+   "confidence": 0.656,
+   "tier": "med",
+   "worst_joint_z_std": 0.058
+  },
+  "posture_loss_deg": {
+   "confidence": 0.656,
+   "tier": "med",
+   "worst_joint_z_std": 0.058
+  },
+  "head_sway_max_pct": {
+   "confidence": 0.503,
+   "tier": "med",
+   "worst_joint_z_std": 0.0773
+  },
+  "head_lift_max_pct": {
+   "confidence": 0.503,
+   "tier": "med",
+   "worst_joint_z_std": 0.0773
+  },
+  "left_arm_bend_top_deg": {
+   "confidence": 0.335,
+   "tier": "low",
+   "worst_joint_z_std": 0.0985
+  },
+  "right_arm_bend_top_deg": {
+   "confidence": 0.106,
+   "tier": "low",
+   "worst_joint_z_std": 0.1274
+  },
+  "lead_knee_flex_address_deg": {
+   "confidence": 0.649,
+   "tier": "med",
+   "worst_joint_z_std": 0.0589
+  },
+  "lead_knee_flex_impact_deg": {
+   "confidence": 0.628,
+   "tier": "med",
+   "worst_joint_z_std": 0.0615
+  },
+  "hip_lateral_shift_pct": {
+   "confidence": 1.0,
+   "tier": "high",
+   "worst_joint_z_std": 0.0083
+  },
+  "tempo_ratio": {
+   "confidence": 1.0,
+   "tier": "high",
+   "basis": "event-timing only (no depth)"
+  }
+ }
+}

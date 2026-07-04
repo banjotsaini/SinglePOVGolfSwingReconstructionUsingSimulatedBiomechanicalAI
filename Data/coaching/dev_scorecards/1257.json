@@ -1,0 +1,206 @@
+{
+ "meta": {
+  "clip_id": 1257,
+  "player": "PERNILLA LINDBERG",
+  "club": "wedge",
+  "view": "face-on"
+ },
+ "events": {
+  "address": 44,
+  "toe_up": 97,
+  "mid_backswing": 113,
+  "top": 139,
+  "mid_downswing": 159,
+  "impact": 177,
+  "mid_follow_through": 187,
+  "finish": 239
+ },
+ "indicators": {
+  "shoulder_turn_top_deg": {
+   "value": 129.74,
+   "percentile": 96,
+   "pro_median": 53.7,
+   "pro_band": [
+    37.5,
+    68.1
+   ],
+   "confidence_tier": "med"
+  },
+  "hip_turn_top_deg": {
+   "value": 142.64,
+   "percentile": 99,
+   "pro_median": 30.5,
+   "pro_band": [
+    21.2,
+    40.6
+   ],
+   "confidence_tier": "high"
+  },
+  "x_factor_top_deg": {
+   "value": -12.91,
+   "percentile": 5,
+   "pro_median": 21.9,
+   "pro_band": [
+    9.7,
+    30.8
+   ],
+   "confidence_tier": "med"
+  },
+  "hip_turn_impact_deg": {
+   "value": 21.3,
+   "percentile": 62,
+   "pro_median": 16.3,
+   "pro_band": [
+    7.1,
+    26.3
+   ],
+   "confidence_tier": "high"
+  },
+  "spine_tilt_address_deg": {
+   "value": 22.43,
+   "percentile": 23,
+   "pro_median": 27.6,
+   "pro_band": [
+    22.9,
+    31.7
+   ],
+   "confidence_tier": "high"
+  },
+  "spine_tilt_impact_deg": {
+   "value": 24.92,
+   "percentile": 57,
+   "pro_median": 23.4,
+   "pro_band": [
+    18.3,
+    28.4
+   ],
+   "confidence_tier": "med"
+  },
+  "posture_loss_deg": {
+   "value": 2.49,
+   "percentile": 25,
+   "pro_median": 5.3,
+   "pro_band": [
+    2.4,
+    8.9
+   ],
+   "confidence_tier": "med"
+  },
+  "head_sway_max_pct": {
+   "value": 46.43,
+   "percentile": 77,
+   "pro_median": 32.5,
+   "pro_band": [
+    23.6,
+    44.2
+   ],
+   "confidence_tier": "med"
+  },
+  "head_lift_max_pct": {
+   "value": 21.77,
+   "percentile": 70,
+   "pro_median": 16.5,
+   "pro_band": [
+    11.9,
+    23.2
+   ],
+   "confidence_tier": "med"
+  },
+  "left_arm_bend_top_deg": {
+   "value": 128.62,
+   "percentile": 51,
+   "pro_median": 128.1,
+   "pro_band": [
+    110.8,
+    143.5
+   ],
+   "confidence_tier": "low"
+  },
+  "right_arm_bend_top_deg": {
+   "value": 128.19,
+   "percentile": 74,
+   "pro_median": 114.1,
+   "pro_band": [
+    97.2,
+    129.0
+   ],
+   "confidence_tier": "low"
+  },
+  "lead_knee_flex_address_deg": {
+   "value": 161.51,
+   "percentile": 37,
+   "pro_median": 164.8,
+   "pro_band": [
+    158.6,
+    170.3
+   ],
+   "confidence_tier": "med"
+  },
+  "lead_knee_flex_impact_deg": {
+   "value": 169.54,
+   "percentile": 85,
+   "pro_median": 160.0,
+   "pro_band": [
+    152.6,
+    166.2
+   ],
+   "confidence_tier": "med"
+  },
+  "hip_lateral_shift_pct": {
+   "value": 0.3,
+   "percentile": 10,
+   "pro_median": 0.9,
+   "pro_band": [
+    0.5,
+    1.3
+   ],
+   "confidence_tier": "high"
+  },
+  "tempo_ratio": {
+   "value": 2.5,
+   "percentile": 9,
+   "pro_median": 3.4,
+   "pro_band": [
+    3.0,
+    4.1
+   ],
+   "confidence_tier": "high"
+  }
+ },
+ "feedback": [
+  {
+   "indicator": "x_factor_top_deg",
+   "label": "X-factor (shoulder-hip separation)",
+   "event": "top",
+   "value": -12.9,
+   "percentile": 5,
+   "pro_median": 21.9,
+   "confidence_tier": "med",
+   "message": "Low shoulder-hip separation at the top \u2014 less stored coil than typical tour swings.",
+   "severity": "review"
+  },
+  {
+   "indicator": "hip_lateral_shift_pct",
+   "label": "Weight shift",
+   "event": "impact",
+   "value": 0.3,
+   "percentile": 10,
+   "pro_median": 0.9,
+   "confidence_tier": "high",
+   "message": "Less lateral hip drive toward target than typical \u2014 possible reverse/limited weight shift.",
+   "severity": "review"
+  },
+  {
+   "indicator": "tempo_ratio",
+   "label": "Tempo (backswing : downswing)",
+   "event": "overall",
+   "value": 2.5,
+   "percentile": 9,
+   "pro_median": 3.4,
+   "confidence_tier": "high",
+   "message": "Quicker backswing-to-downswing ratio than the ~3:1 tour norm \u2014 tempo is on the fast side.",
+   "severity": "review"
+  }
+ ],
+ "summary": "3 indicator(s) fall outside the typical tour range \u2014 see notes below."
+}

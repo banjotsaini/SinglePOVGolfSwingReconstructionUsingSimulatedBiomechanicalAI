@@ -1,0 +1,139 @@
+{
+  "session_a": {
+    "clip_id": 652,
+    "player": "DAVID DUVAL",
+    "club": "fairway",
+    "view": "other"
+  },
+  "session_b": {
+    "clip_id": 746,
+    "player": "DAVID DUVAL",
+    "club": "iron",
+    "view": "other"
+  },
+  "progress_note": "Hip rotation at impact, the instant the club meets the ball, moved closer to the tour range. Posture, the spine and body angle held during the swing, moved closer to the tour range. Lead knee, the knee closer to the target, at address, the setup position, moved closer to the tour range. Lead knee at impact moved closer to the tour range. Weight shift, moving body weight toward the target through the downswing, moved closer to the tour range.\n\nHip turn at the top, where the club changes direction, moved away from the tour range. Spine angle at impact moved away from the tour range. Head sway, sideways movement of the head or body away from the ball, moved away from the tour range. Head height change moved away from the tour range. Tempo, the timing and rhythm of the swing, moved away from the tour range.\n\nThere is a lot here to feel good about.",
+  "claims": [
+    {
+      "text": "Hip rotation at impact moved closer to the tour range.",
+      "indicator_key": "hip_turn_impact_deg",
+      "change": "improved",
+      "claim_type": "delta"
+    },
+    {
+      "text": "Impact is the instant the club meets the ball.",
+      "indicator_key": "hip_turn_impact_deg",
+      "change": "none",
+      "claim_type": "gloss"
+    },
+    {
+      "text": "Posture moved closer to the tour range.",
+      "indicator_key": "posture_loss_deg",
+      "change": "improved",
+      "claim_type": "delta"
+    },
+    {
+      "text": "Posture means the spine and body angle held during the swing.",
+      "indicator_key": "posture_loss_deg",
+      "change": "none",
+      "claim_type": "gloss"
+    },
+    {
+      "text": "Lead knee at address moved closer to the tour range.",
+      "indicator_key": "lead_knee_flex_address_deg",
+      "change": "improved",
+      "claim_type": "delta"
+    },
+    {
+      "text": "Lead knee means the knee closer to the target.",
+      "indicator_key": "lead_knee_flex_address_deg",
+      "change": "none",
+      "claim_type": "gloss"
+    },
+    {
+      "text": "Address is the setup position, just before the swing starts.",
+      "indicator_key": "lead_knee_flex_address_deg",
+      "change": "none",
+      "claim_type": "gloss"
+    },
+    {
+      "text": "Lead knee at impact moved closer to the tour range.",
+      "indicator_key": "lead_knee_flex_impact_deg",
+      "change": "improved",
+      "claim_type": "delta"
+    },
+    {
+      "text": "Weight shift moved closer to the tour range.",
+      "indicator_key": "hip_lateral_shift_pct",
+      "change": "improved",
+      "claim_type": "delta"
+    },
+    {
+      "text": "Weight shift means moving body weight toward the target through the downswing.",
+      "indicator_key": "hip_lateral_shift_pct",
+      "change": "none",
+      "claim_type": "gloss"
+    },
+    {
+      "text": "Hip turn at the top moved away from the tour range.",
+      "indicator_key": "hip_turn_top_deg",
+      "change": "regressed",
+      "claim_type": "delta"
+    },
+    {
+      "text": "Top is where the club changes direction.",
+      "indicator_key": "hip_turn_top_deg",
+      "change": "none",
+      "claim_type": "gloss"
+    },
+    {
+      "text": "Spine angle at impact moved away from the tour range.",
+      "indicator_key": "spine_tilt_impact_deg",
+      "change": "regressed",
+      "claim_type": "delta"
+    },
+    {
+      "text": "Head sway moved away from the tour range.",
+      "indicator_key": "head_sway_max_pct",
+      "change": "regressed",
+      "claim_type": "delta"
+    },
+    {
+      "text": "Head sway means sideways movement of the head or body away from the ball.",
+      "indicator_key": "head_sway_max_pct",
+      "change": "none",
+      "claim_type": "gloss"
+    },
+    {
+      "text": "Head height change moved away from the tour range.",
+      "indicator_key": "head_lift_max_pct",
+      "change": "regressed",
+      "claim_type": "delta"
+    },
+    {
+      "text": "Tempo moved away from the tour range.",
+      "indicator_key": "tempo_ratio",
+      "change": "regressed",
+      "claim_type": "delta"
+    },
+    {
+      "text": "Tempo means the timing and rhythm of the swing.",
+      "indicator_key": "tempo_ratio",
+      "change": "none",
+      "claim_type": "gloss"
+    },
+    {
+      "text": "There is a lot here to feel good about.",
+      "indicator_key": "",
+      "change": "none",
+      "claim_type": "encouragement"
+    }
+  ],
+  "grounding": {
+    "grounded": true,
+    "violations": [],
+    "coverage": 1.0,
+    "n_meaningful": 10,
+    "n_delta_claims": 10
+  },
+  "feature": "pg_readable"
+}

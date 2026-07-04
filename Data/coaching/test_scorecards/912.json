@@ -1,0 +1,228 @@
+{
+ "meta": {
+  "clip_id": 912,
+  "player": "JENNY SHIN",
+  "club": "driver",
+  "view": "face-on"
+ },
+ "events": {
+  "address": 62,
+  "toe_up": 117,
+  "mid_backswing": 139,
+  "top": 175,
+  "mid_downswing": 196,
+  "impact": 211,
+  "mid_follow_through": 222,
+  "finish": 283
+ },
+ "indicators": {
+  "shoulder_turn_top_deg": {
+   "value": 21.25,
+   "percentile": 9,
+   "pro_median": 53.7,
+   "pro_band": [
+    37.5,
+    68.1
+   ],
+   "confidence_tier": "med"
+  },
+  "hip_turn_top_deg": {
+   "value": 24.59,
+   "percentile": 34,
+   "pro_median": 30.5,
+   "pro_band": [
+    21.2,
+    40.6
+   ],
+   "confidence_tier": "high"
+  },
+  "x_factor_top_deg": {
+   "value": -3.34,
+   "percentile": 5,
+   "pro_median": 21.9,
+   "pro_band": [
+    9.7,
+    30.8
+   ],
+   "confidence_tier": "med"
+  },
+  "hip_turn_impact_deg": {
+   "value": 1.51,
+   "percentile": 5,
+   "pro_median": 16.3,
+   "pro_band": [
+    7.1,
+    26.3
+   ],
+   "confidence_tier": "high"
+  },
+  "spine_tilt_address_deg": {
+   "value": 20.4,
+   "percentile": 16,
+   "pro_median": 27.6,
+   "pro_band": [
+    22.9,
+    31.7
+   ],
+   "confidence_tier": "high"
+  },
+  "spine_tilt_impact_deg": {
+   "value": 14.88,
+   "percentile": 14,
+   "pro_median": 23.4,
+   "pro_band": [
+    18.3,
+    28.4
+   ],
+   "confidence_tier": "med"
+  },
+  "posture_loss_deg": {
+   "value": 5.53,
+   "percentile": 51,
+   "pro_median": 5.3,
+   "pro_band": [
+    2.4,
+    8.9
+   ],
+   "confidence_tier": "med"
+  },
+  "head_sway_max_pct": {
+   "value": 35.94,
+   "percentile": 57,
+   "pro_median": 32.5,
+   "pro_band": [
+    23.6,
+    44.2
+   ],
+   "confidence_tier": "med"
+  },
+  "head_lift_max_pct": {
+   "value": 16.97,
+   "percentile": 52,
+   "pro_median": 16.5,
+   "pro_band": [
+    11.9,
+    23.2
+   ],
+   "confidence_tier": "med"
+  },
+  "left_arm_bend_top_deg": {
+   "value": 56.58,
+   "percentile": 6,
+   "pro_median": 128.1,
+   "pro_band": [
+    110.8,
+    143.5
+   ],
+   "confidence_tier": "low"
+  },
+  "right_arm_bend_top_deg": {
+   "value": 101.26,
+   "percentile": 31,
+   "pro_median": 114.1,
+   "pro_band": [
+    97.2,
+    129.0
+   ],
+   "confidence_tier": "low"
+  },
+  "lead_knee_flex_address_deg": {
+   "value": 158.88,
+   "percentile": 26,
+   "pro_median": 164.8,
+   "pro_band": [
+    158.6,
+    170.3
+   ],
+   "confidence_tier": "med"
+  },
+  "lead_knee_flex_impact_deg": {
+   "value": 146.27,
+   "percentile": 12,
+   "pro_median": 160.0,
+   "pro_band": [
+    152.6,
+    166.2
+   ],
+   "confidence_tier": "med"
+  },
+  "hip_lateral_shift_pct": {
+   "value": 0.22,
+   "percentile": 7,
+   "pro_median": 0.9,
+   "pro_band": [
+    0.5,
+    1.3
+   ],
+   "confidence_tier": "high"
+  },
+  "tempo_ratio": {
+   "value": 3.14,
+   "percentile": 34,
+   "pro_median": 3.4,
+   "pro_band": [
+    3.0,
+    4.1
+   ],
+   "confidence_tier": "high"
+  }
+ },
+ "feedback": [
+  {
+   "indicator": "shoulder_turn_top_deg",
+   "label": "Shoulder turn",
+   "event": "top",
+   "value": 21.3,
+   "percentile": 9,
+   "pro_median": 53.7,
+   "confidence_tier": "med",
+   "message": "Restricted shoulder turn at the top \u2014 less than most tour swings (loses coil/power).",
+   "severity": "review"
+  },
+  {
+   "indicator": "x_factor_top_deg",
+   "label": "X-factor (shoulder-hip separation)",
+   "event": "top",
+   "value": -3.3,
+   "percentile": 5,
+   "pro_median": 21.9,
+   "confidence_tier": "med",
+   "message": "Low shoulder-hip separation at the top \u2014 less stored coil than typical tour swings.",
+   "severity": "review"
+  },
+  {
+   "indicator": "hip_turn_impact_deg",
+   "label": "Hip rotation at impact",
+   "event": "impact",
+   "value": 1.5,
+   "percentile": 5,
+   "pro_median": 16.3,
+   "confidence_tier": "high",
+   "message": "Hips less open at impact than typical \u2014 may indicate stalled rotation through the ball.",
+   "severity": "review"
+  },
+  {
+   "indicator": "left_arm_bend_top_deg",
+   "label": "Lead-arm extension",
+   "event": "top",
+   "value": 56.6,
+   "percentile": 6,
+   "pro_median": 128.1,
+   "confidence_tier": "low",
+   "message": "(low-confidence measurement) Lead arm more bent at the top than typical tour swings (less width/structure).",
+   "severity": "low_confidence"
+  },
+  {
+   "indicator": "hip_lateral_shift_pct",
+   "label": "Weight shift",
+   "event": "impact",
+   "value": 0.2,
+   "percentile": 7,
+   "pro_median": 0.9,
+   "confidence_tier": "high",
+   "message": "Less lateral hip drive toward target than typical \u2014 possible reverse/limited weight shift.",
+   "severity": "review"
+  }
+ ],
+ "summary": "4 indicator(s) fall outside the typical tour range \u2014 see notes below."
+}

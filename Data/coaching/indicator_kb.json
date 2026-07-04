@@ -1,0 +1,210 @@
+{
+  "_about": "Coaching knowledge base for the LLM interpretation layer. One vetted explainer card per biomechanical indicator, plus a controlled glossary. The LLM narrates ONLY from these cards/glosses — it must not invent golf terminology or mechanics from its own knowledge. Cards are intentionally neutral/descriptive (MVP scope: no fix-it advice). Author/review: pending coach sign-off.",
+  "_version": "0.1.0",
+  "_schema": {
+    "indicator card": {
+      "label": "short friendly label shown to the user",
+      "plain_name": "beginner-friendly name for the metric",
+      "event": "swing phase this relates to",
+      "unit": "unit of the measured value",
+      "measures": "what the number physically measures (one sentence, plain)",
+      "why": "why it matters to a golfer (one sentence, plain, non-prescriptive)",
+      "in_range_phrasing": "approved description when the metric is inside the tour band",
+      "out_low_phrasing": "approved neutral description when below the tour band (null if not noteworthy low)",
+      "out_high_phrasing": "approved neutral description when above the tour band (null if not noteworthy high)",
+      "glosses": "term -> approved short gloss, for any jargon used in this card"
+    }
+  },
+  "glossary": {
+    "tour range": "the typical spread of values seen across professional tour swings",
+    "tour median": "the middle value among professional tour swings",
+    "address": "the setup position, just before the swing starts",
+    "top": "the top of the backswing, where the club changes direction",
+    "impact": "the instant the club meets the ball",
+    "backswing": "the takeaway and turn back, away from the target",
+    "downswing": "the move from the top of the backswing down to the ball",
+    "percentile": "where this swing sits relative to tour pros — e.g. 30th percentile means 30% of pros are lower"
+  },
+  "indicators": {
+    "shoulder_turn_top_deg": {
+      "label": "Shoulder turn",
+      "plain_name": "how far the shoulders rotate at the top",
+      "event": "top",
+      "unit": "degrees",
+      "measures": "how far the shoulders have rotated away from the target at the top of the backswing",
+      "why": "shoulder rotation is the main way the body coils to store energy for the downswing",
+      "in_range_phrasing": "the shoulders rotate about as far as a typical tour swing at the top",
+      "out_low_phrasing": "the shoulders rotate less than most tour swings at the top",
+      "out_high_phrasing": "the shoulders rotate further than most tour swings at the top",
+      "glosses": {"coil": "the wind-up of the body during the backswing that stores energy"}
+    },
+    "hip_turn_top_deg": {
+      "label": "Hip turn at the top",
+      "plain_name": "how far the hips rotate at the top",
+      "event": "top",
+      "unit": "degrees",
+      "measures": "how far the hips have rotated away from the target at the top of the backswing",
+      "why": "the hips turn alongside the shoulders during the backswing; the difference between the two creates separation",
+      "in_range_phrasing": "the hips rotate about as far as a typical tour swing at the top",
+      "out_low_phrasing": "the hips rotate less than most tour swings at the top",
+      "out_high_phrasing": "the hips rotate further than most tour swings at the top",
+      "glosses": {}
+    },
+    "x_factor_top_deg": {
+      "label": "X-factor (shoulder–hip separation)",
+      "plain_name": "the gap between shoulder turn and hip turn at the top",
+      "event": "top",
+      "unit": "degrees",
+      "measures": "the difference between how far the shoulders turn and how far the hips turn at the top",
+      "why": "this separation is a big part of how the body stores and releases power",
+      "in_range_phrasing": "the separation between shoulders and hips is about typical for a tour swing",
+      "out_low_phrasing": "there is less separation between the shoulders and hips than in most tour swings",
+      "out_high_phrasing": "there is more separation between the shoulders and hips than in most tour swings",
+      "glosses": {"X-factor": "the gap between how far the shoulders turn and how far the hips turn", "separation": "the difference between shoulder turn and hip turn"}
+    },
+    "hip_turn_impact_deg": {
+      "label": "Hip rotation at impact",
+      "plain_name": "how open the hips are at impact",
+      "event": "impact",
+      "unit": "degrees",
+      "measures": "how far the hips have rotated open toward the target at the moment of impact",
+      "why": "the hips lead the body's rotation through the ball",
+      "in_range_phrasing": "the hips are about as open at impact as a typical tour swing",
+      "out_low_phrasing": "the hips are less open at impact than most tour swings",
+      "out_high_phrasing": "the hips are more open at impact than most tour swings",
+      "glosses": {"open hips": "hips rotated to face more toward the target"}
+    },
+    "spine_tilt_address_deg": {
+      "label": "Spine angle at address",
+      "plain_name": "how much the upper body leans at setup",
+      "event": "address",
+      "unit": "degrees",
+      "measures": "how far the spine is tilted away from vertical at the setup position",
+      "why": "the spine angle at setup sets the posture the swing is built around",
+      "in_range_phrasing": "the upper body leans about as much as a typical tour swing at setup",
+      "out_low_phrasing": "the upper body leans less than most tour swings at setup",
+      "out_high_phrasing": "the upper body leans more than most tour swings at setup",
+      "glosses": {"spine angle": "how much the upper body leans forward from standing upright"}
+    },
+    "spine_tilt_impact_deg": {
+      "label": "Spine angle at impact",
+      "plain_name": "how much the upper body leans at impact",
+      "event": "impact",
+      "unit": "degrees",
+      "measures": "how far the spine is tilted away from vertical at the moment of impact",
+      "why": "keeping a similar posture from setup to impact helps the swing stay on plane",
+      "in_range_phrasing": "the upper body leans about as much at impact as a typical tour swing",
+      "out_low_phrasing": "the upper body leans less at impact than most tour swings",
+      "out_high_phrasing": "the upper body leans more at impact than most tour swings",
+      "glosses": {"spine angle": "how much the upper body leans forward from standing upright"}
+    },
+    "posture_loss_deg": {
+      "label": "Posture (spine angle change)",
+      "plain_name": "how much the spine angle changes from setup to impact",
+      "event": "impact",
+      "unit": "degrees",
+      "measures": "how much the spine angle changes between setup and impact",
+      "why": "tour swings tend to hold their setup posture fairly well into impact",
+      "in_range_phrasing": "the posture holds about as steadily from setup to impact as a typical tour swing",
+      "out_low_phrasing": null,
+      "out_high_phrasing": "the spine angle changes more from setup to impact than in most tour swings, meaning the posture shifts during the swing",
+      "glosses": {"posture": "the spine and body angle held during the swing", "early extension": "standing up out of the setup posture during the downswing"}
+    },
+    "head_sway_max_pct": {
+      "label": "Head sway",
+      "plain_name": "how much the head drifts sideways",
+      "event": "backswing",
+      "unit": "percent of body height",
+      "measures": "the most the head drifts sideways during the swing, as a share of body size",
+      "why": "a stable head helps keep the low point of the swing consistent",
+      "in_range_phrasing": "the head stays about as steady side-to-side as a typical tour swing",
+      "out_low_phrasing": "the head moves less side-to-side than most tour swings",
+      "out_high_phrasing": "the head drifts further side-to-side than most tour swings",
+      "glosses": {"sway": "sideways movement of the head or body away from the ball"}
+    },
+    "head_lift_max_pct": {
+      "label": "Head height change",
+      "plain_name": "how much the head moves up and down",
+      "event": "downswing",
+      "unit": "percent of body height",
+      "measures": "the most the head moves up or down during the swing, as a share of body size",
+      "why": "a steady head height helps the club return to the ball consistently",
+      "in_range_phrasing": "the head stays about as steady in height as a typical tour swing",
+      "out_low_phrasing": "the head moves less up-and-down than most tour swings",
+      "out_high_phrasing": "the head moves more up-and-down than most tour swings",
+      "glosses": {}
+    },
+    "left_arm_bend_top_deg": {
+      "label": "Lead-arm extension",
+      "plain_name": "how straight the lead arm is at the top",
+      "event": "top",
+      "unit": "degrees",
+      "measures": "how straight or bent the lead arm is at the top of the backswing",
+      "why": "lead-arm extension relates to the width and structure of the backswing",
+      "in_range_phrasing": "the lead arm is about as extended at the top as a typical tour swing",
+      "out_low_phrasing": "the lead arm is more bent at the top than most tour swings",
+      "out_high_phrasing": null,
+      "glosses": {"lead arm": "the arm closer to the target (left arm for a right-handed golfer)", "width": "how far the hands and club stay from the body during the backswing"}
+    },
+    "right_arm_bend_top_deg": {
+      "label": "Trail-arm position",
+      "plain_name": "how the trail arm folds at the top",
+      "event": "top",
+      "unit": "degrees",
+      "measures": "how much the trail arm folds at the top of the backswing",
+      "why": "the trail arm folds to support the club at the top of the backswing",
+      "in_range_phrasing": "the trail arm folds about as much at the top as a typical tour swing",
+      "out_low_phrasing": "the trail arm folds less at the top than most tour swings",
+      "out_high_phrasing": "the trail arm folds more at the top than most tour swings",
+      "glosses": {"trail arm": "the arm farther from the target (right arm for a right-handed golfer)"}
+    },
+    "lead_knee_flex_address_deg": {
+      "label": "Lead-knee flex at address",
+      "plain_name": "how bent the lead knee is at setup",
+      "event": "address",
+      "unit": "degrees",
+      "measures": "how much the lead knee is bent at the setup position",
+      "why": "knee flex at setup is part of an athletic, balanced stance",
+      "in_range_phrasing": "the lead knee is bent about as much at setup as a typical tour swing",
+      "out_low_phrasing": "the lead knee is more bent at setup than most tour swings",
+      "out_high_phrasing": "the lead knee is straighter at setup than most tour swings",
+      "glosses": {"lead knee": "the knee closer to the target (left knee for a right-handed golfer)", "flex": "how much a joint is bent"}
+    },
+    "lead_knee_flex_impact_deg": {
+      "label": "Lead-knee flex at impact",
+      "plain_name": "how bent the lead knee is at impact",
+      "event": "impact",
+      "unit": "degrees",
+      "measures": "how much the lead knee is bent at the moment of impact",
+      "why": "many tour players straighten the lead leg into impact as part of releasing power",
+      "in_range_phrasing": "the lead knee is bent about as much at impact as a typical tour swing",
+      "out_low_phrasing": "the lead knee is more bent at impact than most tour swings",
+      "out_high_phrasing": "the lead knee is straighter at impact than most tour swings",
+      "glosses": {"lead knee": "the knee closer to the target (left knee for a right-handed golfer)"}
+    },
+    "hip_lateral_shift_pct": {
+      "label": "Weight shift",
+      "plain_name": "how much the hips slide toward the target",
+      "event": "impact",
+      "unit": "percent of body height",
+      "measures": "how far the hips slide sideways toward the target from setup to impact, as a share of body size",
+      "why": "some sideways hip drive toward the target is part of transferring weight through the ball",
+      "in_range_phrasing": "the hips slide toward the target about as much as a typical tour swing",
+      "out_low_phrasing": "the hips slide toward the target less than most tour swings",
+      "out_high_phrasing": "the hips slide sideways more than most tour swings",
+      "glosses": {"weight shift": "moving body weight toward the target through the downswing"}
+    },
+    "tempo_ratio": {
+      "label": "Tempo (backswing : downswing)",
+      "plain_name": "the rhythm of the swing",
+      "event": "overall",
+      "unit": "ratio",
+      "measures": "how long the backswing takes compared with the downswing",
+      "why": "many tour swings settle near a 3-to-1 backswing-to-downswing rhythm",
+      "in_range_phrasing": "the swing rhythm is close to the tour-typical pace",
+      "out_low_phrasing": "the backswing-to-downswing rhythm is quicker than the roughly 3-to-1 tour norm",
+      "out_high_phrasing": "the backswing is longer relative to the downswing than the roughly 3-to-1 tour norm",
+      "glosses": {"tempo": "the timing and rhythm of the swing", "3-to-1": "a backswing about three times as long as the downswing"}
+    }
+  }
+}

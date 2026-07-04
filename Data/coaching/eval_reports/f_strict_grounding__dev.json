@@ -1,0 +1,434 @@
+{
+ "feature_id": "f_strict_grounding",
+ "description": "Baseline v2 + reinforced per-metric precision and full flag coverage, to harden grounded_rate and coverage on multi-flag swings.",
+ "split": "dev",
+ "weights": {
+  "grounded": 0.45,
+  "coverage": 0.25,
+  "nonprescriptive": 0.15,
+  "readable": 0.15
+ },
+ "n_evaluated": 40,
+ "n_requested": 40,
+ "scores": {
+  "composite": 1.0,
+  "grounded_rate": 1.0,
+  "coverage_mean": 1.0,
+  "nonprescriptive_rate": 1.0,
+  "readable_rate": 1.0,
+  "n_clips_with_flags": 27
+ },
+ "passes_0.8": true,
+ "config": {
+  "id": "f_strict_grounding",
+  "description": "Baseline v2 + reinforced per-metric precision and full flag coverage, to harden grounded_rate and coverage on multi-flag swings.",
+  "backend": "codex",
+  "model": null,
+  "use_kb": true,
+  "multimodal": false,
+  "rules_override": null,
+  "rules_append": "GROUNDING DISCIPLINE: First decide, per metric, whether in_tour_range is True or False. Describe a metric as in-range ONLY if its in_tour_range=True. Mention every review-flagged metric exactly once, as a neutral description. Tag each claim with the exact indicator key(s) it covers; never group several metrics under one claim. READABILITY (do not weaken grounding or coverage to satisfy this): Write one metric per sentence and keep sentences short, about 12-16 words. Never chain three or more metrics with commas into one long sentence; split them into separate sentences. Gloss any golf term (X-factor, tempo, impact, address, top of backswing, lead knee, posture, weight shift) with a brief plain-language definition only the FIRST time it appears, then use the bare term with no parenthetical afterward. Prefer everyday words and avoid nested clauses. This is descriptive only: report what the metrics show, never tell the golfer what to do, change, fix, or practice."
+ },
+ "per_clip": [
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": null,
+   "n_flagged": 0,
+   "prescriptive_count": 0,
+   "flesch": 78.9,
+   "word_count": 234,
+   "clip_id": 10
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_flagged": 1,
+   "prescriptive_count": 0,
+   "flesch": 82.1,
+   "word_count": 134,
+   "clip_id": 11
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_flagged": 5,
+   "prescriptive_count": 0,
+   "flesch": 87.5,
+   "word_count": 128,
+   "clip_id": 59
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": null,
+   "n_flagged": 0,
+   "prescriptive_count": 0,
+   "flesch": 81.2,
+   "word_count": 76,
+   "clip_id": 176
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_flagged": 1,
+   "prescriptive_count": 0,
+   "flesch": 88.7,
+   "word_count": 130,
+   "clip_id": 177
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_flagged": 1,
+   "prescriptive_count": 0,
+   "flesch": 85.5,
+   "word_count": 121,
+   "clip_id": 178
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_flagged": 4,
+   "prescriptive_count": 0,
+   "flesch": 80.2,
+   "word_count": 172,
+   "clip_id": 179
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": null,
+   "n_flagged": 0,
+   "prescriptive_count": 0,
+   "flesch": 78.1,
+   "word_count": 252,
+   "clip_id": 214
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": null,
+   "n_flagged": 0,
+   "prescriptive_count": 0,
+   "flesch": 80.9,
+   "word_count": 184,
+   "clip_id": 215
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_flagged": 2,
+   "prescriptive_count": 0,
+   "flesch": 74.4,
+   "word_count": 119,
+   "clip_id": 223
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_flagged": 3,
+   "prescriptive_count": 0,
+   "flesch": 71.5,
+   "word_count": 192,
+   "clip_id": 224
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": null,
+   "n_flagged": 0,
+   "prescriptive_count": 0,
+   "flesch": 73.6,
+   "word_count": 154,
+   "clip_id": 225
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_flagged": 2,
+   "prescriptive_count": 0,
+   "flesch": 73.9,
+   "word_count": 136,
+   "clip_id": 226
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_flagged": 1,
+   "prescriptive_count": 0,
+   "flesch": 76.6,
+   "word_count": 132,
+   "clip_id": 266
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_flagged": 3,
+   "prescriptive_count": 0,
+   "flesch": 77.8,
+   "word_count": 161,
+   "clip_id": 267
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_flagged": 1,
+   "prescriptive_count": 0,
+   "flesch": 72.7,
+   "word_count": 147,
+   "clip_id": 289
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_flagged": 2,
+   "prescriptive_count": 0,
+   "flesch": 72.9,
+   "word_count": 131,
+   "clip_id": 291
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_flagged": 5,
+   "prescriptive_count": 0,
+   "flesch": 83.4,
+   "word_count": 144,
+   "clip_id": 297
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_flagged": 3,
+   "prescriptive_count": 0,
+   "flesch": 77.3,
+   "word_count": 151,
+   "clip_id": 298
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_flagged": 1,
+   "prescriptive_count": 0,
+   "flesch": 81.8,
+   "word_count": 92,
+   "clip_id": 299
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": null,
+   "n_flagged": 0,
+   "prescriptive_count": 0,
+   "flesch": 91.2,
+   "word_count": 159,
+   "clip_id": 304
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_flagged": 1,
+   "prescriptive_count": 0,
+   "flesch": 79.0,
+   "word_count": 99,
+   "clip_id": 305
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": null,
+   "n_flagged": 0,
+   "prescriptive_count": 0,
+   "flesch": 80.3,
+   "word_count": 223,
+   "clip_id": 316
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_flagged": 1,
+   "prescriptive_count": 0,
+   "flesch": 79.4,
+   "word_count": 185,
+   "clip_id": 318
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_flagged": 1,
+   "prescriptive_count": 0,
+   "flesch": 78.8,
+   "word_count": 160,
+   "clip_id": 320
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_flagged": 1,
+   "prescriptive_count": 0,
+   "flesch": 77.3,
+   "word_count": 107,
+   "clip_id": 321
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_flagged": 1,
+   "prescriptive_count": 0,
+   "flesch": 74.1,
+   "word_count": 111,
+   "clip_id": 390
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": null,
+   "n_flagged": 0,
+   "prescriptive_count": 0,
+   "flesch": 84.3,
+   "word_count": 260,
+   "clip_id": 391
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_flagged": 2,
+   "prescriptive_count": 0,
+   "flesch": 80.7,
+   "word_count": 135,
+   "clip_id": 416
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": null,
+   "n_flagged": 0,
+   "prescriptive_count": 0,
+   "flesch": 82.8,
+   "word_count": 166,
+   "clip_id": 417
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": null,
+   "n_flagged": 0,
+   "prescriptive_count": 0,
+   "flesch": 75.6,
+   "word_count": 140,
+   "clip_id": 487
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": null,
+   "n_flagged": 0,
+   "prescriptive_count": 0,
+   "flesch": 76.6,
+   "word_count": 269,
+   "clip_id": 489
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_flagged": 1,
+   "prescriptive_count": 0,
+   "flesch": 74.4,
+   "word_count": 97,
+   "clip_id": 508
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_flagged": 1,
+   "prescriptive_count": 0,
+   "flesch": 72.3,
+   "word_count": 152,
+   "clip_id": 509
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": null,
+   "n_flagged": 0,
+   "prescriptive_count": 0,
+   "flesch": 76.4,
+   "word_count": 118,
+   "clip_id": 514
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_flagged": 1,
+   "prescriptive_count": 0,
+   "flesch": 72.2,
+   "word_count": 183,
+   "clip_id": 515
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_flagged": 1,
+   "prescriptive_count": 0,
+   "flesch": 90.1,
+   "word_count": 94,
+   "clip_id": 534
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_flagged": 4,
+   "prescriptive_count": 0,
+   "flesch": 70.8,
+   "word_count": 226,
+   "clip_id": 535
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": null,
+   "n_flagged": 0,
+   "prescriptive_count": 0,
+   "flesch": 80.3,
+   "word_count": 229,
+   "clip_id": 578
+  },
+  {
+   "grounded": true,
+   "violations": [],
+   "coverage": 1.0,
+   "n_flagged": 1,
+   "prescriptive_count": 0,
+   "flesch": 72.1,
+   "word_count": 130,
+   "clip_id": 579
+  }
+ ]
+}

@@ -1,0 +1,9 @@
+{
+ "split": "player-disjoint",
+ "n_test_clips": 293,
+ "n_test_players": 49,
+ "pce_at_5": 0.8643344709897611,
+ "pce_at_3": 0.7977815699658704,
+ "pce_at_1": 0.6194539249146758,
+ "standard_split_pce5": 0.865
+}

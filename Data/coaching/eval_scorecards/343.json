@@ -1,0 +1,184 @@
+{
+ "meta": {
+  "clip_id": 343,
+  "player": "HEE-WON HAN",
+  "club": "driver",
+  "view": "down-the-line"
+ },
+ "events": {
+  "address": 34,
+  "toe_up": 52,
+  "mid_backswing": 56,
+  "top": 65,
+  "mid_downswing": 70,
+  "impact": 74,
+  "mid_follow_through": 77,
+  "finish": 97
+ },
+ "indicators": {
+  "shoulder_turn_top_deg": {
+   "value": 110.06,
+   "percentile": 93,
+   "pro_median": 53.7,
+   "pro_band": [
+    37.5,
+    68.1
+   ],
+   "confidence_tier": "med"
+  },
+  "hip_turn_top_deg": {
+   "value": 64.64,
+   "percentile": 92,
+   "pro_median": 30.5,
+   "pro_band": [
+    21.2,
+    40.6
+   ],
+   "confidence_tier": "high"
+  },
+  "x_factor_top_deg": {
+   "value": 45.42,
+   "percentile": 92,
+   "pro_median": 21.9,
+   "pro_band": [
+    9.7,
+    30.8
+   ],
+   "confidence_tier": "med"
+  },
+  "hip_turn_impact_deg": {
+   "value": 55.69,
+   "percentile": 95,
+   "pro_median": 16.3,
+   "pro_band": [
+    7.1,
+    26.3
+   ],
+   "confidence_tier": "high"
+  },
+  "spine_tilt_address_deg": {
+   "value": 25.41,
+   "percentile": 38,
+   "pro_median": 27.6,
+   "pro_band": [
+    22.9,
+    31.7
+   ],
+   "confidence_tier": "high"
+  },
+  "spine_tilt_impact_deg": {
+   "value": 15.42,
+   "percentile": 16,
+   "pro_median": 23.4,
+   "pro_band": [
+    18.3,
+    28.4
+   ],
+   "confidence_tier": "med"
+  },
+  "posture_loss_deg": {
+   "value": 9.99,
+   "percentile": 79,
+   "pro_median": 5.3,
+   "pro_band": [
+    2.4,
+    8.9
+   ],
+   "confidence_tier": "med"
+  },
+  "head_sway_max_pct": {
+   "value": 31.06,
+   "percentile": 46,
+   "pro_median": 32.5,
+   "pro_band": [
+    23.6,
+    44.2
+   ],
+   "confidence_tier": "med"
+  },
+  "head_lift_max_pct": {
+   "value": 11.09,
+   "percentile": 22,
+   "pro_median": 16.5,
+   "pro_band": [
+    11.9,
+    23.2
+   ],
+   "confidence_tier": "med"
+  },
+  "left_arm_bend_top_deg": {
+   "value": 134.14,
+   "percentile": 60,
+   "pro_median": 128.1,
+   "pro_band": [
+    110.8,
+    143.5
+   ],
+   "confidence_tier": "low"
+  },
+  "right_arm_bend_top_deg": {
+   "value": 111.08,
+   "percentile": 46,
+   "pro_median": 114.1,
+   "pro_band": [
+    97.2,
+    129.0
+   ],
+   "confidence_tier": "low"
+  },
+  "lead_knee_flex_address_deg": {
+   "value": 132.32,
+   "percentile": 9,
+   "pro_median": 164.8,
+   "pro_band": [
+    158.6,
+    170.3
+   ],
+   "confidence_tier": "med"
+  },
+  "lead_knee_flex_impact_deg": {
+   "value": 148.01,
+   "percentile": 15,
+   "pro_median": 160.0,
+   "pro_band": [
+    152.6,
+    166.2
+   ],
+   "confidence_tier": "med"
+  },
+  "hip_lateral_shift_pct": {
+   "value": 0.69,
+   "percentile": 37,
+   "pro_median": 0.9,
+   "pro_band": [
+    0.5,
+    1.3
+   ],
+   "confidence_tier": "high"
+  },
+  "tempo_ratio": {
+   "value": 3.44,
+   "percentile": 52,
+   "pro_median": 3.4,
+   "pro_band": [
+    3.0,
+    4.1
+   ],
+   "confidence_tier": "high"
+  }
+ },
+ "feedback": [
+  {
+   "indicator": "x_factor_top_deg",
+   "label": "X-factor (shoulder-hip separation)",
+   "event": "top",
+   "value": 45.4,
+   "percentile": 92,
+   "pro_median": 21.9,
+   "confidence_tier": "med",
+   "message": "Very high shoulder-hip separation \u2014 more coil than most; watch for lower-back strain.",
+   "severity": "review"
+  }
+ ],
+ "summary": "1 indicator(s) fall outside the typical tour range \u2014 see notes below."
+}

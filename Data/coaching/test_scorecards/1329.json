@@ -1,0 +1,217 @@
+{
+ "meta": {
+  "clip_id": 1329,
+  "player": "AI MIYAZATO",
+  "club": "driver",
+  "view": "face-on"
+ },
+ "events": {
+  "address": 50,
+  "toe_up": 81,
+  "mid_backswing": 91,
+  "top": 112,
+  "mid_downswing": 117,
+  "impact": 121,
+  "mid_follow_through": 123,
+  "finish": 144
+ },
+ "indicators": {
+  "shoulder_turn_top_deg": {
+   "value": 2.79,
+   "percentile": 1,
+   "pro_median": 53.7,
+   "pro_band": [
+    37.5,
+    68.1
+   ],
+   "confidence_tier": "med"
+  },
+  "hip_turn_top_deg": {
+   "value": 10.58,
+   "percentile": 9,
+   "pro_median": 30.5,
+   "pro_band": [
+    21.2,
+    40.6
+   ],
+   "confidence_tier": "high"
+  },
+  "x_factor_top_deg": {
+   "value": -7.79,
+   "percentile": 5,
+   "pro_median": 21.9,
+   "pro_band": [
+    9.7,
+    30.8
+   ],
+   "confidence_tier": "med"
+  },
+  "hip_turn_impact_deg": {
+   "value": 9.62,
+   "percentile": 32,
+   "pro_median": 16.3,
+   "pro_band": [
+    7.1,
+    26.3
+   ],
+   "confidence_tier": "high"
+  },
+  "spine_tilt_address_deg": {
+   "value": 18.75,
+   "percentile": 11,
+   "pro_median": 27.6,
+   "pro_band": [
+    22.9,
+    31.7
+   ],
+   "confidence_tier": "high"
+  },
+  "spine_tilt_impact_deg": {
+   "value": 10.88,
+   "percentile": 8,
+   "pro_median": 23.4,
+   "pro_band": [
+    18.3,
+    28.4
+   ],
+   "confidence_tier": "med"
+  },
+  "posture_loss_deg": {
+   "value": 7.86,
+   "percentile": 68,
+   "pro_median": 5.3,
+   "pro_band": [
+    2.4,
+    8.9
+   ],
+   "confidence_tier": "med"
+  },
+  "head_sway_max_pct": {
+   "value": 56.84,
+   "percentile": 88,
+   "pro_median": 32.5,
+   "pro_band": [
+    23.6,
+    44.2
+   ],
+   "confidence_tier": "med"
+  },
+  "head_lift_max_pct": {
+   "value": 20.01,
+   "percentile": 63,
+   "pro_median": 16.5,
+   "pro_band": [
+    11.9,
+    23.2
+   ],
+   "confidence_tier": "med"
+  },
+  "left_arm_bend_top_deg": {
+   "value": 77.27,
+   "percentile": 8,
+   "pro_median": 128.1,
+   "pro_band": [
+    110.8,
+    143.5
+   ],
+   "confidence_tier": "low"
+  },
+  "right_arm_bend_top_deg": {
+   "value": 109.34,
+   "percentile": 43,
+   "pro_median": 114.1,
+   "pro_band": [
+    97.2,
+    129.0
+   ],
+   "confidence_tier": "low"
+  },
+  "lead_knee_flex_address_deg": {
+   "value": 150.7,
+   "percentile": 10,
+   "pro_median": 164.8,
+   "pro_band": [
+    158.6,
+    170.3
+   ],
+   "confidence_tier": "med"
+  },
+  "lead_knee_flex_impact_deg": {
+   "value": 165.36,
+   "percentile": 72,
+   "pro_median": 160.0,
+   "pro_band": [
+    152.6,
+    166.2
+   ],
+   "confidence_tier": "med"
+  },
+  "hip_lateral_shift_pct": {
+   "value": 1.15,
+   "percentile": 66,
+   "pro_median": 0.9,
+   "pro_band": [
+    0.5,
+    1.3
+   ],
+   "confidence_tier": "high"
+  },
+  "tempo_ratio": {
+   "value": 6.89,
+   "percentile": 95,
+   "pro_median": 3.4,
+   "pro_band": [
+    3.0,
+    4.1
+   ],
+   "confidence_tier": "high"
+  }
+ },
+ "feedback": [
+  {
+   "indicator": "shoulder_turn_top_deg",
+   "label": "Shoulder turn",
+   "event": "top",
+   "value": 2.8,
+   "percentile": 1,
+   "pro_median": 53.7,
+   "confidence_tier": "med",
+   "message": "Restricted shoulder turn at the top \u2014 less than most tour swings (loses coil/power).",
+   "severity": "review"
+  },
+  {
+   "indicator": "x_factor_top_deg",
+   "label": "X-factor (shoulder-hip separation)",
+   "event": "top",
+   "value": -7.8,
+   "percentile": 5,
+   "pro_median": 21.9,
+   "confidence_tier": "med",
+   "message": "Low shoulder-hip separation at the top \u2014 less stored coil than typical tour swings.",
+   "severity": "review"
+  },
+  {
+   "indicator": "left_arm_bend_top_deg",
+   "label": "Lead-arm extension",
+   "event": "top",
+   "value": 77.3,
+   "percentile": 8,
+   "pro_median": 128.1,
+   "confidence_tier": "low",
+   "message": "(low-confidence measurement) Lead arm more bent at the top than typical tour swings (less width/structure).",
+   "severity": "low_confidence"
+  },
+  {
+   "indicator": "tempo_ratio",
+   "label": "Tempo (backswing : downswing)",
+   "event": "overall",
+   "value": 6.9,
+   "percentile": 95,
+   "pro_median": 3.4,
+   "confidence_tier": "high",
+   "message": "Slower / longer backswing relative to downswing than the ~3:1 tour norm.",
+   "severity": "review"
+  }
+ ],
+ "summary": "3 indicator(s) fall outside the typical tour range \u2014 see notes below."
+}

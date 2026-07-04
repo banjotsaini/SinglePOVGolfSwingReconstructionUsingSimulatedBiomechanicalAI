@@ -1,0 +1,837 @@
+{
+ "feature_id": "qa_readable",
+ "task": "qa",
+ "split": "dev",
+ "weights": {
+  "decision": 0.4,
+  "faithful": 0.3,
+  "clean": 0.15,
+  "readable": 0.15
+ },
+ "n_evaluated": 80,
+ "n_requested": 80,
+ "scores": {
+  "composite": 0.9925,
+  "decision_accuracy": 1.0,
+  "answer_faithfulness": 1.0,
+  "clean_rate": 1.0,
+  "readable_rate": 0.95,
+  "decision_by_category": {
+   "refuse_scope": 1.0,
+   "answer": 1.0,
+   "refuse_lowconf": 1.0,
+   "refuse_unmeasured": 1.0
+  }
+ },
+ "passes_0.8": true,
+ "config": {
+  "id": "qa_readable",
+  "description": "Swing Q&A + readability: keep answers and refusals short and plain, without weakening the answerable/refuse decision or faithfulness.",
+  "backend": "codex",
+  "model": null,
+  "rules_override": null,
+  "rules_append": "READABILITY: Answer in 1-2 short sentences, each under about 15 words. Use everyday words; gloss any golf term briefly the first time. Keep refusals short and kind (one sentence). Do not weaken the answerable/refuse decision or invent anything to satisfy this."
+ },
+ "per_item": [
+  {
+   "gold": "refuse_scope",
+   "decision_correct": true,
+   "faithful": null,
+   "leak": false,
+   "prescriptive": false,
+   "flesch": 80.1,
+   "answerable": false,
+   "refusal_reason": "out_of_scope"
+  },
+  {
+   "gold": "refuse_scope",
+   "decision_correct": true,
+   "faithful": null,
+   "leak": false,
+   "prescriptive": false,
+   "flesch": 84.5,
+   "answerable": false,
+   "refusal_reason": "out_of_scope"
+  },
+  {
+   "gold": "answer",
+   "decision_correct": true,
+   "faithful": true,
+   "leak": false,
+   "prescriptive": false,
+   "flesch": 84.5,
+   "answerable": true,
+   "refusal_reason": "none"
+  },
+  {
+   "gold": "answer",
+   "decision_correct": true,
+   "faithful": true,
+   "leak": false,
+   "prescriptive": false,
+   "flesch": 92.6,
+   "answerable": true,
+   "refusal_reason": "none"
+  },
+  {
+   "gold": "answer",
+   "decision_correct": true,
+   "faithful": true,
+   "leak": false,
+   "prescriptive": false,
+   "flesch": 98.3,
+   "answerable": true,
+   "refusal_reason": "none"
+  },
+  {
+   "gold": "answer",
+   "decision_correct": true,
+   "faithful": true,
+   "leak": false,
+   "prescriptive": false,
+   "flesch": 102.6,
+   "answerable": true,
+   "refusal_reason": "none"
+  },
+  {
+   "gold": "answer",
+   "decision_correct": true,
+   "faithful": true,
+   "leak": false,
+   "prescriptive": false,
+   "flesch": 93.0,
+   "answerable": true,
+   "refusal_reason": "none"
+  },
+  {
+   "gold": "refuse_lowconf",
+   "decision_correct": true,
+   "faithful": null,
+   "leak": false,
+   "prescriptive": false,
+   "flesch": 62.9,
+   "answerable": false,
+   "refusal_reason": "low_confidence"
+  },
+  {
+   "gold": "refuse_unmeasured",
+   "decision_correct": true,
+   "faithful": null,
+   "leak": false,
+   "prescriptive": false,
+   "flesch": 73.2,
+   "answerable": false,
+   "refusal_reason": "unmeasured"
+  },
+  {
+   "gold": "refuse_unmeasured",
+   "decision_correct": true,
+   "faithful": null,
+   "leak": false,
+   "prescriptive": false,
+   "flesch": 84.9,
+   "answerable": false,
+   "refusal_reason": "unmeasured"
+  },
+  {
+   "gold": "refuse_lowconf",
+   "decision_correct": true,
+   "faithful": null,
+   "leak": false,
+   "prescriptive": false,
+   "flesch": 60.7,
+   "answerable": false,
+   "refusal_reason": "low_confidence"
+  },
+  {
+   "gold": "answer",
+   "decision_correct": true,
+   "faithful": true,
+   "leak": false,
+   "prescriptive": false,
+   "flesch": 97.0,
+   "answerable": true,
+   "refusal_reason": "none"
+  },
+  {
+   "gold": "answer",
+   "decision_correct": true,
+   "faithful": true,
+   "leak": false,
+   "prescriptive": false,
+   "flesch": 88.1,
+   "answerable": true,
+   "refusal_reason": "none"
+  },
+  {
+   "gold": "answer",
+   "decision_correct": true,
+   "faithful": true,
+   "leak": false,
+   "prescriptive": false,
+   "flesch": 103.3,
+   "answerable": true,
+   "refusal_reason": "none"
+  },
+  {
+   "gold": "answer",
+   "decision_correct": true,
+   "faithful": true,
+   "leak": false,
+   "prescriptive": false,
+   "flesch": 85.9,
+   "answerable": true,
+   "refusal_reason": "none"
+  },
+  {
+   "gold": "refuse_unmeasured",
+   "decision_correct": true,
+   "faithful": null,
+   "leak": false,
+   "prescriptive": false,
+   "flesch": 81.9,
+   "answerable": false,
+   "refusal_reason": "unmeasured"
+  },
+  {
+   "gold": "answer",
+   "decision_correct": true,
+   "faithful": true,
+   "leak": false,
+   "prescriptive": false,
+   "flesch": 95.2,
+   "answerable": true,
+   "refusal_reason": "none"
+  },
+  {
+   "gold": "refuse_lowconf",
+   "decision_correct": true,
+   "faithful": null,
+   "leak": false,
+   "prescriptive": false,
+   "flesch": 69.0,
+   "answerable": false,
+   "refusal_reason": "low_confidence"
+  },
+  {
+   "gold": "refuse_lowconf",
+   "decision_correct": true,
+   "faithful": null,
+   "leak": false,
+   "prescriptive": false,
+   "flesch": 58.4,
+   "answerable": false,
+   "refusal_reason": "low_confidence"
+  },
+  {
+   "gold": "refuse_scope",
+   "decision_correct": true,
+   "faithful": null,
+   "leak": false,
+   "prescriptive": false,
+   "flesch": 74.8,
+   "answerable": false,
+   "refusal_reason": "out_of_scope"
+  },
+  {
+   "gold": "refuse_unmeasured",
+   "decision_correct": true,
+   "faithful": null,
+   "leak": false,
+   "prescriptive": false,
+   "flesch": 88.9,
+   "answerable": false,
+   "refusal_reason": "unmeasured"
+  },
+  {
+   "gold": "refuse_lowconf",
+   "decision_correct": true,
+   "faithful": null,
+   "leak": false,
+   "prescriptive": false,
+   "flesch": 66.2,
+   "answerable": false,
+   "refusal_reason": "low_confidence"
+  },
+  {
+   "gold": "refuse_unmeasured",
+   "decision_correct": true,
+   "faithful": null,
+   "leak": false,
+   "prescriptive": false,
+   "flesch": 73.2,
+   "answerable": false,
+   "refusal_reason": "unmeasured"
+  },
+  {
+   "gold": "answer",
+   "decision_correct": true,
+   "faithful": true,
+   "leak": false,
+   "prescriptive": false,
+   "flesch": 103.3,
+   "answerable": true,
+   "refusal_reason": "none"
+  },
+  {
+   "gold": "refuse_lowconf",
+   "decision_correct": true,
+   "faithful": null,
+   "leak": false,
+   "prescriptive": false,
+   "flesch": 60.2,
+   "answerable": false,
+   "refusal_reason": "low_confidence"
+  },
+  {
+   "gold": "refuse_scope",
+   "decision_correct": true,
+   "faithful": null,
+   "leak": false,
+   "prescriptive": false,
+   "flesch": 67.5,
+   "answerable": false,
+   "refusal_reason": "out_of_scope"
+  },
+  {
+   "gold": "answer",
+   "decision_correct": true,
+   "faithful": true,
+   "leak": false,
+   "prescriptive": false,
+   "flesch": 95.5,
+   "answerable": true,
+   "refusal_reason": "none"
+  },
+  {
+   "gold": "answer",
+   "decision_correct": true,
+   "faithful": true,
+   "leak": false,
+   "prescriptive": false,
+   "flesch": 93.5,
+   "answerable": true,
+   "refusal_reason": "none"
+  },
+  {
+   "gold": "answer",
+   "decision_correct": true,
+   "faithful": true,
+   "leak": false,
+   "prescriptive": false,
+   "flesch": 83.8,
+   "answerable": true,
+   "refusal_reason": "none"
+  },
+  {
+   "gold": "answer",
+   "decision_correct": true,
+   "faithful": true,
+   "leak": false,
+   "prescriptive": false,
+   "flesch": 93.5,
+   "answerable": true,
+   "refusal_reason": "none"
+  },
+  {
+   "gold": "refuse_unmeasured",
+   "decision_correct": true,
+   "faithful": null,
+   "leak": false,
+   "prescriptive": false,
+   "flesch": 70.1,
+   "answerable": false,
+   "refusal_reason": "unmeasured"
+  },
+  {
+   "gold": "refuse_unmeasured",
+   "decision_correct": true,
+   "faithful": null,
+   "leak": false,
+   "prescriptive": false,
+   "flesch": 81.9,
+   "answerable": false,
+   "refusal_reason": "unmeasured"
+  },
+  {
+   "gold": "answer",
+   "decision_correct": true,
+   "faithful": true,
+   "leak": false,
+   "prescriptive": false,
+   "flesch": 96.2,
+   "answerable": true,
+   "refusal_reason": "none"
+  },
+  {
+   "gold": "refuse_unmeasured",
+   "decision_correct": true,
+   "faithful": null,
+   "leak": false,
+   "prescriptive": false,
+   "flesch": 83.0,
+   "answerable": false,
+   "refusal_reason": "unmeasured"
+  },
+  {
+   "gold": "refuse_unmeasured",
+   "decision_correct": true,
+   "faithful": null,
+   "leak": false,
+   "prescriptive": false,
+   "flesch": 81.9,
+   "answerable": false,
+   "refusal_reason": "unmeasured"
+  },
+  {
+   "gold": "answer",
+   "decision_correct": true,
+   "faithful": true,
+   "leak": false,
+   "prescriptive": false,
+   "flesch": 90.9,
+   "answerable": true,
+   "refusal_reason": "none"
+  },
+  {
+   "gold": "answer",
+   "decision_correct": true,
+   "faithful": true,
+   "leak": false,
+   "prescriptive": false,
+   "flesch": 82.5,
+   "answerable": true,
+   "refusal_reason": "none"
+  },
+  {
+   "gold": "refuse_lowconf",
+   "decision_correct": true,
+   "faithful": null,
+   "leak": false,
+   "prescriptive": false,
+   "flesch": 55.2,
+   "answerable": false,
+   "refusal_reason": "low_confidence"
+  },
+  {
+   "gold": "answer",
+   "decision_correct": true,
+   "faithful": true,
+   "leak": false,
+   "prescriptive": false,
+   "flesch": 88.9,
+   "answerable": true,
+   "refusal_reason": "none"
+  },
+  {
+   "gold": "refuse_scope",
+   "decision_correct": true,
+   "faithful": null,
+   "leak": false,
+   "prescriptive": false,
+   "flesch": 79.6,
+   "answerable": false,
+   "refusal_reason": "out_of_scope"
+  },
+  {
+   "gold": "refuse_lowconf",
+   "decision_correct": true,
+   "faithful": null,
+   "leak": false,
+   "prescriptive": false,
+   "flesch": 62.9,
+   "answerable": false,
+   "refusal_reason": "low_confidence"
+  },
+  {
+   "gold": "answer",
+   "decision_correct": true,
+   "faithful": true,
+   "leak": false,
+   "prescriptive": false,
+   "flesch": 102.8,
+   "answerable": true,
+   "refusal_reason": "none"
+  },
+  {
+   "gold": "answer",
+   "decision_correct": true,
+   "faithful": true,
+   "leak": false,
+   "prescriptive": false,
+   "flesch": 108.8,
+   "answerable": true,
+   "refusal_reason": "none"
+  },
+  {
+   "gold": "answer",
+   "decision_correct": true,
+   "faithful": true,
+   "leak": false,
+   "prescriptive": false,
+   "flesch": 90.9,
+   "answerable": true,
+   "refusal_reason": "none"
+  },
+  {
+   "gold": "refuse_unmeasured",
+   "decision_correct": true,
+   "faithful": null,
+   "leak": false,
+   "prescriptive": false,
+   "flesch": 83.0,
+   "answerable": false,
+   "refusal_reason": "unmeasured"
+  },
+  {
+   "gold": "refuse_scope",
+   "decision_correct": true,
+   "faithful": null,
+   "leak": false,
+   "prescriptive": false,
+   "flesch": 74.8,
+   "answerable": false,
+   "refusal_reason": "out_of_scope"
+  },
+  {
+   "gold": "answer",
+   "decision_correct": true,
+   "faithful": true,
+   "leak": false,
+   "prescriptive": false,
+   "flesch": 87.3,
+   "answerable": true,
+   "refusal_reason": "none"
+  },
+  {
+   "gold": "refuse_lowconf",
+   "decision_correct": true,
+   "faithful": null,
+   "leak": false,
+   "prescriptive": false,
+   "flesch": 59.1,
+   "answerable": false,
+   "refusal_reason": "low_confidence"
+  },
+  {
+   "gold": "refuse_unmeasured",
+   "decision_correct": true,
+   "faithful": null,
+   "leak": false,
+   "prescriptive": false,
+   "flesch": 77.8,
+   "answerable": false,
+   "refusal_reason": "unmeasured"
+  },
+  {
+   "gold": "refuse_lowconf",
+   "decision_correct": true,
+   "faithful": null,
+   "leak": false,
+   "prescriptive": false,
+   "flesch": 58.4,
+   "answerable": false,
+   "refusal_reason": "low_confidence"
+  },
+  {
+   "gold": "refuse_unmeasured",
+   "decision_correct": true,
+   "faithful": null,
+   "leak": false,
+   "prescriptive": false,
+   "flesch": 71.8,
+   "answerable": false,
+   "refusal_reason": "unmeasured"
+  },
+  {
+   "gold": "refuse_unmeasured",
+   "decision_correct": true,
+   "faithful": null,
+   "leak": false,
+   "prescriptive": false,
+   "flesch": 69.0,
+   "answerable": false,
+   "refusal_reason": "unmeasured"
+  },
+  {
+   "gold": "answer",
+   "decision_correct": true,
+   "faithful": true,
+   "leak": false,
+   "prescriptive": false,
+   "flesch": 86.5,
+   "answerable": true,
+   "refusal_reason": "none"
+  },
+  {
+   "gold": "answer",
+   "decision_correct": true,
+   "faithful": true,
+   "leak": false,
+   "prescriptive": false,
+   "flesch": 107.0,
+   "answerable": true,
+   "refusal_reason": "none"
+  },
+  {
+   "gold": "answer",
+   "decision_correct": true,
+   "faithful": true,
+   "leak": false,
+   "prescriptive": false,
+   "flesch": 103.7,
+   "answerable": true,
+   "refusal_reason": "none"
+  },
+  {
+   "gold": "refuse_unmeasured",
+   "decision_correct": true,
+   "faithful": null,
+   "leak": false,
+   "prescriptive": false,
+   "flesch": 81.9,
+   "answerable": false,
+   "refusal_reason": "unmeasured"
+  },
+  {
+   "gold": "refuse_unmeasured",
+   "decision_correct": true,
+   "faithful": null,
+   "leak": false,
+   "prescriptive": false,
+   "flesch": 77.8,
+   "answerable": false,
+   "refusal_reason": "unmeasured"
+  },
+  {
+   "gold": "answer",
+   "decision_correct": true,
+   "faithful": true,
+   "leak": false,
+   "prescriptive": false,
+   "flesch": 88.6,
+   "answerable": true,
+   "refusal_reason": "none"
+  },
+  {
+   "gold": "answer",
+   "decision_correct": true,
+   "faithful": true,
+   "leak": false,
+   "prescriptive": false,
+   "flesch": 106.2,
+   "answerable": true,
+   "refusal_reason": "none"
+  },
+  {
+   "gold": "refuse_unmeasured",
+   "decision_correct": true,
+   "faithful": null,
+   "leak": false,
+   "prescriptive": false,
+   "flesch": 81.9,
+   "answerable": false,
+   "refusal_reason": "unmeasured"
+  },
+  {
+   "gold": "answer",
+   "decision_correct": true,
+   "faithful": true,
+   "leak": false,
+   "prescriptive": false,
+   "flesch": 105.4,
+   "answerable": true,
+   "refusal_reason": "none"
+  },
+  {
+   "gold": "refuse_scope",
+   "decision_correct": true,
+   "faithful": null,
+   "leak": false,
+   "prescriptive": false,
+   "flesch": 80.1,
+   "answerable": false,
+   "refusal_reason": "out_of_scope"
+  },
+  {
+   "gold": "refuse_lowconf",
+   "decision_correct": true,
+   "faithful": null,
+   "leak": false,
+   "prescriptive": false,
+   "flesch": 65.7,
+   "answerable": false,
+   "refusal_reason": "low_confidence"
+  },
+  {
+   "gold": "refuse_unmeasured",
+   "decision_correct": true,
+   "faithful": null,
+   "leak": false,
+   "prescriptive": false,
+   "flesch": 78.2,
+   "answerable": false,
+   "refusal_reason": "unmeasured"
+  },
+  {
+   "gold": "answer",
+   "decision_correct": true,
+   "faithful": true,
+   "leak": false,
+   "prescriptive": false,
+   "flesch": 93.3,
+   "answerable": true,
+   "refusal_reason": "none"
+  },
+  {
+   "gold": "answer",
+   "decision_correct": true,
+   "faithful": true,
+   "leak": false,
+   "prescriptive": false,
+   "flesch": 80.8,
+   "answerable": true,
+   "refusal_reason": "none"
+  },
+  {
+   "gold": "answer",
+   "decision_correct": true,
+   "faithful": true,
+   "leak": false,
+   "prescriptive": false,
+   "flesch": 78.8,
+   "answerable": true,
+   "refusal_reason": "none"
+  },
+  {
+   "gold": "answer",
+   "decision_correct": true,
+   "faithful": true,
+   "leak": false,
+   "prescriptive": false,
+   "flesch": 93.9,
+   "answerable": true,
+   "refusal_reason": "none"
+  },
+  {
+   "gold": "answer",
+   "decision_correct": true,
+   "faithful": true,
+   "leak": false,
+   "prescriptive": false,
+   "flesch": 89.6,
+   "answerable": true,
+   "refusal_reason": "none"
+  },
+  {
+   "gold": "answer",
+   "decision_correct": true,
+   "faithful": true,
+   "leak": false,
+   "prescriptive": false,
+   "flesch": 89.9,
+   "answerable": true,
+   "refusal_reason": "none"
+  },
+  {
+   "gold": "answer",
+   "decision_correct": true,
+   "faithful": true,
+   "leak": false,
+   "prescriptive": false,
+   "flesch": 109.1,
+   "answerable": true,
+   "refusal_reason": "none"
+  },
+  {
+   "gold": "answer",
+   "decision_correct": true,
+   "faithful": true,
+   "leak": false,
+   "prescriptive": false,
+   "flesch": 85.9,
+   "answerable": true,
+   "refusal_reason": "none"
+  },
+  {
+   "gold": "refuse_scope",
+   "decision_correct": true,
+   "faithful": null,
+   "leak": false,
+   "prescriptive": false,
+   "flesch": 84.5,
+   "answerable": false,
+   "refusal_reason": "out_of_scope"
+  },
+  {
+   "gold": "refuse_lowconf",
+   "decision_correct": true,
+   "faithful": null,
+   "leak": false,
+   "prescriptive": false,
+   "flesch": 60.6,
+   "answerable": false,
+   "refusal_reason": "low_confidence"
+  },
+  {
+   "gold": "answer",
+   "decision_correct": true,
+   "faithful": true,
+   "leak": false,
+   "prescriptive": false,
+   "flesch": 106.2,
+   "answerable": true,
+   "refusal_reason": "none"
+  },
+  {
+   "gold": "answer",
+   "decision_correct": true,
+   "faithful": true,
+   "leak": false,
+   "prescriptive": false,
+   "flesch": 95.1,
+   "answerable": true,
+   "refusal_reason": "none"
+  },
+  {
+   "gold": "refuse_unmeasured",
+   "decision_correct": true,
+   "faithful": null,
+   "leak": false,
+   "prescriptive": false,
+   "flesch": 88.0,
+   "answerable": false,
+   "refusal_reason": "unmeasured"
+  },
+  {
+   "gold": "refuse_unmeasured",
+   "decision_correct": true,
+   "faithful": null,
+   "leak": false,
+   "prescriptive": false,
+   "flesch": 78.2,
+   "answerable": false,
+   "refusal_reason": "unmeasured"
+  },
+  {
+   "gold": "answer",
+   "decision_correct": true,
+   "faithful": true,
+   "leak": false,
+   "prescriptive": false,
+   "flesch": 105.5,
+   "answerable": true,
+   "refusal_reason": "none"
+  },
+  {
+   "gold": "refuse_unmeasured",
+   "decision_correct": true,
+   "faithful": null,
+   "leak": false,
+   "prescriptive": false,
+   "flesch": 80.3,
+   "answerable": false,
+   "refusal_reason": "unmeasured"
+  }
+ ]
+}
