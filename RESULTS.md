@@ -1,33 +1,32 @@
-# Single-POV Golf Swing Reconstruction — Model Evaluation & Pipeline
+# Single-POV Golf Swing Reconstruction — Results & Working Demo
 
-**Author:** Banjo &nbsp;•&nbsp; **Status:** baseline scoping complete, 2D + 3D pipeline working end-to-end
+**Author:** Banjo &nbsp;•&nbsp; **Status:** end-to-end MVP working — raw video → coaching scorecard
 
 ---
 
 ## TL;DR
 
-**Recommended pipeline**: MediaPipe Lite → MotionBERT-**Full** → One-Euro smoothing → BVH/CSV for UE5.
+The full "coaching-lite" pipeline runs from a raw phone video to an interpretive swing scorecard in one command:
 
 ```bash
-python Scripts/pipeline.py path/to/swing.mp4 \
-    --backbone mediapipe_lite \
-    --lifter motionbert_full \
-    --smooth oneeuro
+python Scripts/demo.py path/to/swing.mp4
 ```
 
-That produces a folder of UE5-ingestible files for Team 2 (`Data/handoff/<stem>/`).
+Chain: **MediaPipe Lite (2D) → MotionBERT-Full (3D) → One-Euro smoothing → trained 1D-CNN event detector → 15 biomechanical indicators → coaching scorecard + UE5 handoff files.**
 
 | Question | Answer |
 |---|---|
 | Best 2D backbone alone? | **MediaPipe Lite** (PCE@5 = 0.090, 107 FPS CPU, 3 MB) |
-| Best end-to-end (2D + 3D)? | **MediaPipe Lite + MotionBERT-Full** (PCE@5 = **0.170**, 6,900 FPS combined) |
-| What does the team get? | 2D landmarks CSV, 3D landmarks CSV, BVH mocap file, self-contained 3D Three.js HTML preview, h264 overlay MP4 |
+| Best 2D+3D pose pipeline? | **MediaPipe Lite + MotionBERT-Full** (PCE@5 = 0.170, 6,900 FPS) |
+| **Best swing-event detection?** | **Trained 1D-CNN on MotionBERT-Full 3D → PCE@5 = 0.865** (held-out test, beats the GolfDB SwingNet paper's ~0.76) |
+| What does the team get per clip? | Coaching scorecard (PNG + JSON), 3D landmark CSV, BVH mocap, 3D HTML viewer, 2D overlay MP4 |
 
-The biggest surprises in the data:
-1. **MotionBERT-Full nearly doubles PCE.** PCE@5 jumps from 0.090 (MediaPipe Lite alone) → 0.101 (+ MotionBERT-Lite) → **0.170 (+ MotionBERT-Full)**. The temporal-transformer 3D lifter is the single biggest accuracy win we found. And it's still 64× faster than the cheapest 2D model (6,900 FPS).
-2. **Cheap models beat expensive ones — on the 2D side.** MediaPipe Lite beats MediaPipe Heavy on PCE@5 by 73%. MoveNet Lightning beats MoveNet Thunder by 47%. The original coworker baseline (`pose_landmarker_heavy.task`) is actually the *worst* MediaPipe variant for golf events.
-3. **The full pipeline is essentially free post-2D.** Adding MotionBERT-Full on top of cached 2D processes all 1,400 GolfDB clips in 1.5 minutes (6,900 FPS amortized). Even Full has lower compute than every 2D backbone.
-4. **Smoothing cuts jitter by half before UE5 sees it.** One-Euro filter + bone-length lock takes mean acceleration from 0.0041 → 0.0020 on demo clip.
+The headline results, in order of impact:
+
+1. **The trained event detector is the project's biggest win — PCE@5 = 0.865.** Our first heuristic detector (wrist-Y argmin/argmax) topped out at 0.170. Diagnosing that the *detector*, not the pose model, was the bottleneck, we trained a 0.26M-param 1D-CNN on the MotionBERT-Full 3D trajectories. On a held-out 350-clip test (zero source-video overlap with training) it hits **0.865** — above the published SwingNet baseline (~0.76), because we feed clean 3D landmarks instead of raw 160px video.
+2. **The bottleneck was never the pose model.** Three independent models — MediaPipe Heavy, GolfPose, and Meta's Sapiens-1B foundation model — all produced cleaner/smoother 2D yet ranked *low* on event PCE. Anatomical quality and event accuracy were nearly uncorrelated. That decoupling is what pointed us at the detector.
+3. **Coaching-lite layer is built and demoable.** 15 biomechanical indicators (shoulder/hip turn, X-factor, posture, head movement, tempo, weight shift…) computed from the 3D pose at each event, scored against the GolfDB tour-pro distribution, turned into transparent plain-language feedback. Validation check: median tempo recovered as **3.4:1**, matching the known "Tour tempo" 3:1 norm.
+4. **MotionBERT-Full was the key pose upgrade.** PCE@5 for raw pose jumps 0.090 → 0.170 adding the 3D lift, essentially free at 6,900 FPS, and its 3D output is what both the coaching layer and UE5 handoff consume.
 
 ---
 
@@ -182,15 +181,19 @@ The comparable metric is `bone_cv_mean` (dimensionless std/mean). MotionBERT-Lit
 
 **Translation:** the lifter doesn't fix bad 2D inputs. It produces sensible 3D given the 2D it gets.
 
-### 4. Absolute PCE is low across all models (0.049 – 0.101)
+### 4. The heuristic-detector ceiling (0.049–0.101) was the detector, not the pose — and we broke it
 
-Even the winner misses ~90% of swing events within a ±5-frame tolerance. **No off-the-shelf model, used naively, can power a coaching app.** To make this usable for end-users we need *at least one of*:
+With the simple wrist-Y argmin/argmax detector, *every* pose pipeline topped out around 0.05–0.17 PCE@5 — which originally read as "no off-the-shelf model can power a coaching app." That diagnosis was wrong about the cause. The pose was fine; the **detector** was the ceiling.
 
-1. **A smarter event detector** — current logic is wrist-Y argmin/argmax. A small 1D-CNN or LSTM over landmark trajectories trained on GolfDB labels would likely 3-5× the PCE. ~1 week of work.
-2. **Fine-tuning the pose backbone** on golf-domain frames.
-3. **Both** combined.
+**We then trained the fix and measured it:** a 0.26M-param 1D-CNN over MotionBERT-Full's 3D landmark trajectories (`Scripts/train_event_detector.py`).
 
-The good news: any of these improvements is **orthogonal to which 2D backbone we pick**, so the backbone choice is low-risk regardless.
+| Detector on the same MotionBERT-Full 3D | PCE@5 | PCE@3 | PCE@1 |
+|---|---|---|---|
+| Heuristic (wrist-Y argmin/argmax) | 0.170 | 0.143 | 0.093 |
+| GPT-5 / Codex (vision-only, n=32) | 0.258 | 0.188 | 0.086 |
+| **Trained 1D-CNN (held-out 350 clips)** | **0.865** | **0.792** | **0.618** |
+
+For reference the GolfDB **SwingNet paper reports ~0.76** PCE on the same benchmark — we exceed it because the CNN consumes clean 3D landmarks rather than raw 160px frames. This is the result that turns the project from "promising research" into "deployable swing-phase feature."
 
 ---
 
@@ -199,9 +202,11 @@ The good news: any of these improvements is **orthogonal to which 2D backbone we
 | Component | Choice | Rationale |
 |---|---|---|
 | 2D backbone | `mediapipe_lite` | Highest PCE among 2D models, fast on CPU, 3 MB model, same MediaPipe API as current code |
-| 3D lifter | **`motionbert_full`** | **+89% PCE over Lite (0.090 → 0.170), still 6,900 FPS on GPU** |
+| 3D lifter | **`motionbert_full`** | +89% PCE over Lite (0.090 → 0.170), 6,900 FPS; its 3D output feeds the detector + coaching |
 | Smoothing | `oneeuro` + bone-lock | -51% jitter empirically, preserves impact snap |
-| Handoff format | CSV (DataTable) + BVH + HTML preview | Three options at different levels of UE5 integration friction |
+| **Event detector** | **trained `event_detector_tcn.pt`** | **0.865 PCE@5, beats SwingNet; replaces the heuristic** |
+| Coaching | `coaching_indicators` + `coaching_scorecard` | 15 indicators vs tour-pro band → transparent feedback |
+| Handoff format | CSV (DataTable) + BVH + HTML preview + scorecard | UE5 ingestion + the user-facing scorecard |
 
 ### When to deviate
 
@@ -215,7 +220,7 @@ The good news: any of these improvements is **orthogonal to which 2D backbone we
 
 1. **No 3D ground truth on GolfDB.** All "3D quality" metrics are physics-based (bone-length stability, anatomical plausibility) rather than reference-based. The GolfPose paper's GolfSwing dataset (which has mocap ground truth) would let us measure true 3D MPJPE — see "still outstanding" below.
 
-2. **PCE detector is intentionally simple.** The absolute PCE numbers (0.05-0.10) will jump 3-5× with a proper temporal event detector. The *relative* ranking between models won't change much.
+2. **Event detector — trained, measured at 0.865, with one honest caveat.** The trained 1D-CNN result uses GolfDB's *official* split, which has player overlap (66 of 95 test golfers also appear in training, though never the same source video). That matches the SwingNet paper's protocol so the 0.865-vs-0.76 comparison is fair, but it is NOT yet a strict "brand-new golfer" test. A player-disjoint split is the next validation (task #7).
 
 3. **2D vs 3D jitter values are NOT directly comparable.** Different coordinate units (pixels vs normalized meters). The headline "350× smoother" claim is unit-mismatch, not real. We'd need to reproject 3D → 2D for a fair number.
 

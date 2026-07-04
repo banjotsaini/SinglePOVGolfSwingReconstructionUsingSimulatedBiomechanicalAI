@@ -1,0 +1,539 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MotionCaddie — Implementation Guide</title>
+</head>
+<body>
+<style>
+  :root{
+    --ground:#0c1411; --panel:#111c18; --panel2:#0f1815; --line:#223029; --line2:#2c3b34;
+    --ink:#dfeae4; --mut:#93a79d; --faint:#647469;
+    --player:#e8b04b; --serve:#4bb3c9; --pipe:#57c98a; --data:#9a86d8; --change:#e2735f;
+    --mono:ui-monospace,"Cascadia Code","SF Mono",Consolas,"Liberation Mono",monospace;
+    --sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0}
+  .wrap{background:var(--ground);color:var(--ink);font-family:var(--sans);
+    padding:44px clamp(16px,4vw,56px);max-width:1180px;margin:0 auto;line-height:1.5;
+    background-image:radial-gradient(1200px 500px at 80% -10%,rgba(87,201,138,.08),transparent),
+                     radial-gradient(900px 400px at 0% 110%,rgba(75,179,201,.06),transparent);}
+  .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.28em;text-transform:uppercase;
+    color:var(--pipe);display:flex;gap:14px;align-items:center}
+  .eyebrow .rule{height:1px;flex:1;background:linear-gradient(90deg,var(--line2),transparent)}
+  h1{font-size:clamp(26px,4.4vw,40px);font-weight:800;letter-spacing:-.02em;margin:14px 0 6px;
+    text-wrap:balance;line-height:1.05}
+  .lede{color:var(--mut);max-width:64ch;font-size:15px;margin:0 0 6px}
+  .legend{display:flex;flex-wrap:wrap;gap:8px 18px;margin:22px 0 8px;font-family:var(--mono);font-size:11.5px;color:var(--mut)}
+  .legend b{display:inline-flex;align-items:center;gap:7px;font-weight:400}
+  .dot{width:9px;height:9px;border-radius:2px;display:inline-block}
+
+  figure{margin:40px 0 0}
+  figcaption{font-family:var(--mono);font-size:12px;letter-spacing:.04em;color:var(--faint);
+    text-transform:uppercase;margin-bottom:14px;display:flex;align-items:baseline;gap:12px}
+  figcaption b{color:var(--ink);font-weight:700;letter-spacing:.02em;font-size:15px;text-transform:none;font-family:var(--sans)}
+
+  .board{border:1px solid var(--line);border-radius:14px;background:
+    linear-gradient(180deg,var(--panel),var(--panel2));overflow:hidden}
+  .lane{display:grid;grid-template-columns:132px 1fr;border-top:1px solid var(--line)}
+  .lane:first-child{border-top:0}
+  .lane-label{padding:16px 12px;border-right:1px solid var(--line);display:flex;flex-direction:column;gap:6px;
+    background:rgba(255,255,255,.012)}
+  .lane-label .tag{font-family:var(--mono);font-size:12px;font-weight:700;letter-spacing:.02em}
+  .lane-label .meta{font-family:var(--mono);font-size:10.5px;color:var(--faint);line-height:1.45}
+  .track{padding:16px;overflow-x:auto}
+  .flow{display:flex;align-items:stretch;gap:10px;min-width:min-content}
+
+  .node{position:relative;background:#0e1a16;border:1px solid var(--line2);border-radius:10px;
+    padding:11px 13px 12px;min-width:132px;max-width:190px;flex:0 0 auto;
+    border-top:2px solid var(--nc,var(--line2))}
+  .node .n{position:absolute;top:-9px;left:11px;font-family:var(--mono);font-size:10px;font-weight:700;
+    color:var(--ground);background:var(--nc,#888);border-radius:4px;padding:1px 5px;letter-spacing:.02em}
+  .node h4{margin:6px 0 3px;font-size:13.5px;font-weight:650;letter-spacing:-.01em}
+  .node p{margin:0;font-family:var(--mono);font-size:10.5px;color:var(--mut);line-height:1.4}
+  .node .tick{font-family:var(--mono);font-size:10px;color:var(--nc,var(--mut));margin-top:6px;display:block}
+  .arr{align-self:center;color:var(--faint);font-family:var(--mono);font-size:15px;flex:0 0 auto;padding:0 1px}
+
+  .branch{display:flex;flex-direction:column;gap:10px;border-left:2px dashed var(--line2);
+    padding-left:12px;margin-left:2px}
+  .subrow{display:flex;align-items:center;gap:10px}
+  .subrow .lab{font-family:var(--mono);font-size:9.5px;color:var(--faint);writing-mode:vertical-rl;
+    transform:rotate(180deg);letter-spacing:.1em;text-transform:uppercase}
+
+  .callout{display:flex;flex-wrap:wrap;gap:8px;padding:12px 16px;border-top:1px dashed var(--line2);
+    background:rgba(226,115,95,.04)}
+  .chip{font-family:var(--mono);font-size:11px;color:var(--ink);border:1px solid var(--line2);
+    border-radius:20px;padding:4px 11px;background:#0e1a16}
+  .chip .k{color:var(--change);font-weight:700}
+  .chip .up{color:var(--pipe)}
+
+  .notes{margin-top:34px;border-top:1px solid var(--line);padding-top:18px;
+    display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px 26px}
+  .notes h5{font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;
+    color:var(--mut);margin:0 0 6px}
+  .notes p{margin:0;font-size:13px;color:var(--mut)}
+  .notes b{color:var(--ink);font-weight:650}
+  .foot{margin-top:26px;font-family:var(--mono);font-size:11px;color:var(--faint);
+    display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}
+  a{color:var(--serve)}
+
+  /* implementation-guide sections */
+  .sec{margin:46px 0 0}
+  .kicker{font-family:var(--mono);font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--pipe);margin-bottom:8px}
+  .sec h2{font-size:21px;font-weight:800;letter-spacing:-.01em;margin:0 0 5px;text-wrap:balance}
+  .sec .say{color:var(--mut);max-width:74ch;margin:0 0 4px;font-size:14.5px}
+  .status{font-family:var(--mono);font-size:9px;font-weight:700;letter-spacing:.04em;padding:2px 7px;
+    border-radius:20px;text-transform:uppercase;white-space:nowrap;display:inline-block}
+  .st-live{background:rgba(87,201,138,.14);color:#7fe0a0;border:1px solid #2f6a48}
+  .st-plan{background:rgba(232,176,75,.13);color:#e8b04b;border:1px solid #6a5320}
+  .st-gap{background:rgba(226,115,95,.14);color:#e2735f;border:1px solid #6a352d}
+  .grp{font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--data);
+    margin:20px 0 4px;display:flex;align-items:center;gap:10px}
+  .grp::after{content:"";flex:1;height:1px;background:var(--line)}
+  .tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:10px;margin:8px 0 6px;background:var(--panel2)}
+  table.g{width:100%;border-collapse:collapse;font-size:12.5px;min-width:600px}
+  table.g caption{caption-side:top;text-align:left;font-family:var(--mono);font-size:12.5px;color:var(--ink);
+    padding:11px 13px 3px;font-weight:700;display:flex;gap:9px;align-items:center;flex-wrap:wrap}
+  table.g caption .src{font-weight:400;color:var(--faint);font-size:10.5px}
+  table.g th{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.04em;color:var(--faint);
+    text-align:left;padding:6px 13px;border-bottom:1px solid var(--line2);border-top:1px solid var(--line2)}
+  table.g td{padding:6px 13px;border-bottom:1px solid #1a241f;vertical-align:top;color:var(--mut)}
+  table.g td:first-child{font-family:var(--mono);color:var(--ink);white-space:nowrap}
+  table.g td:nth-child(2){font-family:var(--mono);color:var(--serve);font-size:11.5px;white-space:nowrap}
+  table.g tr:last-child td{border-bottom:0}
+  .pk{color:var(--pipe)} .fk{color:var(--serve)} .en{color:var(--player)}
+  .gaps{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:13px;margin-top:8px}
+  .gap{border:1px solid var(--line2);border-left:3px solid var(--gc,var(--change));border-radius:8px;
+    padding:12px 14px;background:#0e1a16}
+  .gap .p{font-family:var(--mono);font-size:9.5px;font-weight:700;letter-spacing:.05em;color:var(--gc,var(--change))}
+  .gap h4{margin:5px 0 4px;font-size:14px;letter-spacing:-.01em}
+  .gap p{margin:0;font-size:12.5px;color:var(--mut);line-height:1.5}
+  .gap .rec{color:var(--pipe)} .gap b{color:var(--ink)}
+</style>
+
+<div class="wrap">
+  <div class="eyebrow">MotionCaddie <span class="rule"></span> Implementation guide · architecture · data model · resources · gaps</div>
+  <h1>MotionCaddie — end-to-end implementation guide</h1>
+  <p class="lede">A single-POV golf swing becomes 3D biomechanics and a plain-English read. This guide
+  covers the runtime flow, the <b>full-app data model</b> (every table + object-storage layout), the
+  <b>AWS resource inventory</b>, and a rigorous <b>gap analysis</b> — what the shipped stateless demo
+  has versus what the multi-user app still needs. Two postures throughout: <span class="status st-live">live · demo</span>
+  is what runs today; <span class="status st-plan">planned</span> is the full app.</p>
+
+  <div class="legend">
+    <b><span class="dot" style="background:var(--player)"></span>Player</b>
+    <b><span class="dot" style="background:var(--serve)"></span>Serve · AWS serverless (CPU)</b>
+    <b><span class="dot" style="background:var(--pipe)"></span>ML pipeline · GPU (offline)</b>
+    <b><span class="dot" style="background:var(--data)"></span>Data &amp; models</b>
+    <b><span class="dot" style="background:var(--change)"></span>Shipped this cycle / legacy</b>
+  </div>
+
+  <!-- ============ FIGURE 1 : END TO END ============ -->
+  <figure>
+    <figcaption>01 <b>End to end — two tiers</b> serve online, precompute offline</figcaption>
+    <div class="board">
+
+      <div class="lane">
+        <div class="lane-label"><span class="tag" style="color:var(--player)">PLAYER</span>
+          <span class="meta">browser<br>phone video in,<br>coaching out</span></div>
+        <div class="track"><div class="flow" style="--nc:var(--player)">
+          <div class="node"><span class="n">1</span><h4>Upload / pick swing</h4><p>face-on or down-the-line clip</p><span class="tick">+ data-use consent</span></div>
+          <span class="arr">→</span>
+          <div class="node"><span class="n">2</span><h4>Request analysis</h4><p>clip id or multipart mp4</p></div>
+          <span class="arr">···</span>
+          <div class="node"><span class="n">9</span><h4>Get results</h4><p>3D replay · plain-English read</p><span class="tick">+ optional audio</span></div>
+        </div></div>
+      </div>
+
+      <div class="lane">
+        <div class="lane-label"><span class="tag" style="color:var(--serve)">SERVE</span>
+          <span class="meta">AWS serverless<br>CPU · scale-to-zero<br>≈ cents / mo</span></div>
+        <div class="track"><div class="flow" style="--nc:var(--serve)">
+          <div class="node"><span class="n">3</span><h4>CloudFront + S3</h4><p>static clip-picker UI</p></div>
+          <span class="arr">→</span>
+          <div class="node"><span class="n">4</span><h4>Lambda URL</h4><p>function URL · container image</p></div>
+          <span class="arr">→</span>
+          <div class="node"><span class="n">5</span><h4>Handler (CPU)</h4><p>reads cached 3D + scorecard from S3</p></div>
+          <span class="arr">→</span>
+          <div class="node"><span class="n">6</span><h4>Claude explain</h4><p>Anthropic API · f_strict_grounding</p><span class="tick">key ← Secrets Manager</span></div>
+        </div></div>
+      </div>
+
+      <div class="lane">
+        <div class="lane-label"><span class="tag" style="color:var(--pipe)">PIPELINE</span>
+          <span class="meta">GPU workstation<br>offline precompute<br>all 1,400 clips</span></div>
+        <div class="track"><div class="flow" style="--nc:var(--pipe)">
+          <div class="node"><span class="n">A</span><h4>2D pose</h4><p>MediaPipe Lite → COCO-17</p></div>
+          <span class="arr">→</span>
+          <div class="node" style="--nc:var(--change)"><span class="n">B</span><h4>3D lift</h4><p>GolfPose MixSTE</p><span class="tick">swapped from MotionBERT</span></div>
+          <span class="arr">→</span>
+          <div class="node"><span class="n">C</span><h4>Events + smooth</h4><p>1D-CNN (raw) · One-Euro (measure)</p></div>
+          <span class="arr">→</span>
+          <div class="node"><span class="n">D</span><h4>Scorecard</h4><p>15 indicators · reliability-gated</p></div>
+          <span class="arr">→</span>
+          <div class="node"><span class="n">E</span><h4>Cache to S3</h4><p>3D · scorecard · replay</p></div>
+        </div></div>
+      </div>
+
+      <div class="lane">
+        <div class="lane-label"><span class="tag" style="color:var(--data)">DATA</span>
+          <span class="meta">S3 + relational<br>corpora, models,<br>history</span></div>
+        <div class="track"><div class="flow" style="--nc:var(--data)">
+          <div class="node"><h4>GolfDB</h4><p>1,400 clips · labels · events · splits</p></div>
+          <span class="arr">·</span>
+          <div class="node"><h4>GolfPose Vicon</h4><p>true 3D ground truth</p></div>
+          <span class="arr">·</span>
+          <div class="node"><h4>Tour-pro bands</h4><p>p25–p75 reference</p></div>
+          <span class="arr">·</span>
+          <div class="node"><h4>Trained models</h4><p>EventTCN · MixSTE</p></div>
+          <span class="arr">·</span>
+          <div class="node"><h4>results_history</h4><p>per-user runs → optimization</p></div>
+        </div></div>
+      </div>
+
+      <div class="callout">
+        <span class="chip"><span class="k">two-tier:</span> the online path serves <b>precomputed</b> results — no GPU, no model runs at request time</span>
+        <span class="chip">Claude on the <b>direct Anthropic API</b>, not Bedrock (credits don't cover it)</span>
+      </div>
+    </div>
+  </figure>
+
+  <!-- ============ FIGURE 2 : PIPELINE DETAIL ============ -->
+  <figure>
+    <figcaption>02 <b>Reading your swing</b> the ML pipeline, exploded</figcaption>
+    <div class="board">
+      <div class="track" style="padding:22px 18px">
+        <div class="flow" style="--nc:var(--pipe)">
+          <div class="node"><span class="n">1</span><h4>Raw video</h4><p>mp4 · ~30–240 fps</p></div>
+          <span class="arr">→</span>
+          <div class="node"><span class="n">2</span><h4>2D pose</h4><p>MediaPipe Lite</p><span class="tick">COCO-17 · ~107 fps CPU</span></div>
+          <span class="arr">→</span>
+          <div class="node" style="--nc:var(--change)"><span class="n">3</span><h4>3D lift</h4><p>GolfPose MixSTE</p><span class="tick">golf-fine-tuned · was MotionBERT</span></div>
+          <span class="arr">→</span>
+          <div class="branch">
+            <div class="subrow"><span class="lab">events</span>
+              <div class="node" style="--nc:var(--serve)"><span class="n">4a</span><h4>Event detector</h4><p>1D-CNN on <b>raw</b> 3D</p><span class="tick">8 events · PCE@5 0.865</span></div>
+            </div>
+            <div class="subrow"><span class="lab">measure</span>
+              <div class="node"><span class="n">4b</span><h4>One-Euro smooth</h4><p>on the measurement branch</p><span class="tick">min_cut 0.3 · β 0.4</span></div>
+              <span class="arr">→</span>
+              <div class="node"><span class="n">5</span><h4>Indicators</h4><p>15 biomechanics @ events</p><span class="tick">vs tour-pro bands</span></div>
+            </div>
+          </div>
+          <span class="arr">→</span>
+          <div class="node" style="--nc:var(--data)"><span class="n">6</span><h4>Scorecard</h4><p>reliability-gated feedback</p><span class="tick">low-confidence depth ⇒ muted</span></div>
+          <span class="arr">→</span>
+          <div class="branch">
+            <div class="subrow"><span class="lab">coach</span>
+              <div class="node" style="--nc:var(--player)"><span class="n">7a</span><h4>Claude read</h4><p>grounded, caddie-tone</p><span class="tick">f_strict_grounding</span></div>
+            </div>
+            <div class="subrow"><span class="lab">replay</span>
+              <div class="node" style="--nc:var(--serve)"><span class="n">7b</span><h4>3D replay</h4><p>Three.js viewer · in-browser</p><span class="tick">preview_3d.html · no engine</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="flow" style="--nc:var(--change);margin-top:16px">
+          <div class="node" style="max-width:250px"><span class="n">↳</span><h4>MotionBERT — benchmark only</h4><p>tops the PCE leaderboard; still selectable via --lifter</p><span class="tick">feeds no deliverable (UE5 handoff retired)</span></div>
+        </div>
+      </div>
+      <div class="callout">
+        <span class="chip"><span class="up">▲ accuracy:</span> coaching-measure error <b>7.59° → 2.83°</b> vs Vicon (lifter swap, −63%)</span>
+        <span class="chip"><span class="up">▲</span> One-Euro recovers <b>33–46%</b> of noise-induced error</span>
+        <span class="chip"><span class="k">not adopted:</span> Austin's z-depth MLP — height-only, doesn't move rotation metrics</span>
+        <span class="chip"><span class="k">retired:</span> Unreal Engine mocap handoff (BVH) — the 3D replay is browser-native</span>
+      </div>
+    </div>
+  </figure>
+
+  <!-- ============ FIGURE 3 : VALIDATION LOOP ============ -->
+  <figure>
+    <figcaption>03 <b>How we know it's right</b> the validation &amp; optimization loop</figcaption>
+    <div class="board">
+      <div class="track" style="padding:22px 18px">
+        <div class="flow">
+          <div class="node" style="--nc:var(--data)"><span class="n">1</span><h4>GolfPose Vicon</h4><p>held-out G5/G6 · true 3D</p></div>
+          <span class="arr">→</span>
+          <div class="node" style="--nc:var(--pipe)"><span class="n">2</span><h4>Accuracy benchmark</h4><p>measurements vs ground truth</p><span class="tick">MixSTE 2.83° &lt; MotionBERT 7.59°</span></div>
+          <span class="arr">→</span>
+          <div class="node" style="--nc:var(--change)"><span class="n">3</span><h4>Pick config</h4><p>lifter + smoothing</p><span class="tick">shipped to pipeline</span></div>
+          <span class="arr">→</span>
+          <div class="node" style="--nc:var(--serve)"><span class="n">4</span><h4>PCE gate</h4><p>retrain event detector</p><span class="tick">0.865 holds — no regression</span></div>
+          <span class="arr">→</span>
+          <div class="node" style="--nc:var(--player)"><span class="n">5</span><h4>LLM grounding eval</h4><p>every sentence traceable</p><span class="tick">f_strict_grounding</span></div>
+          <span class="arr" style="color:var(--change)">↩</span>
+          <div class="node" style="--nc:var(--data)"><span class="n">6</span><h4>results_history</h4><p>feeds the next optimization pass</p></div>
+        </div>
+      </div>
+      <div class="callout">
+        <span class="chip">closed loop: ground-truth benchmark → config change → regression gate → back to data</span>
+      </div>
+    </div>
+  </figure>
+
+  <!-- ============ FIGURE 4 : FULL-APP TARGET (the gap) ============ -->
+  <figure>
+    <figcaption>04 <b>Full-app target</b> the multi-user upload path — none of this ships in the demo yet
+      <span class="status st-gap" style="margin-left:6px">gap</span></figcaption>
+    <div class="board">
+      <div class="lane">
+        <div class="lane-label"><span class="tag" style="color:var(--player)">USER</span>
+          <span class="meta">authenticated<br>own swings +<br>history</span></div>
+        <div class="track"><div class="flow" style="--nc:var(--player)">
+          <div class="node"><span class="n">1</span><h4>Sign in</h4><p>Cognito user pool</p></div>
+          <span class="arr">→</span>
+          <div class="node"><span class="n">2</span><h4>Consent</h4><p>analytics · training · storage</p><span class="tick">written to consents</span></div>
+          <span class="arr">→</span>
+          <div class="node"><span class="n">3</span><h4>Upload swing</h4><p>presigned S3 PUT (mp4)</p></div>
+          <span class="arr">→</span>
+          <div class="node"><span class="n">8</span><h4>Poll / notify</h4><p>status done → results + replay</p></div>
+        </div></div>
+      </div>
+      <div class="lane">
+        <div class="lane-label"><span class="tag" style="color:var(--serve)">INGEST</span>
+          <span class="meta">event-driven<br>validate before<br>you spend GPU</span></div>
+        <div class="track"><div class="flow" style="--nc:var(--serve)">
+          <div class="node"><span class="n">4</span><h4>S3 ObjectCreated</h4><p>→ SQS ingest queue</p></div>
+          <span class="arr">→</span>
+          <div class="node"><span class="n">5</span><h4>Validate</h4><p>1 person · view · fps / slow-mo</p><span class="tick">reject early = no GPU cost</span></div>
+        </div></div>
+      </div>
+      <div class="lane">
+        <div class="lane-label"><span class="tag" style="color:var(--change)">PROCESS</span>
+          <span class="meta">GPU · async<br>SageMaker Async<br>/ Batch (scale-to-0)</span></div>
+        <div class="track"><div class="flow" style="--nc:var(--change)">
+          <div class="node"><span class="n">6</span><h4>Run pipeline</h4><p>MediaPipe → MixSTE → events + smooth → scorecard → Claude</p><span class="tick">the Figure-02 pipeline, on demand</span></div>
+          <span class="arr">→</span>
+          <div class="node"><span class="n">7</span><h4>Persist</h4><p>artifacts → S3 · rows → Aurora</p></div>
+        </div></div>
+      </div>
+      <div class="lane">
+        <div class="lane-label"><span class="tag" style="color:var(--data)">STATE</span>
+          <span class="meta">durable<br>the data model<br>below</span></div>
+        <div class="track"><div class="flow" style="--nc:var(--data)">
+          <div class="node"><h4>Aurora PostgreSQL</h4><p>users · swings · analyses · indicators · …</p></div>
+          <span class="arr">·</span>
+          <div class="node"><h4>S3 artifacts</h4><p>raw video · 3D parquet · PNG · replay</p></div>
+        </div></div>
+      </div>
+      <div class="callout">
+        <span class="chip"><span class="k">the core gap:</span> the demo serves <b>precomputed</b> clips — a real upload has no GPU to run on. This whole figure is the missing tier.</span>
+      </div>
+    </div>
+  </figure>
+
+  <!-- ============ DATA MODEL ============ -->
+  <section class="sec">
+    <div class="kicker">Resources · A</div>
+    <h2>Data model — every table the app needs</h2>
+    <p class="say">Aurora Serverless v2 (PostgreSQL). Three layers: <b>reference data</b> (seeded, versioned, read-mostly),
+    <b>core app data</b> (per-user, transactional), and <b>object storage</b> (S3, keyed from the rows). Column types are
+    Postgres; <span class="pk">▸ pk</span> primary key, <span class="fk">▸ fk</span> foreign key, <span class="en">▸ enum</span> constrained set.
+    Field names below match the live JSON so the loaders map 1:1.</p>
+    <div class="ctx"><b>Schema is authored + validated.</b> <span class="mono">deploy/db/migrations/0001_init.sql</span>
+    (13 tables + the <span class="mono">results_history</span> view) and <span class="mono">deploy/db/load_data.py</span>
+    (seed + backfill) exist. Dry-run against the repo JSON parses clean and produces
+    <b>400 clips → 6000 indicator rows / 3200 event rows / 400 analyses</b>, plus 15 indicators + 8 glossary terms.
+    Still a gap: a <b>live Aurora instance</b> to apply it to, and the Cognito-driven <span class="mono">users/consents</span> path.</div>
+
+    <div class="grp">Reference data — seeded from the repo, one row-set per pipeline version</div>
+
+    <div class="tbl-wrap"><table class="g"><caption>indicator_catalog <span class="status st-plan">planned</span> <span class="src">the 15 biomechanical indicators · src coaching_indicators.py</span></caption>
+      <thead><tr><th>column</th><th>type</th><th>notes</th></tr></thead><tbody>
+      <tr><td>indicator_key</td><td>text</td><td><span class="pk">pk</span> e.g. <span class="mono">shoulder_turn_top_deg</span></td></tr>
+      <tr><td>label</td><td>text</td><td>"Shoulder turn"</td></tr>
+      <tr><td>plain_name</td><td>text</td><td>golfer-facing phrasing for the LLM/KB</td></tr>
+      <tr><td>event_ref</td><td>text</td><td>which swing event it's read at (top / impact / address)</td></tr>
+      <tr><td>unit</td><td>text</td><td><span class="en">deg</span> | <span class="en">pct</span> | <span class="en">ratio</span></td></tr>
+      <tr><td>depends_on_joints</td><td>text[]</td><td>joints used — drives the confidence join</td></tr>
+      </tbody></table></div>
+
+    <div class="tbl-wrap"><table class="g"><caption>reference_bands <span class="status st-plan">planned</span> <span class="src">tour-pro distribution · src Data/coaching/reference_bands.json</span></caption>
+      <thead><tr><th>column</th><th>type</th><th>notes</th></tr></thead><tbody>
+      <tr><td>club</td><td>text</td><td><span class="pk">pk</span> · <span class="en">driver</span> | <span class="en">iron</span> | …</td></tr>
+      <tr><td>indicator_key</td><td>text</td><td><span class="pk">pk</span> <span class="fk">fk</span>→indicator_catalog</td></tr>
+      <tr><td>p10 · p25 · p50 · p75 · p90</td><td>real</td><td>percentile band; p50 is <span class="mono">pro_median</span>, p25–p75 the "tour range"</td></tr>
+      <tr><td>mean · std</td><td>real</td><td>for z-scoring / percentile lookup</td></tr>
+      </tbody></table></div>
+
+    <div class="tbl-wrap"><table class="g"><caption>indicator_confidence <span class="status st-live">live</span> <span class="src">depth-reliability gate · src Austin EDA / indicator_confidence.json</span></caption>
+      <thead><tr><th>column</th><th>type</th><th>notes</th></tr></thead><tbody>
+      <tr><td>indicator_key</td><td>text</td><td><span class="pk">pk</span> <span class="fk">fk</span>→indicator_catalog</td></tr>
+      <tr><td>confidence</td><td>real</td><td>0–1 reliability of the shakiest input joint</td></tr>
+      <tr><td>tier</td><td>text</td><td><span class="en">high</span> | <span class="en">med</span> | <span class="en">low</span> — low can't raise a coaching flag</td></tr>
+      <tr><td>worst_joint_z_std</td><td>real</td><td>empirical depth variance of the worst joint</td></tr>
+      </tbody></table></div>
+
+    <div class="tbl-wrap"><table class="g"><caption>kb_cards <span class="status st-live">live</span> <span class="src">LLM knowledge base / glossary · the only source the model may gloss from</span></caption>
+      <thead><tr><th>column</th><th>type</th><th>notes</th></tr></thead><tbody>
+      <tr><td>term</td><td>text</td><td><span class="pk">pk</span> e.g. "x-factor"</td></tr>
+      <tr><td>plain_name · gloss</td><td>text</td><td>definition the chatbot's <span class="mono">explain_term</span> tool returns</td></tr>
+      <tr><td>indicator_key</td><td>text</td><td><span class="fk">fk</span> nullable — links a term to its metric</td></tr>
+      </tbody></table></div>
+
+    <div class="grp">Core app data — per user, written on every analysis</div>
+
+    <div class="tbl-wrap"><table class="g"><caption>users <span class="status st-gap">gap</span></caption>
+      <thead><tr><th>column</th><th>type</th><th>notes</th></tr></thead><tbody>
+      <tr><td>user_id</td><td>uuid</td><td><span class="pk">pk</span></td></tr>
+      <tr><td>cognito_sub</td><td>text</td><td>unique — identity from the Cognito pool</td></tr>
+      <tr><td>email · display_name</td><td>text</td><td></td></tr>
+      <tr><td>handedness</td><td>char(1)</td><td><span class="en">L</span> | <span class="en">R</span> — picks the lead side for indicators</td></tr>
+      <tr><td>created_at</td><td>timestamptz</td><td></td></tr>
+      </tbody></table></div>
+
+    <div class="tbl-wrap"><table class="g"><caption>consents <span class="status st-gap">gap</span> <span class="src">event-sourced — never mutate, append grant/revoke</span></caption>
+      <thead><tr><th>column</th><th>type</th><th>notes</th></tr></thead><tbody>
+      <tr><td>consent_id</td><td>uuid</td><td><span class="pk">pk</span></td></tr>
+      <tr><td>user_id</td><td>uuid</td><td><span class="fk">fk</span>→users</td></tr>
+      <tr><td>scope</td><td>text</td><td><span class="en">analytics</span> | <span class="en">model_training</span> | <span class="en">storage</span></td></tr>
+      <tr><td>granted</td><td>bool</td><td>current state for this scope</td></tr>
+      <tr><td>granted_at · revoked_at</td><td>timestamptz</td><td>revoked_at null while active — drives S3 retention</td></tr>
+      </tbody></table></div>
+
+    <div class="tbl-wrap"><table class="g"><caption>swings <span class="status st-gap">gap</span> <span class="src">one row per uploaded (or GolfDB) clip</span></caption>
+      <thead><tr><th>column</th><th>type</th><th>notes</th></tr></thead><tbody>
+      <tr><td>swing_id</td><td>uuid</td><td><span class="pk">pk</span></td></tr>
+      <tr><td>user_id</td><td>uuid</td><td><span class="fk">fk</span>→users (null for seeded GolfDB)</td></tr>
+      <tr><td>source</td><td>text</td><td><span class="en">upload</span> | <span class="en">golfdb</span></td></tr>
+      <tr><td>raw_video_s3_key</td><td>text</td><td>→ uploads bucket</td></tr>
+      <tr><td>club · view</td><td>text</td><td>view <span class="en">face_on</span> | <span class="en">down_the_line</span></td></tr>
+      <tr><td>fps · n_frames</td><td>real · int</td><td>from probe; flags slow-mo</td></tr>
+      <tr><td>status</td><td>text</td><td><span class="en">uploaded→queued→processing→done→failed</span></td></tr>
+      <tr><td>error · uploaded_at</td><td>text · timestamptz</td><td></td></tr>
+      </tbody></table></div>
+
+    <div class="tbl-wrap"><table class="g"><caption>analyses <span class="status st-gap">gap</span> <span class="src">unique(swing_id, pipeline_version) — re-run on a pipeline bump = the optimization loop</span></caption>
+      <thead><tr><th>column</th><th>type</th><th>notes</th></tr></thead><tbody>
+      <tr><td>analysis_id</td><td>uuid</td><td><span class="pk">pk</span></td></tr>
+      <tr><td>swing_id</td><td>uuid</td><td><span class="fk">fk</span>→swings</td></tr>
+      <tr><td>pipeline_version</td><td>text</td><td>e.g. <span class="mono">mixste+oneeuro@2026-07</span></td></tr>
+      <tr><td>lifter · smoothing_cfg</td><td>text · jsonb</td><td><span class="mono">golfpose3d</span> · <span class="mono">{oneeuro:0.3/0.4}</span></td></tr>
+      <tr><td>landmarks_3d_s3_key</td><td>text</td><td>→ artifacts bucket (parquet)</td></tr>
+      <tr><td>replay_html_s3_key · scorecard_png_s3_key</td><td>text</td><td>browser replay + rendered card</td></tr>
+      <tr><td>scorecard_json</td><td>jsonb</td><td>exact blob for reproduction (indicators normalized below too)</td></tr>
+      <tr><td>status · latency_ms · created_at</td><td>text · int · timestamptz</td><td></td></tr>
+      </tbody></table></div>
+
+    <div class="tbl-wrap"><table class="g"><caption>swing_events <span class="status st-gap">gap</span> <span class="src">8 rows per analysis · src scorecard.events</span></caption>
+      <thead><tr><th>column</th><th>type</th><th>notes</th></tr></thead><tbody>
+      <tr><td>analysis_id</td><td>uuid</td><td><span class="pk">pk</span> <span class="fk">fk</span>→analyses</td></tr>
+      <tr><td>event_name</td><td>text</td><td><span class="pk">pk</span> · <span class="en">address…finish</span> (8)</td></tr>
+      <tr><td>frame_idx</td><td>int</td><td>detected on raw 3D by the 1D-CNN</td></tr>
+      </tbody></table></div>
+
+    <div class="tbl-wrap"><table class="g"><caption>indicators <span class="status st-gap">gap</span> <span class="src">~15 rows per analysis · normalized scorecard · src scorecard.indicators</span></caption>
+      <thead><tr><th>column</th><th>type</th><th>notes</th></tr></thead><tbody>
+      <tr><td>analysis_id</td><td>uuid</td><td><span class="pk">pk</span> <span class="fk">fk</span>→analyses</td></tr>
+      <tr><td>indicator_key</td><td>text</td><td><span class="pk">pk</span> <span class="fk">fk</span>→indicator_catalog</td></tr>
+      <tr><td>value · percentile</td><td>real · int</td><td>measured value + its percentile vs the band</td></tr>
+      <tr><td>pro_median · pro_band_low · pro_band_high</td><td>real</td><td>snapshotted from reference_bands at run time</td></tr>
+      <tr><td>in_range · confidence_tier</td><td>bool · text</td><td>tier copied so the row is self-describing</td></tr>
+      </tbody></table></div>
+
+    <div class="tbl-wrap"><table class="g"><caption>feedback_notes &nbsp;·&nbsp; explanations &nbsp;·&nbsp; chat_turns <span class="status st-gap">gap</span></caption>
+      <thead><tr><th>table</th><th>key</th><th>notes</th></tr></thead><tbody>
+      <tr><td>feedback_notes</td><td>note_id <span class="pk">pk</span></td><td>gated coaching notes (analysis_id, indicator_key, label, event, message, <span class="mono">severity</span> ∈ review|info) — src scorecard.feedback</td></tr>
+      <tr><td>explanations</td><td>analysis_id <span class="pk">pk</span></td><td>1:1 LLM read — backend, model (<span class="mono">claude-opus-4-8</span>), text, <span class="mono">grounded</span> bool, violations jsonb, tokens_in/out</td></tr>
+      <tr><td>chat_turns</td><td>turn_id <span class="pk">pk</span></td><td>audit only (runtime is stateless) — question, answer, grounded, tools_used jsonb, compare_swing_id, iters</td></tr>
+      <tr><td>results_history</td><td><span class="en">view</span></td><td>not a base table — rollup over analyses×swings per user, ordered by created_at, with per-indicator Δ vs the prior analysis. Feeds the optimization loop.</td></tr>
+      </tbody></table></div>
+
+    <div class="grp">Object storage — S3, keyed from the rows above</div>
+    <div class="tbl-wrap"><table class="g"><caption>S3 layout</caption>
+      <thead><tr><th>bucket / prefix</th><th>status</th><th>contents · lifecycle</th></tr></thead><tbody>
+      <tr><td>motion-caddie-uploads/users/{user_id}/{swing_id}.mp4</td><td><span class="status st-gap">gap</span></td><td>raw phone video (PII: faces) — expire/delete on consent revoke</td></tr>
+      <tr><td>motion-caddie-artifacts/analyses/{analysis_id}/</td><td><span class="status st-gap">gap</span></td><td>3D parquet · scorecard.png · preview_3d.html — regenerable</td></tr>
+      <tr><td>motion-caddie-demo-assets/{clip_id}/</td><td><span class="status st-live">live</span></td><td>per-clip explanation + PNG cache → $0 repeat demos</td></tr>
+      <tr><td>motion-caddie-demo-web/</td><td><span class="status st-live">live</span></td><td>static clip-picker UI, fronted by CloudFront (OAC, private)</td></tr>
+      </tbody></table></div>
+  </section>
+
+  <!-- ============ RESOURCE INVENTORY ============ -->
+  <section class="sec">
+    <div class="kicker">Resources · B</div>
+    <h2>AWS resource inventory</h2>
+    <p class="say">What the shipped demo stack provisions, and what the full app adds. Everything under
+    <span class="status st-live">live</span> is specified in <span class="mono">AWS_DEPLOY_HANDOFF.md</span>; the
+    <span class="status st-plan">planned</span> rows are the new infra the multi-user app needs.</p>
+    <div class="tbl-wrap"><table class="g">
+      <thead><tr><th>resource</th><th>status</th><th>purpose · key config</th></tr></thead><tbody>
+      <tr><td>Lambda (container, CPU)</td><td><span class="status st-live">live</span></td><td>demo serve + <span class="mono">/chat</span>; Function URL, 2–3 GB, 60–120 s, reserved concurrency 2–5 (cost cap), model loaded at module scope</td></tr>
+      <tr><td>S3 ×2 (web · assets)</td><td><span class="status st-live">live</span></td><td>static UI + per-clip cache</td></tr>
+      <tr><td>CloudFront + OAC</td><td><span class="status st-live">live</span></td><td>fronts the private web bucket</td></tr>
+      <tr><td>Secrets Manager</td><td><span class="status st-live">live</span></td><td><span class="mono">motion-caddie/anthropic-api-key</span> — fetched once at cold start</td></tr>
+      <tr><td>ECR (SAM-managed)</td><td><span class="status st-live">live</span></td><td>Lambda image repo (companion stack)</td></tr>
+      <tr><td>IAM Identity Center</td><td><span class="status st-live">live</span></td><td>team SSO + least-priv <span class="mono">MotionCaddieDeployer</span></td></tr>
+      <tr><td>CloudWatch + Budgets</td><td><span class="status st-live">live</span></td><td>logs, Errors alarm, ~$5–10/mo budget alert</td></tr>
+      <tr><td>Anthropic API (direct)</td><td><span class="status st-live">live</span></td><td><span class="mono">claude-opus-4-8</span> — not Bedrock (credits don't cover it); console hard cap</td></tr>
+      <tr><td>Amazon Cognito</td><td><span class="status st-plan">planned</span></td><td>user pool — real identity + consent (demo uses an allow-list, no login)</td></tr>
+      <tr><td>Aurora Serverless v2 (PostgreSQL)</td><td><span class="status st-plan">planned</span></td><td>the data model above; min 0.5 ACU idle. In a VPC → Lambda needs VPC config or RDS Proxy</td></tr>
+      <tr><td>S3 ×2 (uploads · artifacts)</td><td><span class="status st-plan">planned</span></td><td>raw video + per-analysis outputs; presigned PUT/GET</td></tr>
+      <tr><td>SQS (ingest queue)</td><td><span class="status st-plan">planned</span></td><td>S3 ObjectCreated → decouple upload from GPU; DLQ for poison clips</td></tr>
+      <tr><td>GPU worker — SageMaker Async Inference <span class="en">or</span> AWS Batch</td><td><span class="status st-gap">gap</span></td><td><b>the missing tier.</b> Runs Figure-02 on demand; scales to zero between jobs; SageMaker Async has a built-in queue + S3 in/out</td></tr>
+      <tr><td>Step Functions</td><td><span class="status st-plan">planned</span></td><td>optional — orchestrate 2D→3D→scorecard→explain with retries/visibility</td></tr>
+      <tr><td>API Gateway (REST, Cognito authorizer)</td><td><span class="status st-plan">planned</span></td><td>authenticated app API (the demo's Function URL stays for the public clip demo)</td></tr>
+      </tbody></table></div>
+  </section>
+
+  <!-- ============ PROCESSING PATHS ============ -->
+  <section class="sec">
+    <div class="kicker">Resources · C</div>
+    <h2>Two processing paths</h2>
+    <p class="say">The same coaching science runs two ways. The <b>cached demo</b> is synchronous and CPU-only.
+    The <b>live upload</b> is asynchronous and GPU-backed — decoupled because a real analysis takes seconds of GPU,
+    too long to block an HTTP request.</p>
+    <div class="board"><div class="track" style="padding:18px">
+      <div class="grp" style="margin-top:0">Path 1 · cached clip <span class="status st-live">live</span></div>
+      <div class="flow" style="--nc:var(--serve)">
+        <div class="node"><h4>Browser</h4><p>pick curated clip</p></div><span class="arr">→</span>
+        <div class="node"><h4>Function URL</h4><p>Lambda (CPU)</p></div><span class="arr">→</span>
+        <div class="node"><h4>Read cache</h4><p>parquet + scorecard from image/S3</p></div><span class="arr">→</span>
+        <div class="node"><h4>Detector + card</h4><p>+ Claude (or S3-cached)</p></div><span class="arr">→</span>
+        <div class="node" style="--nc:var(--player)"><h4>Return</h4><p>scorecard · text · png_url</p></div>
+      </div>
+      <div class="grp">Path 2 · live upload <span class="status st-gap">gap</span></div>
+      <div class="flow" style="--nc:var(--change)">
+        <div class="node" style="--nc:var(--player)"><h4>App (Cognito)</h4><p>presigned S3 PUT</p></div><span class="arr">→</span>
+        <div class="node" style="--nc:var(--serve)"><h4>S3 → SQS</h4><p>ObjectCreated event</p></div><span class="arr">→</span>
+        <div class="node" style="--nc:var(--serve)"><h4>Validate</h4><p>1 person · view · fps</p></div><span class="arr">→</span>
+        <div class="node"><h4>GPU worker</h4><p>MediaPipe→MixSTE→events+smooth→scorecard→Claude</p></div><span class="arr">→</span>
+        <div class="node" style="--nc:var(--data)"><h4>Persist</h4><p>S3 artifacts + Aurora rows · status=done</p></div><span class="arr">→</span>
+        <div class="node" style="--nc:var(--player)"><h4>Notify</h4><p>poll / WebSocket → results</p></div>
+      </div>
+    </div></div>
+  </section>
+
+  <!-- ============ GAP ANALYSIS ============ -->
+  <section class="sec">
+    <div class="kicker">Resources · D</div>
+    <h2>Gap analysis &amp; open decisions</h2>
+    <p class="say">What stands between the shipped stateless demo and the full app, most-blocking first.
+    <span class="rec" style="color:var(--pipe)">Green = the recommended call.</span></p>
+    <div class="gaps">
+      <div class="gap" style="--gc:var(--player)"><div class="p">P0 · infra authored, needs deploy</div><h4>Live upload / processing path</h4><p>IaC written + <b>cfn-lint clean</b> (<span class="mono">deploy/infra/full_app.yaml</span>): SQS→CPU-Lambda async processing, Aurora, S3, Cognito, alarms, budget. <span class="rec">Verdict: no GPU needed</span> — CPU Lambda handles a swing in 30–60 s at ~$0.01. Optional <span class="mono">ml.g4dn.xlarge</span> SageMaker Async (min-0) is gated behind <span class="mono">EnableGpuWorker</span>. Remaining: build the processing container + deploy.</p></div>
+      <div class="gap" style="--gc:var(--player)"><div class="p">P0 · schema done, needs infra</div><h4>Database</h4><p>Schema + seed + backfill are <b>authored &amp; dry-run-validated</b> (<span class="mono">deploy/db/</span>). Remaining: provision the instance. <span class="rec">Rec: Aurora Serverless v2 Postgres</span> — relational fits the ERD; scales to 0.5 ACU idle; then <span class="mono">psql -f 0001_init.sql</span> + <span class="mono">load_data.py --all</span>.</p></div>
+      <div class="gap"><div class="p">P0 · blocker</div><h4>No auth / identity</h4><p>Demo is an open allow-list. Real users + per-user history + consent need <b>Cognito</b>. The diagram's "consent" step has no store today → the <span class="mono">consents</span> table.</p></div>
+      <div class="gap" style="--gc:var(--player)"><div class="p">P0 · cheap fix</div><h4>Stale lifter in the deploy doc</h4><p><span class="mono">AWS_DEPLOY_HANDOFF.md</span> still bakes the <span class="mono">motionbert_full</span> cache + references. Post-swap it must bake <span class="mono">golfpose3d</span> + the retrained detector. <span class="rec">One-line change; do before the next deploy.</span></p></div>
+      <div class="gap" style="--gc:var(--player)"><div class="p">P1 · quality</div><h4>No upload validation gate</h4><p>Single-person / view / fps-slow-mo checks <b>before</b> GPU spend. A bad clip should fail in ingest (cents) not after a GPU job (dollars).</p></div>
+      <div class="gap" style="--gc:var(--player)"><div class="p">P1 · compliance</div><h4>Consent → retention not enforced</h4><p>Raw video is PII (faces). Needs S3 lifecycle tied to <span class="mono">consents.revoked_at</span> and a delete-my-data path.</p></div>
+      <div class="gap" style="--gc:var(--player)"><div class="p">P1 · science</div><h4>Optimization loop is manual</h4><p>The <span class="mono">unique(swing_id, pipeline_version)</span> key makes re-analysis cheap, but nothing triggers it. Needs a backfill job on pipeline bump + the <span class="mono">results_history</span> Δ view.</p></div>
+      <div class="gap" style="--gc:var(--pipe)"><div class="p">P2 · resolved (pending apply)</div><h4>Reference data as files</h4><p>Bands / confidence / KB now have a <b>loader into the seeded tables</b> (<span class="mono">load_data.py seed</span>, units normalized, joints derived). Once it runs against a live DB, JSON becomes the seed source of record, not the runtime source.</p></div>
+    </div>
+  </section>
+
+  <div class="notes">
+    <div><h5>What shipped this cycle</h5><p><b>3D lifter</b> MotionBERT → golf-fine-tuned <b>MixSTE</b>; <b>One-Euro</b> smoothing on the measurement branch; event detector <b>retrained</b> on MixSTE 3D (PCE@5 holds at 0.865).</p></div>
+    <div><h5>Two branches, one lift</h5><p>Events read <b>raw</b> 3D — they're motion reversals and need the sharp velocity signal. Measurements read <b>smoothed</b> 3D — angles are steadier when jitter is removed.</p></div>
+    <div><h5>Honest scope</h5><p>Austin's z-depth MLP was benchmarked and <b>not adopted</b> — it corrects only the height axis. MotionBERT still tops the PCE leaderboard and stays a selectable <code>--lifter</code>, but with the <b>UE5 handoff retired</b> it now feeds no deliverable.</p></div>
+    <div><h5>The 3D replay is browser-native</h5><p>The player's replay is a self-contained <b>Three.js</b> viewer (<code>preview_3d.html</code>) built from the same 3D — no game engine, no plugin. Retiring Unreal changed nothing the player sees.</p></div>
+    <div><h5>Why serverless serves cache</h5><p>The heavy pipeline needs a GPU. The demo doesn't run it — it serves precomputed 3D + scorecard from S3 and spends compute only on the Claude call.</p></div>
+  </div>
+
+  <div class="foot"><span>MotionCaddie · single-POV golf swing reconstruction</span><span>architecture as of the MixSTE + One-Euro swap · UE5 handoff retired</span></div>
+</div>
+
+</body>
+</html>

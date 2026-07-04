@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Motion Caddie — Coaching Q&amp;A Chatbot (concept demo)</title>
+<style>
+  :root{
+    /* warm light theme — cream / deep-green / purple / gold (Anthropic editorial) */
+    --bg:#faf9f5; --panel:#ffffff; --panel2:#f4f6f2; --line:#e5e9e2;
+    --ink:#0a120d; --dim:#5b6b61; --faint:#8a988e;
+    --green:#0c5c3a; --green2:#0e7c4a; --greenBright:#16a35a; --amber:#b3781a; --red:#c0392b;
+    --purple:#6d4ad0; --blue:#6d4ad0; --chip:#eef1eb; --chipP:#f2ecfc; --user:#0c5c3a;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --serif:ui-serif,Georgia,"Iowan Old Style","Times New Roman",serif;
+    --shadow:0 1px 3px rgba(11,32,24,.05),0 1px 2px rgba(11,32,24,.04);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:radial-gradient(1100px 620px at 78% -14%,#eef4ee 0%,var(--bg) 55%);
+       color:var(--ink);font-family:var(--sans);line-height:1.55;-webkit-font-smoothing:antialiased}
+  a{color:var(--green2)}
+  .wrap{max-width:1080px;margin:0 auto;padding:26px 20px 80px}
+  header.top{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .logo{width:42px;height:42px;border-radius:11px;background:linear-gradient(145deg,var(--greenBright),#0c5c3a);
+        display:grid;place-items:center;font-size:22px;box-shadow:0 6px 16px rgba(12,92,58,.22)}
+  h1{font-size:22px;margin:0;font-family:var(--serif);font-weight:600;letter-spacing:-.01em}
+  .tag{color:var(--dim);font-size:13px;margin-top:2px}
+  .badge{margin-left:auto;background:#fbefd9;border:1px solid #efd9ae;color:#9a6a12;
+         font-size:11px;font-weight:600;padding:5px 10px;border-radius:20px;letter-spacing:.3px}
+  nav.tabs{display:flex;gap:6px;margin:22px 0 18px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+  .tab{background:none;border:none;color:var(--dim);font:inherit;font-weight:600;font-size:14px;
+       padding:10px 14px;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px}
+  .tab:hover{color:var(--ink)}
+  .tab.active{color:var(--green);border-bottom-color:var(--green)}
+  .view{display:none;animation:fade .25s ease}
+  .view.active{display:block}
+  @keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+
+  /* ---- chat ---- */
+  .chatgrid{display:grid;grid-template-columns:1fr 300px;gap:18px}
+  @media(max-width:820px){.chatgrid{grid-template-columns:1fr}}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow)}
+  .ctxbar{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+  .pill{font-size:12px;color:var(--dim);background:var(--chip);border:1px solid var(--line);padding:4px 10px;border-radius:20px}
+  .pill b{color:var(--ink)}
+  .toggle{margin-left:auto;display:flex;align-items:center;gap:8px;font-size:12px;color:var(--dim);cursor:pointer;user-select:none}
+  .switch{width:38px;height:22px;border-radius:20px;background:#d4dcd5;position:relative;transition:.2s}
+  .switch::after{content:"";position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.2);transition:.2s}
+  .toggle.on .switch{background:var(--green2)} .toggle.on .switch::after{left:18px;background:#fff}
+  #stream{height:460px;overflow-y:auto;padding:18px 16px;display:flex;flex-direction:column;gap:14px}
+  #stream>*{flex-shrink:0}   /* don't compress messages/traces — let #stream scroll instead */
+  #stream::-webkit-scrollbar{width:8px}#stream::-webkit-scrollbar-thumb{background:#d9e0d8;border-radius:8px}
+  .msg{max-width:86%;padding:11px 14px;border-radius:14px;font-size:14.5px;white-space:pre-wrap}
+  .msg.user{align-self:flex-end;background:var(--user);color:#f4f9f5;border-bottom-right-radius:5px}
+  .msg.bot{align-self:flex-start;background:var(--panel);color:var(--ink);border:1px solid var(--line);border-bottom-left-radius:5px;box-shadow:var(--shadow)}
+  .msg.bot.refuse{background:#fdf9f0;border-color:#efd9ae}
+  .who{font-size:11px;color:var(--faint);margin:0 4px 3px}
+  .grade{display:inline-flex;align-items:center;gap:6px;margin-top:9px;font-size:11px;
+         color:var(--green);background:rgba(22,163,90,.10);border:1px solid rgba(22,163,90,.28);
+         padding:3px 8px;border-radius:20px}
+  .grade.warn{color:#9a6a12;background:#fbefd9;border-color:#efd9ae}
+  /* tool trace */
+  .trace{align-self:flex-start;max-width:92%;font-family:var(--mono);font-size:11.5px;
+         background:#faf7ff;border:1px dashed #e0d2f7;border-radius:12px;overflow:hidden}
+  .trace summary{cursor:pointer;padding:8px 12px;color:var(--purple);font-weight:600;list-style:none;user-select:none}
+  .trace summary::-webkit-details-marker{display:none}
+  .trace[open] summary{border-bottom:1px solid #ece4fb}
+  .trace .body{padding:6px 12px 10px}
+  .tc{padding:6px 0;border-bottom:1px dotted #ece4fb}
+  .tc:last-child{border-bottom:none}
+  .tc .call{color:var(--green)} .tc .arg{color:var(--amber)} .tc .res{color:var(--dim);display:block;margin-top:2px;white-space:pre-wrap;word-break:break-word}
+  .typing{align-self:flex-start;color:var(--faint);font-size:13px;padding:4px 10px}
+  .dot{display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--greenBright);margin:0 1px;animation:blink 1.2s infinite}
+  .dot:nth-child(2){animation-delay:.2s}.dot:nth-child(3){animation-delay:.4s}
+  @keyframes blink{0%,60%,100%{opacity:.25}30%{opacity:1}}
+  .inputbar{display:flex;gap:8px;padding:12px;border-top:1px solid var(--line)}
+  .inputbar input{flex:1;background:#fbfcfa;border:1px solid var(--line);color:var(--ink);
+                  border-radius:10px;padding:11px 13px;font:inherit;font-size:14px}
+  .inputbar input:focus{outline:none;border-color:var(--green2);box-shadow:0 0 0 3px rgba(22,163,90,.12)}
+  .inputbar button{background:var(--green);border:none;color:#f4f9f5;font-weight:700;border-radius:10px;padding:0 16px;cursor:pointer;transition:.15s}
+  .inputbar button:hover{background:var(--green2)}
+  /* suggestions */
+  .side h3{font-size:12px;text-transform:uppercase;letter-spacing:.6px;color:var(--faint);margin:16px 14px 8px}
+  .chips{display:flex;flex-direction:column;gap:7px;padding:0 12px}
+  .chip{text-align:left;background:var(--panel);border:1px solid var(--line);color:var(--ink);
+        font:inherit;font-size:13px;padding:9px 11px;border-radius:10px;cursor:pointer;transition:.15s;box-shadow:var(--shadow)}
+  .chip:hover{border-color:var(--greenBright);background:#eef4ee;transform:translateX(2px)}
+  .chip .k{font-size:10px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;display:block;margin-bottom:2px}
+  .k.ask{color:var(--green)} .k.prog{color:var(--purple)} .k.refuse{color:var(--amber)}
+
+  /* ---- generic content ---- */
+  h2{font-size:20px;margin:28px 0 10px;font-family:var(--serif);font-weight:600;letter-spacing:-.01em}
+  h3.blk{font-size:15px;margin:20px 0 8px;color:var(--ink)}
+  p{color:var(--ink)} .muted{color:var(--dim);font-size:14px}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}@media(max-width:760px){.grid2{grid-template-columns:1fr}}
+  .box{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;box-shadow:var(--shadow)}
+  .box h4{margin:0 0 6px;font-size:14px;color:var(--green)}
+  .box.small p{font-size:13.5px;color:var(--dim);margin:6px 0 0}
+  code{background:#eef4ee;border:1px solid #dfe7df;border-radius:5px;padding:1px 6px;font-family:var(--mono);font-size:12.5px;color:var(--green)}
+  ul.clean{list-style:none;padding:0;margin:8px 0} ul.clean li{padding:5px 0 5px 22px;position:relative;color:var(--dim);font-size:14px}
+  ul.clean li::before{content:"▸";position:absolute;left:4px;color:var(--greenBright)}
+  table.cmp{width:100%;border-collapse:collapse;margin-top:8px;font-size:13px}
+  table.cmp th,table.cmp td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--line)}
+  table.cmp th{color:var(--faint);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.4px}
+  .yes{color:var(--green)} .no{color:var(--faint)}
+  .foot{color:var(--faint);font-size:12px;margin-top:34px;border-top:1px solid var(--line);padding-top:16px}
+  .arch{width:100%;height:auto;border:1px solid var(--line);border-radius:14px;background:#ffffff;margin-top:8px;box-shadow:var(--shadow)}
+  .legend{display:flex;gap:16px;flex-wrap:wrap;margin-top:10px;font-size:12px;color:var(--dim)}
+  .sw{display:inline-block;width:11px;height:11px;border-radius:3px;vertical-align:middle;margin-right:5px}
+  /* ---- swing library ---- */
+  .libgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:16px;margin-top:18px}
+  .swing{background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow);cursor:pointer;transition:.15s;display:flex;flex-direction:column}
+  .swing:hover{border-color:var(--greenBright);transform:translateY(-2px);box-shadow:0 8px 20px rgba(11,32,24,.10)}
+  .swing video,.swing .thumb{width:100%;aspect-ratio:16/10;object-fit:cover;background:#0a120d;display:block}
+  .swing .thumb{display:grid;place-items:center;color:#5b6b61;font-size:12px}
+  .swing .body{padding:12px 13px}
+  .swing .nm{font-weight:700;font-size:14px}
+  .swing .sub{color:var(--dim);font-size:12px;margin-top:1px}
+  .swing .badges{display:flex;gap:6px;margin-top:9px;flex-wrap:wrap}
+  .bdg{font-size:10.5px;font-weight:600;padding:3px 8px;border-radius:20px;border:1px solid transparent}
+  .bdg.good{color:var(--green);background:rgba(22,163,90,.10);border-color:rgba(22,163,90,.28)}
+  .bdg.warn{color:#9a6a12;background:#fbefd9;border-color:#efd9ae}
+  .swing .cta{margin-top:10px;font-size:12px;color:var(--green2);font-weight:700}
+  #liveBadge{border:1px solid var(--line)}
+  #liveBadge.live,.badge.live{color:var(--green);background:rgba(22,163,90,.10);border-color:rgba(22,163,90,.28)}
+  #liveBadge.off,.badge.off{color:#9a6a12;background:#fbefd9;border-color:#efd9ae}
+  .active-card{outline:2px solid var(--greenBright);outline-offset:1px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="logo">🏌️</div>
+    <div>
+      <h1>Motion Caddie — Coaching Q&amp;A Chatbot</h1>
+      <div class="tag">A grounded, tool-calling assistant that answers questions about your golf swing</div>
+    </div>
+    <span class="badge" id="modeBadge">checking…</span>
+  </header>
+
+  <nav class="tabs">
+    <button class="tab active" data-v="lib">🎬 My Swings</button>
+    <button class="tab" data-v="chat">💬 Coaching chat</button>
+    <button class="tab" data-v="arch">🏗️ Architecture</button>
+    <button class="tab" data-v="ground">🎯 How it stays grounded</button>
+  </nav>
+
+  <!-- ============================ LIBRARY ============================ -->
+  <section class="view active" id="v-lib">
+    <h2 style="margin-top:6px">Your uploaded swings</h2>
+    <p class="muted">A library of swings you've captured. Pick one to open it in the coaching chat and ask
+      questions about it — every answer is grounded in that swing's measured data.</p>
+    <div class="libgrid" id="libGrid"></div>
+  </section>
+
+  <!-- ============================ CHAT ============================ -->
+  <section class="view" id="v-chat">
+    <div class="chatgrid">
+      <div class="card" style="display:flex;flex-direction:column">
+        <div class="ctxbar">
+          <span class="pill">🎥 <b id="activeName">My Swing</b> · <span id="activeMeta">driver · down-the-line</span></span>
+          <label class="pill" style="display:flex;align-items:center;gap:6px;cursor:pointer">Compare with
+            <select id="cmpSelect" style="background:transparent;border:none;color:var(--ink);font:inherit;font-size:12px;cursor:pointer;outline:none"></select>
+          </label>
+          <span class="pill" id="liveBadge" style="margin-left:auto" title="live = answers run through the real agent (Codex) on the local server">● checking…</span>
+        </div>
+        <div id="stream"></div>
+        <div class="inputbar">
+          <input id="q" placeholder="Ask about this swing…  e.g. “what are the biggest takeaways?”" autocomplete="off"/>
+          <button id="send">Ask</button>
+        </div>
+      </div>
+
+      <div class="side">
+        <h3>Ask about a metric</h3>
+        <div class="chips">
+          <button class="chip"><span class="k ask">Metric</span>How was my tempo?</button>
+          <button class="chip"><span class="k ask">Metric</span>How was my weight shift?</button>
+          <button class="chip"><span class="k ask">Overview</span>What stood out in this swing?</button>
+          <button class="chip"><span class="k ask">Summary</span>What are the biggest takeaways?</button>
+        </div>
+        <h3>Compare swings</h3>
+        <div class="chips">
+          <button class="chip"><span class="k prog">Compare</span>How does my shoulder turn compare?</button>
+          <button class="chip"><span class="k prog">Compare</span>Compare our tempo.</button>
+        </div>
+        <h3>Watch it refuse (safely)</h3>
+        <div class="chips">
+          <button class="chip"><span class="k refuse">Unmeasured</span>How far did the ball go?</button>
+          <button class="chip"><span class="k refuse">Low-confidence</span>Was my lead arm straight at the top?</button>
+          <button class="chip"><span class="k refuse">Out of scope</span>What should I fix?</button>
+        </div>
+      </div>
+    </div>
+    <p class="muted" style="margin-top:14px">Every answer is built only from data the model <b>fetches with tools</b> — open the
+      <span style="color:var(--purple)">🔧 tool calls</span> trace under any reply to see exactly which measurements it read.
+      When <b>live</b>, answers run through the real agent (Codex) on the local server; offline, an in-page mock
+      mirrors it. Numbers are from real Motion Caddie scorecards.</p>
+  </section>
+
+  <!-- ============================ ARCH ============================ -->
+  <section class="view" id="v-arch">
+    <h2>System architecture</h2>
+    <p class="muted">The chatbot is an <b>agentic tool-use loop</b>. The model never sees the raw scorecard — it must
+      call read-only tools to fetch each number, which makes every factual claim traceable to a measurement.
+      It runs two ways from the <b>same</b> <code>coaching_chat.py</code>: <b>locally</b> via <code>serve_demo.py</code>
+      + the Codex CLI (what this page is using), or in the <b>cloud</b> on AWS Lambda + Claude.</p>
+
+    <svg class="arch" viewBox="0 0 900 430" xmlns="http://www.w3.org/2000/svg" font-family="var(--sans)">
+      <defs>
+        <marker id="ar" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto">
+          <path d="M0,0 L7,3 L0,6 Z" fill="#6d4ad0"/></marker>
+        <marker id="arg" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto">
+          <path d="M0,0 L7,3 L0,6 Z" fill="#16a35a"/></marker>
+      </defs>
+      <!-- client -->
+      <rect x="20" y="150" width="150" height="120" rx="12" fill="#f4f6f2" stroke="#e5e9e2"/>
+      <text x="95" y="180" fill="#0a120d" font-size="14" font-weight="700" text-anchor="middle">Browser UI</text>
+      <text x="95" y="202" fill="#5b6b61" font-size="11" text-anchor="middle">clip picker + chat</text>
+      <text x="95" y="222" fill="#5b6b61" font-size="11" text-anchor="middle">holds transcript</text>
+      <text x="95" y="248" fill="#8a988e" font-size="10" text-anchor="middle">S3 + CloudFront</text>
+      <!-- lambda -->
+      <rect x="250" y="70" width="360" height="290" rx="14" fill="#fbfcfa" stroke="#16a35a" stroke-width="1.5"/>
+      <text x="430" y="96" fill="#0c5c3a" font-size="13" font-weight="700" text-anchor="middle">AWS Lambda (container, CPU-only, scale-to-zero)</text>
+      <rect x="272" y="112" width="150" height="70" rx="10" fill="#ffffff" stroke="#e5e9e2"/>
+      <text x="347" y="140" fill="#0a120d" font-size="12" font-weight="600" text-anchor="middle">/chat handler</text>
+      <text x="347" y="159" fill="#5b6b61" font-size="10" text-anchor="middle">rebuilds SwingContext</text>
+      <text x="347" y="172" fill="#5b6b61" font-size="10" text-anchor="middle">from cached scorecard</text>
+      <rect x="442" y="112" width="146" height="70" rx="10" fill="#ffffff" stroke="#e5e9e2"/>
+      <text x="515" y="140" fill="#0a120d" font-size="12" font-weight="600" text-anchor="middle">tool dispatch</text>
+      <text x="515" y="159" fill="#5b6b61" font-size="10" text-anchor="middle">get_indicator …</text>
+      <text x="515" y="172" fill="#5b6b61" font-size="10" text-anchor="middle">deterministic Python</text>
+      <!-- loop box -->
+      <rect x="272" y="200" width="316" height="86" rx="10" fill="#faf7ff" stroke="#e0d2f7" stroke-dasharray="4 3"/>
+      <text x="430" y="220" fill="#6d4ad0" font-size="11" font-weight="700" text-anchor="middle">↻ tool-use loop (≤ 6 rounds / turn)</text>
+      <text x="430" y="240" fill="#5b6b61" font-size="10.5" text-anchor="middle">model asks for a tool → run it → return JSON → repeat</text>
+      <text x="430" y="256" fill="#5b6b61" font-size="10.5" text-anchor="middle">until the model writes its final answer</text>
+      <text x="430" y="274" fill="#8a988e" font-size="10" text-anchor="middle">then verify_chat_grounding() checks the transcript</text>
+      <rect x="272" y="300" width="316" height="44" rx="10" fill="#eef4ee" stroke="#dfe7df"/>
+      <text x="430" y="320" fill="#0a120d" font-size="11" font-weight="600" text-anchor="middle">SwingContext — cached 3D-pose scorecard(s) + KB</text>
+      <text x="430" y="335" fill="#5b6b61" font-size="10" text-anchor="middle">the ONLY data the tools can read (grounding boundary)</text>
+      <!-- claude -->
+      <rect x="700" y="150" width="170" height="120" rx="12" fill="#f4f6f2" stroke="#e5e9e2"/>
+      <text x="785" y="182" fill="#0a120d" font-size="14" font-weight="700" text-anchor="middle">Claude</text>
+      <text x="785" y="202" fill="#5b6b61" font-size="11" text-anchor="middle">claude-opus-4-8</text>
+      <text x="785" y="222" fill="#5b6b61" font-size="11" text-anchor="middle">native tool use</text>
+      <text x="785" y="248" fill="#8a988e" font-size="10" text-anchor="middle">Anthropic API · key in</text>
+      <text x="785" y="260" fill="#8a988e" font-size="10" text-anchor="middle">Secrets Manager</text>
+      <!-- arrows -->
+      <line x1="170" y1="210" x2="248" y2="150" stroke="#6d4ad0" stroke-width="1.6" marker-end="url(#ar)"/>
+      <text x="196" y="172" fill="#6d4ad0" font-size="9">POST clip+msgs</text>
+      <line x1="248" y1="230" x2="172" y2="248" stroke="#6d4ad0" stroke-width="1.6" marker-end="url(#ar)"/>
+      <text x="188" y="268" fill="#6d4ad0" font-size="9">answer + trace</text>
+      <line x1="610" y1="180" x2="698" y2="200" stroke="#16a35a" stroke-width="1.6" marker-end="url(#arg)"/>
+      <text x="624" y="176" fill="#0e7c4a" font-size="9">messages+tools</text>
+      <line x1="698" y1="235" x2="612" y2="250" stroke="#16a35a" stroke-width="1.6" marker-end="url(#arg)"/>
+      <text x="628" y="270" fill="#0e7c4a" font-size="9">tool_use / text</text>
+    </svg>
+    <div class="legend">
+      <span><span class="sw" style="background:#6d4ad0"></span>Browser ↔ server (per user turn, stateless)</span>
+      <span><span class="sw" style="background:#16a35a"></span>server ↔ model (many rounds inside one turn)</span>
+    </div>
+    <p class="muted" style="margin-top:10px">Diagram shows the AWS deployment. The <b>same agent runs locally</b> in
+      <code>serve_demo.py</code>: the browser posts to <code>/api/chat</code>, a small Python server runs the identical
+      tool-use loop, and the model is <b>Codex</b> (already authed) instead of Claude on Lambda — a one-line backend swap
+      (<code>--backend codex|anthropic</code>). This page is running that live path now.</p>
+
+    <div class="grid2" style="margin-top:20px">
+      <div class="box"><h4>Why tool calling</h4>
+        <p class="muted">The old Q&amp;A dumped the whole scorecard into one prompt and hoped the model
+          reported the right metric. Here the model <b>can't cite a number it never fetched</b> — grounding is
+          enforced at the data layer, and the tool log is an audit trail (the 🔧 trace under each answer).</p></div>
+      <div class="box"><h4>Two runtimes, one agent</h4>
+        <p class="muted"><b>Local:</b> <code>serve_demo.py</code> + the <b>Codex</b> CLI — no key, runs on your machine.
+          <b>Cloud:</b> AWS Lambda (scale-to-zero, CPU-only) + <b>Claude</b> via the Anthropic API. Same
+          <code>coaching_chat.py</code> loop, tools, and verifier — the backend is a config flip.</p></div>
+      <div class="box"><h4>The tools</h4>
+        <ul class="clean">
+          <li><code>list_indicators</code> — what can be answered</li>
+          <li><code>get_indicator</code> — one metric vs tour range</li>
+          <li><code>compare_indicator</code> — this swing vs another swing</li>
+          <li><code>get_flagged_observations</code> / <code>get_swing_summary</code></li>
+          <li><code>explain_term</code> — glossary lookup, no inventing</li>
+        </ul></div>
+      <div class="box"><h4>Stateless &amp; bounded</h4>
+        <p class="muted">The browser keeps the conversation; each turn posts <code>{clip_id, question, history[]}</code>.
+          The server reloads a pre-computed scorecard (no GPU) and a hard 6-round cap plus history/size limits bound cost.
+          Cloud scales to zero; nothing runs between questions.</p></div>
+    </div>
+
+    <h3 class="blk">From single-shot Q&amp;A → tool-calling chatbot</h3>
+    <table class="cmp">
+      <tr><th>Capability</th><th>Old <code>coaching_ask.py</code></th><th>New <code>coaching_chat.py</code></th></tr>
+      <tr><td>Shape</td><td class="no">one structured-output call</td><td class="yes">agentic tool-use loop</td></tr>
+      <tr><td>Multi-turn / follow-ups</td><td class="no">no</td><td class="yes">yes — keeps history</td></tr>
+      <tr><td>Compare swings</td><td class="no">no</td><td class="yes"><code>compare_indicator</code> across two swings</td></tr>
+      <tr><td>Grounding</td><td class="no">self-reported, then checked</td><td class="yes">structural — only fetched data</td></tr>
+      <tr><td>Refuses unmeasured / low-confidence / fix-it</td><td class="yes">yes</td><td class="yes">yes (driven by tool results)</td></tr>
+    </table>
+  </section>
+
+  <!-- ============================ GROUND ============================ -->
+  <section class="view" id="v-ground">
+    <h2>How it stays grounded</h2>
+    <p class="muted">Three layers keep answers honest — the same discipline that got the explanation layer to a
+      held-out grounding score of 1.000, now applied to a conversation.</p>
+    <div class="grid2">
+      <div class="box small"><h4>1 · Tools are the only source of truth</h4>
+        <p>The scorecard is never pasted into the prompt. To say “your tempo is 3.1”, the model must call
+          <code>get_indicator("tempo_ratio")</code>. No call → no number.</p></div>
+      <div class="box small"><h4>2 · A clear refusal taxonomy</h4>
+        <p>Unmeasured topics (ball flight, grip, club face) → the metric isn’t in <code>list_indicators</code>.
+          Low-confidence metrics (arm bend from one camera) → the tool returns <code>reliable:false</code>.
+          Fix/advice → out of scope. In all three it declines instead of guessing.</p></div>
+      <div class="box small"><h4>3 · Deterministic transcript check</h4>
+        <p><code>verify_chat_grounding()</code> re-reads the tool log after each answer and flags a
+          low-confidence leak, an in/out-of-range claim with no matching fetch, or prescriptive language —
+          the green/amber badge under every reply.</p></div>
+      <div class="box small"><h4>Tolerant by design</h4>
+        <p>Any model or network failure degrades gracefully to a short apology, never a crash or a made-up
+          answer — matching the shipped CLIs.</p></div>
+    </div>
+    <h3 class="blk">Try the refusals in the chat</h3>
+    <p class="muted">The three amber chips under “Watch it refuse” show each path. Notice the tool trace: for an
+      unmeasured question it lists the metrics and finds none matching; for the arm question it fetches the metric,
+      sees <code>reliable:false</code>, and declines <i>without revealing the value</i>.</p>
+  </section>
+
+  <div class="foot">
+    Motion Caddie capstone · tool-calling coaching chatbot ·
+    <b>live</b> runs the real agent (<code>Scripts/coaching_chat.py</code>) through <b>Codex</b> on the local
+    <code>serve_demo.py</code>; opened as a plain file it falls back to an in-page mock of the same logic ·
+    cloud runtime is Claude (<code>claude-opus-4-8</code>) on AWS Lambda.
+  </div>
+</div>
+
+<script>
+/* ------------------------------------------------------------------ *
+ *  Embedded engine — mirrors coaching_chat.py's SwingContext + tools  *
+ *  + refusal taxonomy, so the demo behaves like the real thing.       *
+ * ------------------------------------------------------------------ */
+const META = {
+ tempo_ratio:{label:"Tempo (backswing : downswing)",plain:"the rhythm of the swing",unit:"",event:"overall",band:[3.0,4.1],median:3.4,tier:"high",
+   in:"the swing rhythm is close to the tour-typical pace",lo:"the backswing-to-downswing rhythm is quicker than the roughly 3-to-1 tour norm",hi:"the backswing is longer relative to the downswing than the roughly 3-to-1 tour norm"},
+ shoulder_turn_top_deg:{label:"Shoulder turn",plain:"how far the shoulders rotate at the top",unit:"°",event:"top",band:[37.5,68.1],median:53.7,tier:"med",
+   in:"the shoulders rotate about as far as a typical tour swing at the top",lo:"the shoulders rotate less than most tour swings at the top",hi:"the shoulders rotate further than most tour swings at the top"},
+ hip_turn_top_deg:{label:"Hip turn at the top",plain:"how far the hips rotate at the top",unit:"°",event:"top",band:[21.2,40.6],median:30.5,tier:"high",
+   in:"the hips rotate about as far as a typical tour swing at the top",lo:"the hips rotate less than most tour swings at the top",hi:"the hips rotate further than most tour swings at the top"},
+ x_factor_top_deg:{label:"X-factor (shoulder–hip separation)",plain:"the gap between shoulder turn and hip turn at the top",unit:"°",event:"top",band:[9.7,30.8],median:21.9,tier:"med",
+   in:"the separation between shoulders and hips is about typical for a tour swing",lo:"there is less separation between the shoulders and hips than in most tour swings",hi:"there is more separation between the shoulders and hips than in most tour swings"},
+ hip_turn_impact_deg:{label:"Hip rotation at impact",plain:"how open the hips are at impact",unit:"°",event:"impact",band:[7.1,26.3],median:16.3,tier:"high",
+   in:"the hips are about as open at impact as a typical tour swing",lo:"the hips are less open at impact than most tour swings",hi:"the hips are more open at impact than most tour swings"},
+ spine_tilt_address_deg:{label:"Spine angle at address",plain:"how much the upper body leans at setup",unit:"°",event:"address",band:[22.9,31.7],median:27.6,tier:"high",
+   in:"the upper body leans about as much as a typical tour swing at setup",lo:"the upper body leans less than most tour swings at setup",hi:"the upper body leans more than most tour swings at setup"},
+ posture_loss_deg:{label:"Posture (spine-angle change)",plain:"how much the spine angle changes from setup to impact",unit:"°",event:"impact",band:[2.4,8.9],median:5.3,tier:"med",
+   in:"the posture holds about as steadily from setup to impact as a typical tour swing",lo:"",hi:"the spine angle changes more from setup to impact than in most tour swings, meaning the posture shifts during the swing"},
+ head_sway_max_pct:{label:"Head sway",plain:"how much the head drifts sideways",unit:"%",event:"backswing",band:[23.6,44.2],median:32.5,tier:"med",
+   in:"the head stays about as steady side-to-side as a typical tour swing",lo:"the head moves less side-to-side than most tour swings",hi:"the head drifts further side-to-side than most tour swings"},
+ head_lift_max_pct:{label:"Head height change",plain:"how much the head moves up and down",unit:"%",event:"downswing",band:[11.9,23.2],median:16.5,tier:"med",
+   in:"the head stays about as steady in height as a typical tour swing",lo:"the head moves less up-and-down than most tour swings",hi:"the head moves more up-and-down than most tour swings"},
+ hip_lateral_shift_pct:{label:"Weight shift",plain:"how much the hips slide toward the target",unit:"%",event:"impact",band:[0.5,1.3],median:0.9,tier:"high",
+   in:"the hips slide toward the target about as much as a typical tour swing",lo:"the hips slide toward the target less than most tour swings",hi:"the hips slide sideways more than most tour swings"},
+ left_arm_bend_top_deg:{label:"Lead-arm extension",plain:"how straight the lead arm is at the top",unit:"°",event:"top",band:[110.8,143.5],median:128.1,tier:"low",
+   in:"the lead arm is about as extended at the top as a typical tour swing",lo:"the lead arm is more bent at the top than most tour swings",hi:""}
+};
+// ---- the user's "uploaded" swing library (REAL per-clip scorecard values) ----
+const CLIPS={"0":{"player":"Sandra Gal","club":"driver","view":"down-the-line","date":"Jun 2","video":"Data/handoff/0/0_overlay.mp4","values":{"shoulder_turn_top_deg":10.27,"hip_turn_top_deg":4.87,"x_factor_top_deg":5.4,"hip_turn_impact_deg":23.23,"spine_tilt_address_deg":24.07,"spine_tilt_impact_deg":23.28,"posture_loss_deg":0.79,"head_sway_max_pct":10.31,"head_lift_max_pct":9.58,"left_arm_bend_top_deg":127.78,"right_arm_bend_top_deg":136.62,"lead_knee_flex_address_deg":165.52,"lead_knee_flex_impact_deg":148.36,"hip_lateral_shift_pct":0.79,"tempo_ratio":4.0}},
+"2":{"player":"Chris DiMarco","club":"driver","view":"down-the-line","date":"Jun 9","video":"Data/handoff/2/2_overlay.mp4","values":{"shoulder_turn_top_deg":38.73,"hip_turn_top_deg":15.61,"x_factor_top_deg":23.11,"hip_turn_impact_deg":16.5,"spine_tilt_address_deg":29.67,"spine_tilt_impact_deg":24.47,"posture_loss_deg":5.2,"head_sway_max_pct":17.44,"head_lift_max_pct":13.45,"left_arm_bend_top_deg":62.36,"right_arm_bend_top_deg":98.45,"lead_knee_flex_address_deg":168.96,"lead_knee_flex_impact_deg":150.59,"hip_lateral_shift_pct":1.81,"tempo_ratio":4.29}},
+"4":{"player":"Brooke Henderson","club":"driver","view":"down-the-line","date":"Jun 14","video":"Data/handoff/4/4_overlay.mp4","values":{"shoulder_turn_top_deg":52.51,"hip_turn_top_deg":22.62,"x_factor_top_deg":29.89,"hip_turn_impact_deg":21.51,"spine_tilt_address_deg":31.43,"spine_tilt_impact_deg":27.45,"posture_loss_deg":3.99,"head_sway_max_pct":38.01,"head_lift_max_pct":10.69,"left_arm_bend_top_deg":138.74,"right_arm_bend_top_deg":142.32,"lead_knee_flex_address_deg":156.55,"lead_knee_flex_impact_deg":149.86,"hip_lateral_shift_pct":2.06,"tempo_ratio":3.57}},
+"6":{"player":"Nick Watney","club":"driver","view":"down-the-line","date":"Jun 18","video":"Data/handoff/6/6_overlay.mp4","values":{"shoulder_turn_top_deg":51.07,"hip_turn_top_deg":25.15,"x_factor_top_deg":25.92,"hip_turn_impact_deg":26.84,"spine_tilt_address_deg":30.77,"spine_tilt_impact_deg":30.77,"posture_loss_deg":0.0,"head_sway_max_pct":19.38,"head_lift_max_pct":13.62,"left_arm_bend_top_deg":175.81,"right_arm_bend_top_deg":115.99,"lead_knee_flex_address_deg":166.59,"lead_knee_flex_impact_deg":142.59,"hip_lateral_shift_pct":1.27,"tempo_ratio":3.12}},
+"8":{"player":"Cristie Kerr","club":"driver","view":"face-on","date":"Jun 23","video":"Data/handoff/8/8_overlay.mp4","values":{"shoulder_turn_top_deg":21.25,"hip_turn_top_deg":16.83,"x_factor_top_deg":4.42,"hip_turn_impact_deg":21.51,"spine_tilt_address_deg":32.2,"spine_tilt_impact_deg":21.76,"posture_loss_deg":10.44,"head_sway_max_pct":51.82,"head_lift_max_pct":38.21,"left_arm_bend_top_deg":133.94,"right_arm_bend_top_deg":120.54,"lead_knee_flex_address_deg":168.66,"lead_knee_flex_impact_deg":166.01,"hip_lateral_shift_pct":1.42,"tempo_ratio":3.88}},
+"10":{"player":"Steve Stricker","club":"driver","view":"face-on","date":"Jun 27","video":"Data/handoff/10/10_overlay.mp4","values":{"shoulder_turn_top_deg":40.69,"hip_turn_top_deg":40.23,"x_factor_top_deg":0.46,"hip_turn_impact_deg":6.88,"spine_tilt_address_deg":24.12,"spine_tilt_impact_deg":28.06,"posture_loss_deg":3.94,"head_sway_max_pct":24.55,"head_lift_max_pct":11.52,"left_arm_bend_top_deg":125.46,"right_arm_bend_top_deg":125.95,"lead_knee_flex_address_deg":177.83,"lead_knee_flex_impact_deg":171.58,"hip_lateral_shift_pct":1.38,"tempo_ratio":3.57}},
+"1292":{"player":"My Swing","club":"driver","view":"down-the-line","date":"Jun 30","video":"Data/demo/1292/1292_overlay.mp4","values":{"shoulder_turn_top_deg":40.41,"hip_turn_top_deg":18.11,"x_factor_top_deg":22.3,"hip_turn_impact_deg":46.7,"spine_tilt_address_deg":32.62,"spine_tilt_impact_deg":23.7,"posture_loss_deg":8.93,"head_sway_max_pct":57.61,"head_lift_max_pct":17.19,"left_arm_bend_top_deg":121.33,"right_arm_bend_top_deg":134.68,"lead_knee_flex_address_deg":157.79,"lead_knee_flex_impact_deg":167.69,"hip_lateral_shift_pct":0.16,"tempo_ratio":3.35}}};
+const LIB_ORDER=["1292","8","10","6","4","2","0"];
+let ACTIVE="1292", COMPARE=null;           // active swing + optional comparison swing
+const V=(k,c)=>CLIPS[c].values[k];
+const inRange=(k,c)=>{const v=V(k,c),b=META[k].band;return v>=b[0]&&v<=b[1];};
+const titleCase=s=>String(s).toLowerCase().replace(/\b\w/g,ch=>ch.toUpperCase());
+const clipName=c=>CLIPS[c]?CLIPS[c].player:("swing "+c);
+const GLOSSARY = {
+  "tour range":"the typical spread of values seen across professional tour swings",
+  "tour median":"the middle value among professional tour swings",
+  "address":"the setup position, just before the swing starts",
+  "top":"the top of the backswing, where the club changes direction",
+  "impact":"the moment the club meets the ball",
+  "x-factor":"the difference between how far the shoulders and the hips have turned at the top — a measure of coil"
+};
+
+/* ---- tools (mirror the Python tools; read the ACTIVE clip, COMPARE for change) ---- */
+function t_list_indicators(){return{indicators:Object.keys(META).map(k=>({key:k,label:META[k].label,plain_name:META[k].plain,confidence_tier:META[k].tier,reliable:META[k].tier!=="low"})),count:Object.keys(META).length};}
+function t_get_indicator(key){const m=META[key];if(!m)return{measured:false,key,note:"not measured for this swing"};
+  const o={measured:true,key,label:m.label,value:V(key,ACTIVE),unit:m.unit,tour_median:m.median,pro_band:m.band,in_tour_range:inRange(key,ACTIVE),confidence_tier:m.tier,reliable:m.tier!=="low"};
+  if(!o.reliable)o.note="LOW CONFIDENCE from a single camera — do not state or judge the value";return o;}
+function t_compare_indicator(key){const m=META[key];if(!m)return{comparable:false,key};if(COMPARE==null)return{comparable:false,key,note:"no comparison swing selected"};
+  if(m.tier==="low")return{comparable:false,key,confidence_tier:"low",note:"low-confidence; not reliable enough to compare"};
+  const a=V(key,ACTIVE),b=V(key,COMPARE),d=Math.round((a-b)*100)/100;
+  return{comparable:true,key,earlier_value:b,current_value:a,delta:d,direction:d>0?"increased":d<0?"decreased":"unchanged",current_in_tour_range:inRange(key,ACTIVE),earlier_in_tour_range:inRange(key,COMPARE)};}
+function t_get_flagged(){const f=Object.keys(META).filter(k=>META[k].tier!=="low"&&!inRange(k,ACTIVE));return{flagged:f.map(k=>({key:k,label:META[k].label})),count:f.length};}
+function t_get_summary(){const rel=Object.keys(META).filter(k=>META[k].tier!=="low");return{n_indicators:Object.keys(META).length,n_reliable:rel.length,n_in_tour_range:rel.filter(k=>inRange(k,ACTIVE)).length,n_flagged:rel.filter(k=>!inRange(k,ACTIVE)).length};}
+function t_explain_term(term){const t=term.toLowerCase().trim();if(GLOSSARY[t])return{term:t,in_glossary:true,gloss:GLOSSARY[t]};return{term:t,in_glossary:false,note:"not in glossary"};}
+
+/* ---- keyword → indicator routing ---- */
+const UNMEASURED=["ball","distance","how far","carry","yard","slice","hook","grip","club face","clubface","face open","face closed","swing plane","plane","wrist","hinge","clubhead","club head","speed","mph","which club","what club","launch","spin","start left","start right","left or right","draw","fade"];
+const LOWCONF=["lead arm","left arm","trail arm","right arm","arm straight","arm bend","arm extension","elbow"];
+const FIX=["what should i","how do i fix","how can i fix","what do i fix","fix my","should i work on","drill","how to improve my","what to improve","help me fix","what can i do to"];
+const PROG=["improve","improved","progress","better than","since last","last time","before","earlier","used to","weeks ago","week ago","changed","change since","compared","compare","comparison","versus","differ","against","getting better","any better"];
+// broad "sum it up" asks + conversational references to the prior turn
+const SUMMARY=/takeaway|summar|overall|rundown|overview|biggest|key (point|thing)|main (thing|point)|how did i do|break it down|how (was|were) my swing|tell me about my swing|in general|the gist|highlight|how('?s| is) my swing|report/;
+const REF=/all of the above|all of them|all of it|all of my|all the metrics|all metrics|everything|every metric|full (breakdown|rundown|report)|list them all|show me all|each of (them|those)|go through (them|all)/;
+
+function has(arr,ql){return arr.some(w=>ql.includes(w));}
+// return ALL metrics referenced, most-specific first (dedups hip/shoulder overlaps)
+function matchMetrics(ql){
+  const f=[],add=k=>{if(!f.includes(k))f.push(k);};
+  if(/\btempo\b|rhythm|\bpace\b/.test(ql))add("tempo_ratio");
+  if(/x[-\s]?factor|separation|shoulder[-\s]hip/.test(ql))add("x_factor_top_deg");
+  if(/\bshoulder/.test(ql)&&!/shoulder[-\s]hip/.test(ql))add("shoulder_turn_top_deg");
+  if(/\bhip/.test(ql)){ if(/impact/.test(ql))add("hip_turn_impact_deg");
+    else if(!/weight|lateral|shift|transfer/.test(ql))add("hip_turn_top_deg"); }
+  if(/weight shift|weight transfer|\btransfer\b|lateral|slide toward|\bweight\b/.test(ql))add("hip_lateral_shift_pct");
+  if(/posture|hold my angle|spine angle change|stay down|keep.*posture|hold.*posture/.test(ql))add("posture_loss_deg");
+  if(/\bspine\b|setup lean|posture at setup|at address/.test(ql)&&!/change/.test(ql))add("spine_tilt_address_deg");
+  if(/head sway|head move|side to side|head still|\bhead\b/.test(ql))add("head_sway_max_pct");
+  return f;
+}
+function findKey(ql){return matchMetrics(ql)[0]||null;}
+const RELIABLE=Object.keys(META).filter(k=>META[k].tier!=="low");
+
+// one-line-per-metric rundown (current values, or this-swing-vs-COMPARE when asked)
+function rundown(tc,call,keys,cmp){
+  const lines=[cmp?`Here's this swing next to ${clipName(COMPARE)}'s:`:"Here's a quick rundown:"];
+  keys.forEach(k=>{
+    const L=cap(low(META[k].label));
+    if(META[k].tier==="low"){call("get_indicator",{key:k},t_get_indicator(k));
+      lines.push(`• ${L}: measured from a single camera, so it's low-confidence — not reliable enough to call.`);return;}
+    if(cmp){const r=call("compare_indicator",{key:k},t_compare_indicator(k));
+      lines.push(`• ${L}: ${r.current_value}${META[k].unit} here vs ${r.earlier_value}${META[k].unit} for ${clipName(COMPARE)} (${r.current_in_tour_range?"in range":"outside range"}).`);
+    }else{const r=call("get_indicator",{key:k},t_get_indicator(k));
+      lines.push(`• ${L}: ${r.value}${META[k].unit} — ${r.in_tour_range?"inside the tour range":"outside the tour range"}.`);}
+  });
+  return{toolCalls:tc,answer:lines.join("\n")};
+}
+// the "biggest takeaways" summary: strengths + watch-outs (+ compare if a 2nd swing is picked)
+function summarize(tc,call,cmp){
+  const sum=call("get_swing_summary",{},t_get_summary());
+  const fl=call("get_flagged_observations",{},t_get_flagged());
+  const inR=RELIABLE.filter(k=>inRange(k,ACTIVE));
+  const notable=["tempo_ratio","shoulder_turn_top_deg","x_factor_top_deg","hip_lateral_shift_pct"].filter(k=>inR.includes(k)).slice(0,3);
+  const strong=(notable.length?notable:inR.slice(0,3));
+  strong.forEach(k=>call("get_indicator",{key:k},t_get_indicator(k)));
+  const lines=[`Here are the biggest takeaways from ${clipName(ACTIVE)}'s swing:`,
+    `• Of ${sum.n_reliable} reliably-measured things, ${sum.n_in_tour_range} are tour-like.`,
+    `• Working well: ${listEng(strong.map(k=>`${low(META[k].label)} (${V(k,ACTIVE)}${META[k].unit})`))}.`];
+  lines.push(fl.count?`• Outside the tour range: ${listEng(fl.flagged.map(f=>low(f.label)))}.`
+                     :"• Nothing fell outside the tour range on this swing. 👍");
+  if(cmp){const diff=RELIABLE.filter(k=>inRange(k,ACTIVE)&&!inRange(k,COMPARE));
+    diff.forEach(k=>call("compare_indicator",{key:k},t_compare_indicator(k)));
+    if(diff.length)lines.push(`• In range here but not in ${clipName(COMPARE)}'s: ${listEng(diff.map(k=>low(META[k].label)))}.`);}
+  return{toolCalls:tc,answer:lines.join("\n")};
+}
+
+/* ---- the "brain": returns {toolCalls:[{name,input,result}], answer, refuse} ---- */
+function respond(q){
+  const ql=q.toLowerCase();
+  const tc=[]; const call=(name,input,result)=>{tc.push({name,input,result});return result;};
+  const cmp=(COMPARE!=null);
+
+  // term definition
+  if(/what('| i)?s |what does |what is |explain |meaning of |define /.test(ql) && !has(PROG,ql)){
+    const m=ql.match(/(?:what(?:'s| is| does)?|explain|define|meaning of)\s+(?:an?\s+|the\s+|my\s+)?([a-z\- ]+?)(?:\s+mean)?[\?\.]?$/);
+    let term=m?m[1].trim():"";
+    if(GLOSSARY[term]||["x-factor","x factor","tempo","posture","weight shift"].includes(term)){
+      if(term==="x factor")term="x-factor";
+      const r=call("explain_term",{term},t_explain_term(term));
+      if(r.in_glossary)return{toolCalls:tc,answer:`${cap(term)} is ${r.gloss}.`};
+    }
+  }
+  // unmeasured refusal
+  if(has(UNMEASURED,ql) && !findKey(ql)){
+    call("list_indicators",{},{count:t_list_indicators().count,matched:false});
+    return{toolCalls:tc,refuse:true,answer:"That isn't something this swing analysis measures — it works from body motion, not ball flight, club, or contact. So I can't tell you that from what I have."};
+  }
+  // low-confidence refusal — only when the question is ONLY about a low-conf metric
+  // (if it also lists reliable metrics, the rundown handles the low-conf note inline)
+  if(has(LOWCONF,ql) && matchMetrics(ql).length===0){
+    const r=call("get_indicator",{key:"left_arm_bend_top_deg"},t_get_indicator("left_arm_bend_top_deg","today"));
+    return{toolCalls:tc,refuse:true,answer:"That one comes from a single camera, so the measurement isn't reliable enough to judge — I'd rather not call it either way than guess."};
+  }
+  // fix / advice refusal  (but let "has my X improved" fall through to progress)
+  if(has(FIX,ql) && !has(PROG,ql) && !SUMMARY.test(ql)){
+    return{toolCalls:tc,refuse:true,answer:"I can describe what your swing did, but I don't give fixes or drills — that's outside what this tool is meant to do. Want me to walk through what stood out instead?"};
+  }
+  // conversational reference ("all of the above", "everything") -> full rundown
+  if(REF.test(ql)){
+    return rundown(tc,call,RELIABLE, has(PROG,ql)&&cmp);
+  }
+  // broad "biggest takeaways / summary / how did I do" -> real summary
+  if(SUMMARY.test(ql) && matchMetrics(ql).length<2){
+    return summarize(tc,call,cmp);
+  }
+  // multiple metrics named in one question -> a rundown of each
+  {
+    const ms=matchMetrics(ql);
+    if(ms.length>=2 && (/[,&]|\band\b|\bplus\b/.test(ql) || ms.length>=3)){
+      return rundown(tc,call,ms, has(PROG,ql)&&cmp);
+    }
+  }
+  // comparison to another selected swing
+  if(has(PROG,ql)){
+    if(!cmp)return{toolCalls:tc,refuse:true,answer:"Pick a swing to compare against — use the “Compare with” selector above the chat — and I'll line the two up."};
+    const k=findKey(ql);
+    if(k){
+      if(META[k].tier==="low"){call("compare_indicator",{key:k},t_compare_indicator(k));
+        return{toolCalls:tc,refuse:true,answer:`${META[k].label} is a low-confidence measurement, so I can't reliably compare it across swings.`};}
+      const r=call("compare_indicator",{key:k},t_compare_indicator(k));
+      const dir=Math.abs(r.delta);
+      let s=`For ${low(META[k].label)}, this swing is ${r.current_value}${META[k].unit} (${r.current_in_tour_range?"in the tour range":"outside the tour range"}) versus ${r.earlier_value}${META[k].unit} for ${clipName(COMPARE)} (${r.earlier_in_tour_range?"in range":"outside range"}).`;
+      if(dir>0)s+=` A ${dir}${META[k].unit} difference.`;
+      return{toolCalls:tc,answer:s};
+    }
+    // overall comparison: metrics in range here but not for the other swing
+    call("get_swing_summary",{},t_get_summary());
+    const diff=Object.keys(META).filter(k=>META[k].tier!=="low"&&inRange(k,ACTIVE)&&!inRange(k,COMPARE));
+    diff.forEach(k=>call("compare_indicator",{key:k},t_compare_indicator(k)));
+    if(diff.length){
+      return{toolCalls:tc,answer:`Compared with ${clipName(COMPARE)}, this swing is inside the tour range on ${listEng(diff.map(k=>low(META[k].label)))} where ${clipName(COMPARE)}'s isn't. Ask about any one for the numbers.`};
+    }
+    return{toolCalls:tc,answer:`This swing and ${clipName(COMPARE)}'s land inside the tour range on the same metrics — no in/out-of-range differences to call out.`};
+  }
+  // overview: flagged
+  if(/stood out|stand out|flag|issue|problem|wrong|off|notable|notice/.test(ql)){
+    const r=call("get_flagged_observations",{},t_get_flagged());
+    if(!r.count)return{toolCalls:tc,answer:"Nothing stood out — every reliably-measured metric is inside the tour range on this swing. 👍"};
+    const names=r.flagged.map(f=>low(f.label));
+    return{toolCalls:tc,answer:`On this swing, ${listEng(names)} ${r.count>1?"were":"was"} outside the typical tour range. Everything else measured sat inside it.`};
+  }
+  // overview: summary
+  if(/summary|overall|how did i do|in general|overview|how was my swing/.test(ql)){
+    const r=call("get_swing_summary",{},t_get_summary());
+    return{toolCalls:tc,answer:`Of ${r.n_reliable} reliably-measured metrics, ${r.n_in_tour_range} are inside the tour range and ${r.n_flagged} fell outside. Ask about any one and I'll pull the numbers.`};
+  }
+  // single-metric answer
+  const k=findKey(ql);
+  if(k){
+    if(META[k].tier==="low"){const r=call("get_indicator",{key:k},t_get_indicator(k));
+      return{toolCalls:tc,refuse:true,answer:"That measurement isn't reliable enough from a single camera, so I can't assess it."};}
+    const r=call("get_indicator",{key:k},t_get_indicator(k));
+    const phr=r.in_tour_range?META[k].in:(r.value<META[k].band[0]?META[k].lo:META[k].hi);
+    let s=`Your ${low(META[k].label)} is ${r.value}${META[k].unit}`;
+    s+=r.in_tour_range?`, inside the tour range (${r.pro_band[0]}–${r.pro_band[1]}) — ${phr}.`:` — ${phr} (tour range ${r.pro_band[0]}–${r.pro_band[1]}).`;
+    return{toolCalls:tc,answer:s};
+  }
+  // fallback — offer the summary path so a broad ask is never a dead end
+  call("list_indicators",{},{count:t_list_indicators().count});
+  return{toolCalls:tc,answer:"I can break down the measured parts of your swing — tempo, shoulder and hip turn, X-factor, posture, spine angle, head sway, and weight shift. Ask about any of those, list a few, or say “give me the biggest takeaways” for a summary."};
+}
+const cap=s=>s.charAt(0).toUpperCase()+s.slice(1);
+const low=s=>s.charAt(0).toLowerCase()+s.slice(1);
+const listEng=a=>a.length<=1?(a[0]||""):a.slice(0,-1).join(", ")+" and "+a[a.length-1];
+
+/* ---- verifier (mirrors verify_chat_grounding) — used for the OFFLINE mock ---- */
+function verify(res){
+  const a=(res.answer||"").toLowerCase();const v=[];
+  const ok=new Set(),lc=new Set();
+  (res.toolCalls||[]).forEach(e=>{const r=e.result;if(!r)return;
+    if(e.name==="get_indicator"||e.name==="compare_indicator"){
+      if(r.reliable===false||r.confidence_tier==="low")lc.add(r.key);
+      else if(r.measured||r.comparable)ok.add(r.key);}});
+  lc.forEach(k=>{if(a.includes(String(V(k,ACTIVE))))v.push("low_confidence_leak");});
+  if(!res.refuse && /\byou should\b|\btry to\b|\bwork on\b|\bdrill\b|\bpractice\b/.test(a))v.push("prescriptive");
+  return{grounded:v.length===0,violations:v,fetched:[...ok]};
+}
+
+/* ------------------------------ UI ------------------------------ */
+let LIVE=false;                     // true when the local server is reachable
+const HIST={};                      // per-clip conversation history [{role,content}]
+const $s=document.getElementById('stream');
+const qEl=document.getElementById('q');
+function el(t,c,txt){const e=document.createElement(t);if(c)e.className=c;if(txt!=null)e.textContent=txt;return e;}
+function scroll(){$s.scrollTop=$s.scrollHeight;}
+function addUser(q){const w=el('div');w.append(el('div','who','You'),el('div','msg user',q));$s.append(w);scroll();}
+function addTyping(){const t=el('div','typing');t.innerHTML=(LIVE?'Running the agent (Codex)':'Checking the measurements')+' <span class="dot"></span><span class="dot"></span><span class="dot"></span>';$s.append(t);scroll();return t;}
+function grade(res){return (res.grounded!==undefined)?{grounded:res.grounded,violations:res.violations||[]}:verify(res);}
+function addBot(res){
+  const tcs=res.toolCalls||[];
+  if(tcs.length){
+    const d=el('details','trace');const sum=el('summary',null,`🔧 ${tcs.length} tool call${tcs.length>1?'s':''} — click to inspect`);
+    const body=el('div','body');
+    tcs.forEach(e=>{const r=el('div','tc');
+      const argStr=e.input?JSON.stringify(e.input).replace(/^{}$/,''):'';
+      let rs=e.result?JSON.stringify(e.result):'';
+      if(rs.length>340)rs=rs.slice(0,340)+' … ('+rs.length+' chars)';
+      const esc=s=>s.replace(/[<>&]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[c]));
+      r.innerHTML=`<span class="call">${e.name}</span>(<span class="arg">${esc(argStr)}</span>)`+
+                  (rs?`<span class="res">→ ${esc(rs)}</span>`:'');
+      body.append(r);});
+    d.append(sum,body);$s.append(d);
+  }
+  const w=el('div');w.append(el('div','who','Motion Caddie'));
+  const m=el('div','msg bot'+(res.refuse?' refuse':''),res.answer);
+  const g=grade(res);const gd=el('span','grade'+(g.grounded?'':' warn'));
+  gd.textContent=g.grounded?'✓ grounded in fetched data':'⚠ grounding: '+(g.violations||[]).join(', ');
+  m.append(document.createElement('br'),gd);
+  w.append(m);$s.append(w);scroll();
+}
+async function liveAsk(q){
+  const hist=HIST[ACTIVE]||(HIST[ACTIVE]=[]);
+  const body={clip_id:Number(ACTIVE),question:q,history:hist.slice()};
+  if(COMPARE!=null)body.compare_clip_id=Number(COMPARE);
+  const r=await fetch('/api/chat',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)});
+  if(!r.ok)throw new Error('http '+r.status);
+  const d=await r.json();
+  hist.push({role:'user',content:q},{role:'assistant',content:d.answer||''});
+  // prefer the full tool_log (name + input + result); fall back to bare names
+  const tcs=(d.tool_log&&d.tool_log.length)?d.tool_log:(d.tools_used||[]).map(n=>({name:n}));
+  return {answer:d.answer,toolCalls:tcs,grounded:d.grounded,violations:d.violations,refuse:false};
+}
+async function ask(q){
+  addUser(q);const typing=addTyping();
+  let res;
+  try{
+    if(LIVE){res=await liveAsk(q);}
+    else{res=respond(q);await new Promise(r=>setTimeout(r,500+Math.random()*300));}
+  }catch(e){res=respond(q);res.answer+="  (couldn't reach the live agent — showing the offline mock)";}
+  typing.remove();addBot(res);
+}
+document.getElementById('send').onclick=()=>{const v=qEl.value.trim();if(v){ask(v);qEl.value='';}};
+qEl.addEventListener('keydown',e=>{if(e.key==='Enter'){const v=qEl.value.trim();if(v){ask(v);qEl.value='';}}});
+document.querySelectorAll('.chip').forEach(c=>c.onclick=()=>{const q=c.childNodes[c.childNodes.length-1].textContent.trim();ask(q);});
+
+/* ---- swing library ---- */
+const libGrid=document.getElementById('libGrid');
+function relStats(cid){const rel=Object.keys(META).filter(k=>META[k].tier!=="low");
+  const inR=rel.filter(k=>inRange(k,cid)).length;return{inR,rel:rel.length,flagged:rel.length-inR};}
+function renderLibrary(){
+  libGrid.innerHTML='';
+  LIB_ORDER.forEach(cid=>{
+    const c=CLIPS[cid],b=relStats(cid);
+    const card=el('div','swing');card.dataset.cid=cid;
+    const vid=document.createElement('video');
+    vid.src=c.video;vid.muted=true;vid.loop=true;vid.playsInline=true;vid.preload='metadata';
+    vid.addEventListener('loadedmetadata',()=>{try{vid.currentTime=Math.min(0.1,(vid.duration||1)/2);}catch(e){}});
+    vid.onmouseenter=()=>vid.play().catch(()=>{});vid.onmouseleave=()=>vid.pause();
+    vid.onerror=()=>{const t=el('div','thumb','🎥 '+c.player);vid.replaceWith(t);};
+    card.append(vid);
+    const body=el('div','body');
+    body.innerHTML=`<div class="nm">${c.player}</div><div class="sub">${titleCase(c.club)} · ${c.view} · ${c.date}</div>`+
+      `<div class="badges"><span class="bdg good">${b.inR}/${b.rel} in range</span>`+
+      (b.flagged?`<span class="bdg warn">${b.flagged} outside range</span>`:'<span class="bdg good">all in range</span>')+
+      `</div><div class="cta">Open in coaching chat →</div>`;
+    card.append(body);card.onclick=()=>selectClip(cid);
+    libGrid.append(card);
+  });
+}
+function populateCompare(){
+  const sel=document.getElementById('cmpSelect');sel.innerHTML='<option value="">— none —</option>';
+  LIB_ORDER.filter(c=>c!==ACTIVE).forEach(c=>{const o=document.createElement('option');o.value=c;o.textContent=CLIPS[c].player;sel.append(o);});
+  sel.value=COMPARE||'';
+}
+function updateCtx(){
+  document.getElementById('activeName').textContent=CLIPS[ACTIVE].player;
+  document.getElementById('activeMeta').textContent=`${titleCase(CLIPS[ACTIVE].club)} · ${CLIPS[ACTIVE].view}`;
+  document.querySelectorAll('.swing').forEach(s=>s.classList.toggle('active-card',s.dataset.cid===String(ACTIVE)));
+}
+function selectClip(cid){ACTIVE=String(cid);COMPARE=null;$s.innerHTML='';populateCompare();updateCtx();greet();showTab('chat');}
+document.getElementById('cmpSelect').onchange=e=>{COMPARE=e.target.value||null;};
+
+/* ---- tabs + greeting ---- */
+function showTab(v){document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x.dataset.v===v));
+  document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));
+  document.getElementById('v-'+v).classList.add('active');}
+document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>showTab(t.dataset.v));
+function greet(){const w=el('div');w.append(el('div','who','Motion Caddie'));
+  w.append(el('div','msg bot',`You're looking at ${CLIPS[ACTIVE].player}'s swing (${titleCase(CLIPS[ACTIVE].club)}, ${CLIPS[ACTIVE].view}). Ask me anything about it — a metric like tempo or weight shift, the biggest takeaways, or pick a second swing to compare. 🏌️`));
+  $s.append(w);scroll();}
+
+/* ---- live detection + init ---- */
+(async function init(){
+  const badge=document.getElementById('liveBadge');
+  const mode=document.getElementById('modeBadge');
+  try{const r=await fetch('/api/clips',{cache:'no-store'});
+    if(!r.ok)throw 0;LIVE=true;badge.textContent='● live · Codex';badge.className='live';
+    mode.textContent='LIVE · real agent (Codex)';mode.className='badge live';}
+  catch(e){LIVE=false;badge.textContent='● offline preview';badge.className='off';
+    mode.textContent='OFFLINE preview · in-page mock';mode.className='badge off';}
+  renderLibrary();populateCompare();updateCtx();greet();
+})();
+</script>
+</body>
+</html>
