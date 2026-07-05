@@ -174,7 +174,7 @@ const Chat = (() => {
     const lines = [`Here are the biggest takeaways from ${clipName(ACTIVE)}'s swing:`,
       `• Of ${sum.n_reliable} reliably-measured things, ${sum.n_in_tour_range} are tour-like.`,
       `• Working well: ${listEng(strong.map(k => `${low(label(k, ACTIVE))} (${val(k, ACTIVE)}${unit(k, ACTIVE)})`))}.`];
-    lines.push(fl.count ? `• Outside the tour range: ${listEng(fl.flagged.map(f => low(f.label)))}.` : "• Nothing fell outside the tour range on this swing. 👍");
+    lines.push(fl.count ? `• Outside the tour range: ${listEng(fl.flagged.map(f => low(f.label)))}.` : "• Nothing fell outside the tour range on this swing.");
     if (cmp) { const diff = reliableKeys(ACTIVE).filter(k => IND(COMPARE)[k] && inRange(k, ACTIVE) && !inRange(k, COMPARE)); diff.forEach(k => call("compare_indicator", { key: k }, t_compare(k))); if (diff.length) lines.push(`• In range here but not in ${clipName(COMPARE)}'s: ${listEng(diff.map(k => low(label(k, ACTIVE))))}.`); }
     return { toolCalls: tc, answer: lines.join("\n") };
   }
@@ -215,7 +215,7 @@ const Chat = (() => {
     }
     if (/stood out|stand out|flag|issue|problem|wrong|off|notable|notice/.test(ql)) {
       const r = call("get_flagged_observations", {}, t_flagged());
-      if (!r.count) return { toolCalls: tc, answer: "Nothing stood out — every reliably-measured metric is inside the tour range on this swing. 👍" };
+      if (!r.count) return { toolCalls: tc, answer: "Nothing stood out — every reliably-measured metric is inside the tour range on this swing." };
       const names = r.flagged.map(f => low(f.label));
       return { toolCalls: tc, answer: `On this swing, ${listEng(names)} ${r.count > 1 ? "were" : "was"} outside the typical tour range. Everything else measured sat inside it.` };
     }
@@ -269,7 +269,7 @@ const Chat = (() => {
   function addBot(res) {
     const tcs = res.toolCalls || [];
     if (tcs.length) {
-      const d = el("details", "trace"); const sum = el("summary", null, `🔧 ${tcs.length} tool call${tcs.length > 1 ? "s" : ""} — click to inspect`);
+      const d = el("details", "trace"); const sum = el("summary", null, `${tcs.length} tool call${tcs.length > 1 ? "s" : ""} — click to inspect`);
       const bodyd = el("div", "trace-body");
       tcs.forEach(e => {
         const r = el("div", "tc");
@@ -277,7 +277,7 @@ const Chat = (() => {
         let rs = e.result ? JSON.stringify(e.result) : "";
         if (rs.length > 340) rs = rs.slice(0, 340) + " … (" + rs.length + " chars)";
         const esc = s => s.replace(/[<>&]/g, c => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]));
-        r.innerHTML = `<span class="call">${esc(e.name)}</span>(<span class="arg">${esc(argStr)}</span>)` + (rs ? `<span class="res">→ ${esc(rs)}</span>` : "");
+        r.innerHTML = `<span class="call">${esc(e.name)}</span>(<span class="arg">${esc(argStr)}</span>)` + (rs ? `<span class="res">-&gt; ${esc(rs)}</span>` : "");
         bodyd.append(r);
       });
       d.append(sum, bodyd); dom.stream.append(d);
@@ -285,7 +285,7 @@ const Chat = (() => {
     const w = el("div", "chat-turn"); w.append(el("div", "who", "MotionCaddie"));
     const m = el("div", "msg bot" + (res.refuse ? " refuse" : ""), res.answer);
     const g = grade(res); const gd = el("span", "grade" + (g.grounded ? "" : " warn"));
-    gd.textContent = g.grounded ? "✓ grounded in fetched data" : "⚠ grounding: " + (g.violations || []).join(", ");
+    gd.textContent = g.grounded ? "Grounded in fetched data" : "Grounding check: " + (g.violations || []).join(", ");
     m.append(document.createElement("br"), gd); w.append(m); dom.stream.append(w); scroll();
   }
   async function ask(q) {
@@ -298,7 +298,7 @@ const Chat = (() => {
   function greet() {
     const c = CLIPDATA[ACTIVE];
     const w = el("div", "chat-turn"); w.append(el("div", "who", "MotionCaddie"));
-    w.append(el("div", "msg bot", `You're looking at ${c.name}'s swing (${c.club}, ${c.view}). Ask me anything about it — a metric like tempo or weight shift, the biggest takeaways, or pick a second swing to compare. 🏌️`));
+    w.append(el("div", "msg bot", `You're looking at ${c.name}'s swing (${c.club}, ${c.view}). Ask me anything about it — a metric like tempo or weight shift, the biggest takeaways, or pick a second swing to compare.`));
     dom.stream.append(w); scroll();
   }
   function populateCompare() {

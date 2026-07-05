@@ -1,7 +1,7 @@
 # MotionCaddie — Front-End Deployment Plan & Handoff
 
 **Owner today:** Austin · **Proposed next owner:** Theo
-**Status:** static demo built + working locally; coach chat folded in; deployment + upload feature not started
+**Status:** static demo + coach chat + **prototype** upload and account/consent flows working locally; S3 hosting + real backend not started
 **Last updated:** 2026-07-05
 
 ---
@@ -60,6 +60,121 @@ Banjot pushed editable HTML sources from the same design lineage as this
 
 ---
 
+## 2026-07-05 — Upload flow, prototype accounts + consent, visual polish
+
+Reworked `deploy/web/` from a "pick a demo clip" demo into something that reads like
+a product: a landing page with a real upload path, a prototype account + consent
+flow, and a cleaner visual pass. **Everything added here is a front-end illusion —
+no backend, no real auth, nothing leaves the browser.** New files: `auth.js`
+(account + consent logic + the single `CONSENT_COPY` wording object) and
+`privacy.html` (Data & Privacy page rendered from `CONSENT_COPY`).
+
+**What shipped:**
+- **Upload flow (prototype).** Landing leads with a primary **"Upload swing video"**
+  CTA + a secondary **"Demo swings"** section (the three real pre-rendered clips).
+  Picking a file shows its name, runs the *same* 7-step Analyze loader, then shows a
+  results view that **plays back the user's actual file locally** (a `blob:` object
+  URL — truthful, it's their raw clip) behind a persistent banner: *"Prototype. No
+  real 3D analysis ran on your uploaded video — the metrics, 3D replay, and coach
+  below are illustrative demo values."* The metrics/plain/coach/3D are a clearly
+  labelled sample bundle. **No file is uploaded anywhere.**
+- **Prototype account + consent.** Sign in / Create account as modals. Stores only
+  safe profile metadata in `localStorage` (`displayName`, `username`,
+  `consentGiven`, `modelUseConsent`, `consentTimestamp`, `consentVersion`); the
+  password field is demo-only and its value is **never stored**. Consent is **two
+  separate checkboxes**: a required, unchecked-by-default **analysis-use** consent
+  that gates account creation, and a genuinely optional, off-by-default
+  **model-improvement** opt-in. Both use honest "may"-wording. Signed-in state shows
+  a **My swings** dashboard + working Sign out. All consent/privacy wording lives in
+  one place: `CONSENT_COPY` in `auth.js`.
+- **Polish.** Removed all UI emojis except the ⛳ logo (icons are inline SVG now),
+  reframed samples as "Demo swings", tightened copy to a clean product tone.
+
+**Prototype-only — what is NOT real yet:** uploaded-video analysis (no pipeline
+runs), accounts (no server, no real auth, password never stored), and consent
+enforcement (captured locally, honored by nobody yet because nothing is uploaded).
+The honesty banner + the "prototype account only" microcopy + the privacy page's
+"nothing is uploaded" wording are all true *today* and MUST stay until the backend
+below actually exists.
+
+---
+
+## Going live on S3 — what the upload, accounts, and consent still need
+
+This is the plan to turn the three prototype flows above into real ones once the
+site is hosted (Phase 1) and a backend exists (Phases 3–4). The front-end seams are
+deliberately localized so each is a contained change, not a rewrite.
+
+### A. Upload → real analysis (extends Phase 3/4)
+Today `startUpload()` in `app.js` sets `mode="upload"`, loads the sample bundle, and
+plays the file back locally. To go live, that one function becomes:
+1. **Gate first:** require signed-in + `consentGiven` before doing anything (see C).
+2. **Get a presigned PUT URL** from a tiny `/presign` endpoint (Lambda Function URL
+   or API Gateway) → returns a short-lived S3 PUT URL for
+   `01_inputs/<userId>/<uploadId>.mp4` plus the `uploadId`.
+3. **PUT the file straight to S3** from the browser (not through compute — big video
+   shouldn't route through a Lambda). Show real upload progress.
+4. **Show the existing 7-step loader as a genuine "processing" state** — real
+   analysis isn't instant.
+5. **Poll for results:** either poll `03_outputs/<uploadId>/` (presigned GETs) or a
+   `/status?uploadId=` endpoint until the bundle exists, then call the *existing*
+   `loadClipBundle()` pointed at those URLs. **Remove the prototype banner and the
+   illustrative sample** only at this point.
+
+Backend that has to exist for this (Phase 4):
+- **`/presign` + `/status`** — tiny CPU Lambdas (or one small API).
+- **Pipeline trigger:** S3 `01_inputs/` upload event → an async **Fargate/Batch GPU**
+  job for the heavy path (raw video → MediaPipe 2D → 3D lift), then the **CPU Lambda**
+  path (event detection → scorecard → Claude eval) → writes `overlay.mp4`,
+  `replay_3d.json`, `metrics.json`, `explanation.json` to `03_outputs/<uploadId>/`.
+  **Same asset shape the UI already reads**, so `loadClipBundle()` is the only
+  front-end swap — exactly as designed.
+- **CORS:** the S3 data bucket needs a CORS rule allowing presigned PUT from the
+  CloudFront origin; `/presign` and `/status` must return CORS headers.
+- **H.264/yuv420p** on any overlay the pipeline renders (browser playback gotcha).
+
+### B. Accounts → real auth
+`auth.js` is the single seam. `Auth.createAccount` / `signIn` / `signOut` currently
+read/write `localStorage`. To go live, swap those three handlers for a hosted
+identity provider (e.g. a Cognito user pool — confirm against Lawrence's account
+setup, and note the demo constraint was explicitly *no* auth provider, so this is a
+post-demo decision). Then:
+- The front end stores the **auth token** the IdP issues, not a bare profile, and
+  attaches it to `/presign`, `/status`, and `/chat` calls; the backend authorizes.
+- **Password handling becomes the IdP's job** — our code still never sees or stores a
+  raw password (keep it that way).
+- Keep the UI identical; only the module internals change.
+
+### C. Consent → captured, enforced, honored (the compliance piece)
+Right now consent lives only in `localStorage` and binds nothing. Live, it has to be
+real:
+- **Persist it server-side**, keyed to the user, with the exact `consentVersion` from
+  `CONSENT_COPY` so you know *which text* they agreed to.
+- **Enforce the split in the pipeline:** the analysis-use consent is required to
+  process at all; **`modelUseConsent` decides whether that user's uploaded video and
+  derived pose data may be copied into any training/eval dataset.** If it's false, the
+  pipeline must exclude their data from anything under `02_working/` /
+  dataset-building — tag outputs `no-train` and never route them into a training set.
+  This is what keeps the "may … help improve future models" wording honest: it's a
+  real opt-out, not decoration.
+- **Deletion + withdrawal path** (the privacy page promises these): a control to
+  delete a user's uploads + derived data from S3 and any dataset, and to withdraw
+  `modelUseConsent` later (which must also purge already-collected training copies).
+- **Re-consent on version bump:** if `CONSENT_COPY.version` changes materially,
+  prompt existing users to re-agree; the stored version lets you detect who's stale.
+- ❗ **Honesty guardrail at cutover:** `privacy.html` currently says *"nothing is
+  uploaded."* That sentence and the upload banner become false the moment real
+  uploads start. **Update the privacy copy + remove the prototype banner in the same
+  change that turns on real uploads — never before, never after.** `CONSENT_COPY` is
+  the one place to edit the wording.
+
+### D. Order of operations
+Phase 1 (host the static site) can ship the prototype flows as-is — they're honest.
+Real uploads (A) must not turn on before consent enforcement (C) and, ideally, real
+auth (B) exist, because that's the moment user video actually leaves the browser.
+
+---
+
 ## TL;DR for whoever picks this up
 There's a working static front end at `deploy/web/` (vanilla HTML/CSS/JS, no
 framework). It runs locally today off pre-rendered placeholder data for 3 fixed
@@ -70,10 +185,12 @@ plan to take it from "local demo" → "hosted app with real uploads." Read the
 ---
 
 ## Current state (what already exists — don't redo)
-- `deploy/web/index.html · styles.css · app.js` — editable vanilla front end,
-  no build step. Three screens: **Pick → Analyze (7-step loader) → Results**
-  (Plain English + The Numbers tabs, 9-metric table, 2D overlay, rotatable 3D
-  replay).
+- `deploy/web/index.html · styles.css · app.js · chat.js · auth.js · privacy.html`
+  — editable vanilla front end, no build step. Flow: **Landing (upload CTA + demo
+  swings) → Analyze (7-step loader) → Results** (Plain English + The Numbers + Ask
+  the coach tabs, 9-metric table, 2D overlay, rotatable 3D replay). Plus a
+  **prototype** upload flow, account/consent modals, and a "My swings" dashboard —
+  see the two 2026-07-05 sections above for what's real vs prototype-only.
 - `deploy/web/assets/<clip_id>/` — per-clip data: `metrics.json`,
   `explanation.json`, `replay_3d.json`, `overlay.mp4`, `raw.mp4`.
 - Data is currently **placeholder** (clip 0 uses real MotionBERT 3D output;
@@ -139,8 +256,10 @@ Front end polls / is notified, then displays the results
 ```
 
 Front-end work for this:
-- An upload screen (replace/augment the "Use this sample swing" button) that
-  sends the file to S3 `01_inputs/`.
+- The upload UI **already exists** as a prototype (landing "Upload swing video" CTA +
+  file picker + loader + results banner). Going live is the localized `startUpload()`
+  change spelled out in **"Going live on S3 → A"** above — send the file to S3
+  `01_inputs/` via presigned URL instead of playing it back locally.
 - ⚠️ **Uploads should go directly to S3 via a presigned URL**, not through the
   app server — big video files shouldn't route through compute. The backend
   hands the browser a short-lived presigned PUT URL; the browser uploads straight

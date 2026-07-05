@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MotionCaddie — Data & Privacy</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="brand" href="index.html" style="text-decoration:none">
+    <span class="brand-mark" aria-hidden="true">⛳</span>
+    <span class="brand-name">MotionCaddie</span>
+  </a>
+  <a class="btn-text" href="index.html">Back to app</a>
+</header>
+
+<main class="doc">
+  <p class="doc-eyebrow consent-microcopy"></p>
+  <h1 id="pv-title">Data &amp; Privacy</h1>
+  <p class="doc-updated">Last updated <span id="pv-updated"></span></p>
+  <p class="doc-intro" id="pv-intro"></p>
+  <div id="pv-sections"><!-- rendered from CONSENT_COPY.privacy --></div>
+  <p class="muted small doc-foot">
+    <a class="btn-text" href="index.html">Back to MotionCaddie</a>
+  </p>
+</main>
+
+<script src="auth.js"></script>
+<script>
+  // Render the privacy detail from the single CONSENT_COPY source (auth.js).
+  (function () {
+    var C = (window.CONSENT_COPY || {}).privacy || { sections: [] };
+    var mc = window.CONSENT_COPY ? window.CONSENT_COPY.microcopy : "";
+    document.querySelectorAll(".consent-microcopy").forEach(function (n) { n.textContent = mc; });
+    if (C.title) document.getElementById("pv-title").textContent = C.title;
+    document.getElementById("pv-updated").textContent = C.updated || "";
+    document.getElementById("pv-intro").textContent = C.intro || "";
+    var wrap = document.getElementById("pv-sections");
+    (C.sections || []).forEach(function (s) {
+      var h = document.createElement("h2"); h.textContent = s.h;
+      var p = document.createElement("p"); p.textContent = s.p;
+      wrap.appendChild(h); wrap.appendChild(p);
+    });
+  })();
+</script>
+</body>
+</html>

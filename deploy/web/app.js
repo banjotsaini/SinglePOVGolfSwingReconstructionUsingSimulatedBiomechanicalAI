@@ -28,9 +28,14 @@ async function loadManifest() {
 }
 
 /* ============================== app state =============================== */
+const SAMPLE_ID = "830";   // demo swing used to illustrate a prototype upload result
+
 const state = {
   clips: [],
   selectedId: null,
+  mode: "demo",       // "demo" (real pre-rendered clip) | "upload" (prototype)
+  upload: null,       // { name, url } for a prototype uploaded file
+  uploads: [],        // this session's prototype uploads (for the dashboard)
   bundle: null,       // loaded clip bundle for the results screen
   bundlePromise: null,
   viewer: null,       // Replay3D instance
@@ -54,7 +59,7 @@ function goto(screen) {
   window.scrollTo({ top: 0 });
 }
 
-/* ============================ 1 · pick screen =========================== */
+/* ============================ 1 · landing screen ======================= */
 function renderGallery() {
   const gal = $("#clip-gallery");
   gal.innerHTML = "";
@@ -65,17 +70,46 @@ function renderGallery() {
     card.innerHTML = `
       <video src="assets/${clip.id}/raw.mp4" preload="metadata" muted playsinline></video>
       <div class="clip-title">${clip.title}</div>
-      <div class="clip-meta">${clip.view} · ${clip.club}</div>`;
-    card.addEventListener("click", () => selectClip(clip.id));
+      <div class="clip-meta">${clip.view} · ${clip.club}</div>
+      <div class="clip-cta">Open result</div>`;
+    card.addEventListener("click", () => startDemo(clip.id));
     gal.appendChild(card);
   }
-  selectClip(state.clips[0].id);
 }
 
-function selectClip(id) {
+/* start a real pre-rendered demo swing */
+function startDemo(id) {
+  state.mode = "demo";
   state.selectedId = id;
-  document.querySelectorAll(".clip-card").forEach(c =>
-    c.classList.toggle("selected", c.dataset.id === id));
+  state.upload = null;
+  runAnalyze();
+}
+
+/* ---- prototype upload: pick a local file, then run the SAME loader ---- */
+function onFileChosen(file) {
+  if (!file) return;
+  if (state.upload && state.upload.url) URL.revokeObjectURL(state.upload.url);
+  state.upload = { name: file.name, url: URL.createObjectURL(file) };
+  const box = $("#upload-status");
+  box.hidden = false;
+  box.innerHTML = `
+    <div class="upload-file">
+      <span class="upload-file-name" title="${file.name}">${file.name}</span>
+      <span class="upload-badge">Prototype — no real analysis</span>
+    </div>
+    <button id="btn-analyze-upload" class="btn-primary" type="button">Analyze swing</button>`;
+  $("#btn-analyze-upload").addEventListener("click", startUpload);
+}
+
+function startUpload() {
+  if (!state.upload) return;
+  state.mode = "upload";
+  state.selectedId = SAMPLE_ID;   // illustrative results bundle; overlay uses the real file
+  if (!state.uploads.some(u => u.name === state.upload.name)) {
+    state.uploads.push({ name: state.upload.name });
+    renderDashboard();
+  }
+  runAnalyze();
 }
 
 /* ========================== 2 · analyze screen ========================== */
@@ -117,16 +151,25 @@ function metricByKey(key) {
 function renderResults() {
   const { metrics, explanation, overlayUrl, replay } = state.bundle;
   const clip = state.clips.find(c => c.id === state.selectedId);
+  const isUpload = state.mode === "upload";
 
-  $("#results-clip-label").textContent = `${clip.title} · ${clip.view} · ${clip.club}`;
-  $("#results-headline").textContent = explanation.headline;
+  // honesty banner + labelling for prototype uploads
+  $("#results-banner").hidden = !isUpload;
+  if (isUpload) {
+    $("#results-clip-label").textContent = `Your upload · ${state.upload.name}`;
+    $("#results-headline").textContent = "Illustrative result (prototype)";
+  } else {
+    $("#results-clip-label").textContent = `${clip.title} · ${clip.view} · ${clip.club}`;
+    $("#results-headline").textContent = explanation.headline;
+  }
 
   renderPlain(explanation);
   renderNumbers(metrics.metrics);
   Chat.activate(state.selectedId);
 
   const vid = $("#overlay-video");
-  vid.src = overlayUrl;
+  // upload mode plays back the user's ACTUAL file (truthful — their raw clip, no overlay claimed)
+  vid.src = isUpload ? state.upload.url : overlayUrl;
   vid.load();
 
   if (state.viewer) state.viewer.destroy();
@@ -368,7 +411,10 @@ async function init() {
     chips: [...document.querySelectorAll("#view-chat .chip-btn")],
   });
 
-  $("#btn-analyze").addEventListener("click", runAnalyze);
+  // upload (prototype): primary CTA opens the file picker
+  $("#btn-upload").addEventListener("click", () => $("#file-input").click());
+  $("#file-input").addEventListener("change", (e) => onFileChosen(e.target.files[0]));
+
   $("#btn-restart").addEventListener("click", () => {
     if (state.viewer) { state.viewer.destroy(); state.viewer = null; }
     $("#overlay-video").pause();
@@ -377,7 +423,32 @@ async function init() {
   $("#tab-plain").addEventListener("click", () => showTab("plain"));
   $("#tab-numbers").addEventListener("click", () => showTab("numbers"));
   $("#tab-chat").addEventListener("click", () => showTab("chat"));
+
+  // prototype account: render the signed-in dashboard on any auth change
+  if (window.Auth) Auth.init();
+  document.addEventListener("mc-auth-change", renderDashboard);
+  renderDashboard();
+
   goto("pick");
+}
+
+/* ---- signed-in "My swings" dashboard (prototype) ---- */
+function renderDashboard() {
+  const dash = $("#dashboard");
+  if (!dash) return;
+  const signedIn = window.Auth && Auth.isSignedIn();
+  dash.hidden = !signedIn;
+  if (!signedIn) return;
+  const user = Auth.currentUser();
+  $("#dash-name").textContent = user.displayName || user.username;
+  const wrap = $("#dash-swings");
+  if (!state.uploads.length) {
+    wrap.innerHTML = `<p class="muted small">No swings yet. Upload a swing video above to get started — analysis is prototype-only in this demo.</p>`;
+    return;
+  }
+  wrap.innerHTML = state.uploads.map(u =>
+    `<div class="dash-swing"><span class="dash-swing-name" title="${u.name}">${u.name}</span>` +
+    `<span class="upload-badge">Prototype</span></div>`).join("");
 }
 
 init();
