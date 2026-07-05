@@ -1,0 +1,58 @@
+{
+  "proxy1_perjoint_const_debias_train->test": {
+    "test_depth_rmse_before_mm": 29.2,
+    "test_depth_rmse_after_mm": 30.0,
+    "reduction_pct": -2.7
+  },
+  "proxy2_pose_conditioned_leave_one_subject_out": {
+    "learn_G5_apply_G6": {
+      "before_mm": 29.5,
+      "after_mm": 27.1,
+      "reduction_pct": 8.4
+    },
+    "learn_G6_apply_G5": {
+      "before_mm": 27.1,
+      "after_mm": 27.8,
+      "reduction_pct": -2.4
+    }
+  },
+  "per_joint_depth_bias_corr_train_vs_test": -0.03,
+  "per_joint_depth_bias_train_mm": {
+    "hip": 0.0,
+    "r_hip": 1.2,
+    "r_knee": 1.8,
+    "r_ankle": 2.1,
+    "l_hip": 1.1,
+    "l_knee": 2.3,
+    "l_ankle": 2.9,
+    "spine": -1.2,
+    "neck": 0.4,
+    "nose": 2.3,
+    "head": 2.6,
+    "l_shoulder": 0.2,
+    "l_elbow": 2.3,
+    "l_wrist": 6.3,
+    "r_shoulder": 1.7,
+    "r_elbow": 3.7,
+    "r_wrist": 3.3
+  },
+  "per_joint_depth_bias_test_mm": {
+    "hip": 0.0,
+    "r_hip": 1.8,
+    "r_knee": -14.8,
+    "r_ankle": -11.8,
+    "l_hip": -0.1,
+    "l_knee": -12.4,
+    "l_ankle": -21.1,
+    "spine": -12.1,
+    "neck": -12.0,
+    "nose": -18.0,
+    "head": -25.2,
+    "l_shoulder": -13.4,
+    "l_elbow": -13.3,
+    "l_wrist": -5.3,
+    "r_shoulder": -8.5,
+    "r_elbow": -1.6,
+    "r_wrist": -6.6
+  }
+}

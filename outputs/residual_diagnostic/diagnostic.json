@@ -1,0 +1,950 @@
+{
+  "split_def": {
+    "train": [
+      "G1",
+      "G2",
+      "G3",
+      "G4"
+    ],
+    "test": [
+      "G5",
+      "G6"
+    ]
+  },
+  "model": "golfpose MixSTE 17+0",
+  "note_club": "17+0 checkpoint has NO club joints; wrists are the closest club proxy.",
+  "per_swing_alignment": [
+    {
+      "subj": "G1",
+      "swing": "Swing01",
+      "procrustes_rot_deg": 112.8,
+      "scale": 0.989,
+      "T": 611,
+      "mpjpe_mm": 9.8
+    },
+    {
+      "subj": "G1",
+      "swing": "Swing02",
+      "procrustes_rot_deg": 112.0,
+      "scale": 0.985,
+      "T": 501,
+      "mpjpe_mm": 8.6
+    },
+    {
+      "subj": "G1",
+      "swing": "Swing03",
+      "procrustes_rot_deg": 112.3,
+      "scale": 0.989,
+      "T": 571,
+      "mpjpe_mm": 10.5
+    },
+    {
+      "subj": "G1",
+      "swing": "Swing04",
+      "procrustes_rot_deg": 112.5,
+      "scale": 0.987,
+      "T": 1241,
+      "mpjpe_mm": 6.7
+    },
+    {
+      "subj": "G1",
+      "swing": "Swing05",
+      "procrustes_rot_deg": 112.6,
+      "scale": 0.988,
+      "T": 641,
+      "mpjpe_mm": 9.7
+    },
+    {
+      "subj": "G1",
+      "swing": "Swing06",
+      "procrustes_rot_deg": 112.4,
+      "scale": 0.985,
+      "T": 1161,
+      "mpjpe_mm": 7.0
+    },
+    {
+      "subj": "G1",
+      "swing": "Swing07",
+      "procrustes_rot_deg": 112.7,
+      "scale": 0.986,
+      "T": 1221,
+      "mpjpe_mm": 7.4
+    },
+    {
+      "subj": "G1",
+      "swing": "Swing08",
+      "procrustes_rot_deg": 112.6,
+      "scale": 0.984,
+      "T": 558,
+      "mpjpe_mm": 9.5
+    },
+    {
+      "subj": "G1",
+      "swing": "Swing09",
+      "procrustes_rot_deg": 112.6,
+      "scale": 0.988,
+      "T": 1381,
+      "mpjpe_mm": 8.0
+    },
+    {
+      "subj": "G1",
+      "swing": "Swing10",
+      "procrustes_rot_deg": 112.2,
+      "scale": 0.984,
+      "T": 431,
+      "mpjpe_mm": 7.4
+    },
+    {
+      "subj": "G2",
+      "swing": "Swing01",
+      "procrustes_rot_deg": 112.5,
+      "scale": 0.985,
+      "T": 689,
+      "mpjpe_mm": 8.4
+    },
+    {
+      "subj": "G2",
+      "swing": "Swing02",
+      "procrustes_rot_deg": 112.1,
+      "scale": 0.984,
+      "T": 571,
+      "mpjpe_mm": 8.0
+    },
+    {
+      "subj": "G2",
+      "swing": "Swing03",
+      "procrustes_rot_deg": 112.7,
+      "scale": 0.983,
+      "T": 540,
+      "mpjpe_mm": 9.1
+    },
+    {
+      "subj": "G2",
+      "swing": "Swing04",
+      "procrustes_rot_deg": 112.9,
+      "scale": 0.981,
+      "T": 529,
+      "mpjpe_mm": 7.1
+    },
+    {
+      "subj": "G2",
+      "swing": "Swing05",
+      "procrustes_rot_deg": 112.7,
+      "scale": 0.981,
+      "T": 629,
+      "mpjpe_mm": 8.8
+    },
+    {
+      "subj": "G2",
+      "swing": "Swing06",
+      "procrustes_rot_deg": 112.4,
+      "scale": 0.985,
+      "T": 460,
+      "mpjpe_mm": 6.1
+    },
+    {
+      "subj": "G3",
+      "swing": "Swing01",
+      "procrustes_rot_deg": 112.4,
+      "scale": 0.983,
+      "T": 1337,
+      "mpjpe_mm": 6.9
+    },
+    {
+      "subj": "G3",
+      "swing": "Swing02",
+      "procrustes_rot_deg": 112.3,
+      "scale": 0.984,
+      "T": 1249,
+      "mpjpe_mm": 5.3
+    },
+    {
+      "subj": "G3",
+      "swing": "Swing03",
+      "procrustes_rot_deg": 112.3,
+      "scale": 0.986,
+      "T": 1237,
+      "mpjpe_mm": 6.4
+    },
+    {
+      "subj": "G3",
+      "swing": "Swing04",
+      "procrustes_rot_deg": 112.3,
+      "scale": 0.983,
+      "T": 1134,
+      "mpjpe_mm": 5.7
+    },
+    {
+      "subj": "G3",
+      "swing": "Swing05",
+      "procrustes_rot_deg": 112.4,
+      "scale": 0.986,
+      "T": 1268,
+      "mpjpe_mm": 6.0
+    },
+    {
+      "subj": "G3",
+      "swing": "Swing06",
+      "procrustes_rot_deg": 112.2,
+      "scale": 0.983,
+      "T": 1153,
+      "mpjpe_mm": 5.4
+    },
+    {
+      "subj": "G4",
+      "swing": "Swing01",
+      "procrustes_rot_deg": 112.8,
+      "scale": 0.984,
+      "T": 1208,
+      "mpjpe_mm": 7.2
+    },
+    {
+      "subj": "G4",
+      "swing": "Swing02",
+      "procrustes_rot_deg": 112.4,
+      "scale": 0.984,
+      "T": 1118,
+      "mpjpe_mm": 7.0
+    },
+    {
+      "subj": "G4",
+      "swing": "Swing03",
+      "procrustes_rot_deg": 112.8,
+      "scale": 0.983,
+      "T": 923,
+      "mpjpe_mm": 6.4
+    },
+    {
+      "subj": "G4",
+      "swing": "Swing04",
+      "procrustes_rot_deg": 112.2,
+      "scale": 0.984,
+      "T": 1497,
+      "mpjpe_mm": 6.1
+    },
+    {
+      "subj": "G4",
+      "swing": "Swing05",
+      "procrustes_rot_deg": 113.0,
+      "scale": 0.983,
+      "T": 1504,
+      "mpjpe_mm": 6.7
+    },
+    {
+      "subj": "G4",
+      "swing": "Swing06",
+      "procrustes_rot_deg": 112.4,
+      "scale": 0.984,
+      "T": 1354,
+      "mpjpe_mm": 5.4
+    },
+    {
+      "subj": "G4",
+      "swing": "Swing07",
+      "procrustes_rot_deg": 112.6,
+      "scale": 0.983,
+      "T": 1597,
+      "mpjpe_mm": 6.3
+    },
+    {
+      "subj": "G4",
+      "swing": "Swing08",
+      "procrustes_rot_deg": 112.1,
+      "scale": 0.982,
+      "T": 825,
+      "mpjpe_mm": 7.5
+    },
+    {
+      "subj": "G5",
+      "swing": "Swing01",
+      "procrustes_rot_deg": 112.0,
+      "scale": 0.981,
+      "T": 570,
+      "mpjpe_mm": 25.9
+    },
+    {
+      "subj": "G5",
+      "swing": "Swing02",
+      "procrustes_rot_deg": 113.0,
+      "scale": 0.975,
+      "T": 500,
+      "mpjpe_mm": 16.9
+    },
+    {
+      "subj": "G6",
+      "swing": "Swing01",
+      "procrustes_rot_deg": 111.4,
+      "scale": 1.054,
+      "T": 1481,
+      "mpjpe_mm": 26.3
+    },
+    {
+      "subj": "G6",
+      "swing": "Swing02",
+      "procrustes_rot_deg": 113.1,
+      "scale": 1.059,
+      "T": 1161,
+      "mpjpe_mm": 23.2
+    },
+    {
+      "subj": "G6",
+      "swing": "Swing03",
+      "procrustes_rot_deg": 111.7,
+      "scale": 1.062,
+      "T": 1243,
+      "mpjpe_mm": 23.1
+    },
+    {
+      "subj": "G6",
+      "swing": "Swing04",
+      "procrustes_rot_deg": 113.6,
+      "scale": 1.058,
+      "T": 931,
+      "mpjpe_mm": 17.7
+    },
+    {
+      "subj": "G6",
+      "swing": "Swing05",
+      "procrustes_rot_deg": 111.1,
+      "scale": 1.06,
+      "T": 971,
+      "mpjpe_mm": 22.5
+    },
+    {
+      "subj": "G6",
+      "swing": "Swing06",
+      "procrustes_rot_deg": 113.5,
+      "scale": 1.062,
+      "T": 1103,
+      "mpjpe_mm": 20.2
+    }
+  ],
+  "axis_energy_share_train": {
+    "x": 0.74,
+    "y_lab": 0.136,
+    "z_vert": 0.124
+  },
+  "axis_energy_share_test": {
+    "x": 0.87,
+    "y_lab": 0.085,
+    "z_vert": 0.045
+  },
+  "per_joint": {
+    "train": [
+      {
+        "joint": "hip",
+        "mean_mm": 0.0,
+        "std_mm": 0.0,
+        "bias_x_mm": 0.0,
+        "bias_y_mm": 0.0,
+        "bias_z_mm": 0.0,
+        "std_x_mm": 0.0,
+        "std_y_mm": 0.0,
+        "std_z_mm": 0.0
+      },
+      {
+        "joint": "r_hip",
+        "mean_mm": 3.0,
+        "std_mm": 1.7,
+        "bias_x_mm": 1.2,
+        "bias_y_mm": 0.1,
+        "bias_z_mm": 0.6,
+        "std_x_mm": 2.6,
+        "std_y_mm": 1.4,
+        "std_z_mm": 1.0
+      },
+      {
+        "joint": "r_knee",
+        "mean_mm": 6.3,
+        "std_mm": 4.3,
+        "bias_x_mm": 1.9,
+        "bias_y_mm": 0.1,
+        "bias_z_mm": -0.6,
+        "std_x_mm": 6.5,
+        "std_y_mm": 2.5,
+        "std_z_mm": 2.2
+      },
+      {
+        "joint": "r_ankle",
+        "mean_mm": 10.5,
+        "std_mm": 5.2,
+        "bias_x_mm": 1.2,
+        "bias_y_mm": 3.2,
+        "bias_z_mm": -5.2,
+        "std_x_mm": 8.7,
+        "std_y_mm": 3.5,
+        "std_z_mm": 3.1
+      },
+      {
+        "joint": "l_hip",
+        "mean_mm": 3.0,
+        "std_mm": 1.8,
+        "bias_x_mm": 1.3,
+        "bias_y_mm": -0.7,
+        "bias_z_mm": -0.6,
+        "std_x_mm": 2.7,
+        "std_y_mm": 1.3,
+        "std_z_mm": 0.9
+      },
+      {
+        "joint": "l_knee",
+        "mean_mm": 7.3,
+        "std_mm": 5.0,
+        "bias_x_mm": 2.7,
+        "bias_y_mm": -1.1,
+        "bias_z_mm": -1.7,
+        "std_x_mm": 7.4,
+        "std_y_mm": 2.5,
+        "std_z_mm": 2.5
+      },
+      {
+        "joint": "l_ankle",
+        "mean_mm": 9.9,
+        "std_mm": 4.6,
+        "bias_x_mm": 3.3,
+        "bias_y_mm": -1.3,
+        "bias_z_mm": -6.0,
+        "std_x_mm": 7.2,
+        "std_y_mm": 2.9,
+        "std_z_mm": 3.2
+      },
+      {
+        "joint": "spine",
+        "mean_mm": 4.3,
+        "std_mm": 3.9,
+        "bias_x_mm": -1.0,
+        "bias_y_mm": -0.9,
+        "bias_z_mm": 0.5,
+        "std_x_mm": 5.2,
+        "std_y_mm": 1.6,
+        "std_z_mm": 1.4
+      },
+      {
+        "joint": "neck",
+        "mean_mm": 4.9,
+        "std_mm": 3.1,
+        "bias_x_mm": 0.8,
+        "bias_y_mm": -1.4,
+        "bias_z_mm": -0.5,
+        "std_x_mm": 5.0,
+        "std_y_mm": 1.7,
+        "std_z_mm": 1.4
+      },
+      {
+        "joint": "nose",
+        "mean_mm": 6.9,
+        "std_mm": 4.1,
+        "bias_x_mm": 2.3,
+        "bias_y_mm": 0.2,
+        "bias_z_mm": -1.2,
+        "std_x_mm": 6.9,
+        "std_y_mm": 2.6,
+        "std_z_mm": 1.8
+      },
+      {
+        "joint": "head",
+        "mean_mm": 8.2,
+        "std_mm": 4.3,
+        "bias_x_mm": 2.4,
+        "bias_y_mm": 1.1,
+        "bias_z_mm": -3.0,
+        "std_x_mm": 7.6,
+        "std_y_mm": 2.4,
+        "std_z_mm": 2.4
+      },
+      {
+        "joint": "l_shoulder",
+        "mean_mm": 5.5,
+        "std_mm": 3.2,
+        "bias_x_mm": 0.6,
+        "bias_y_mm": -1.3,
+        "bias_z_mm": -1.2,
+        "std_x_mm": 5.3,
+        "std_y_mm": 2.0,
+        "std_z_mm": 2.3
+      },
+      {
+        "joint": "l_elbow",
+        "mean_mm": 9.8,
+        "std_mm": 6.9,
+        "bias_x_mm": 2.2,
+        "bias_y_mm": 0.4,
+        "bias_z_mm": -2.0,
+        "std_x_mm": 10.6,
+        "std_y_mm": 3.9,
+        "std_z_mm": 2.5
+      },
+      {
+        "joint": "l_wrist",
+        "mean_mm": 12.0,
+        "std_mm": 7.4,
+        "bias_x_mm": 5.6,
+        "bias_y_mm": 3.0,
+        "bias_z_mm": -0.5,
+        "std_x_mm": 11.1,
+        "std_y_mm": 4.4,
+        "std_z_mm": 3.8
+      },
+      {
+        "joint": "r_shoulder",
+        "mean_mm": 5.2,
+        "std_mm": 3.2,
+        "bias_x_mm": 1.7,
+        "bias_y_mm": 0.3,
+        "bias_z_mm": -0.4,
+        "std_x_mm": 5.0,
+        "std_y_mm": 2.3,
+        "std_z_mm": 1.8
+      },
+      {
+        "joint": "r_elbow",
+        "mean_mm": 9.5,
+        "std_mm": 6.1,
+        "bias_x_mm": 3.6,
+        "bias_y_mm": 0.9,
+        "bias_z_mm": -0.7,
+        "std_x_mm": 9.3,
+        "std_y_mm": 4.5,
+        "std_z_mm": 2.6
+      },
+      {
+        "joint": "r_wrist",
+        "mean_mm": 13.0,
+        "std_mm": 8.1,
+        "bias_x_mm": 2.9,
+        "bias_y_mm": 2.0,
+        "bias_z_mm": -0.5,
+        "std_x_mm": 12.9,
+        "std_y_mm": 5.4,
+        "std_z_mm": 5.2
+      }
+    ],
+    "test": [
+      {
+        "joint": "hip",
+        "mean_mm": 0.0,
+        "std_mm": 0.0,
+        "bias_x_mm": 0.0,
+        "bias_y_mm": 0.0,
+        "bias_z_mm": 0.0,
+        "std_x_mm": 0.0,
+        "std_y_mm": 0.0,
+        "std_z_mm": 0.0
+      },
+      {
+        "joint": "r_hip",
+        "mean_mm": 5.4,
+        "std_mm": 3.0,
+        "bias_x_mm": 2.0,
+        "bias_y_mm": -0.2,
+        "bias_z_mm": 0.7,
+        "std_x_mm": 5.1,
+        "std_y_mm": 2.4,
+        "std_z_mm": 1.5
+      },
+      {
+        "joint": "r_knee",
+        "mean_mm": 18.5,
+        "std_mm": 12.2,
+        "bias_x_mm": -13.7,
+        "bias_y_mm": -6.1,
+        "bias_z_mm": 4.3,
+        "std_x_mm": 13.8,
+        "std_y_mm": 6.0,
+        "std_z_mm": 4.8
+      },
+      {
+        "joint": "r_ankle",
+        "mean_mm": 29.2,
+        "std_mm": 19.0,
+        "bias_x_mm": -11.1,
+        "bias_y_mm": -4.2,
+        "bias_z_mm": 4.1,
+        "std_x_mm": 28.9,
+        "std_y_mm": 11.1,
+        "std_z_mm": 10.0
+      },
+      {
+        "joint": "l_hip",
+        "mean_mm": 5.0,
+        "std_mm": 2.8,
+        "bias_x_mm": -0.1,
+        "bias_y_mm": -0.2,
+        "bias_z_mm": 0.9,
+        "std_x_mm": 5.0,
+        "std_y_mm": 2.3,
+        "std_z_mm": 1.4
+      },
+      {
+        "joint": "l_knee",
+        "mean_mm": 24.2,
+        "std_mm": 17.2,
+        "bias_x_mm": -12.1,
+        "bias_y_mm": -2.9,
+        "bias_z_mm": 4.8,
+        "std_x_mm": 25.3,
+        "std_y_mm": 5.6,
+        "std_z_mm": 5.8
+      },
+      {
+        "joint": "l_ankle",
+        "mean_mm": 35.1,
+        "std_mm": 22.4,
+        "bias_x_mm": -20.4,
+        "bias_y_mm": -5.8,
+        "bias_z_mm": 8.6,
+        "std_x_mm": 32.4,
+        "std_y_mm": 8.3,
+        "std_z_mm": 9.9
+      },
+      {
+        "joint": "spine",
+        "mean_mm": 20.9,
+        "std_mm": 8.5,
+        "bias_x_mm": -11.4,
+        "bias_y_mm": -4.1,
+        "bias_z_mm": 1.5,
+        "std_x_mm": 18.0,
+        "std_y_mm": 5.3,
+        "std_z_mm": 2.5
+      },
+      {
+        "joint": "neck",
+        "mean_mm": 22.6,
+        "std_mm": 13.8,
+        "bias_x_mm": -11.1,
+        "bias_y_mm": -4.8,
+        "bias_z_mm": -0.1,
+        "std_x_mm": 22.0,
+        "std_y_mm": 6.7,
+        "std_z_mm": 4.7
+      },
+      {
+        "joint": "nose",
+        "mean_mm": 27.0,
+        "std_mm": 15.6,
+        "bias_x_mm": -17.4,
+        "bias_y_mm": -5.1,
+        "bias_z_mm": 2.3,
+        "std_x_mm": 23.5,
+        "std_y_mm": 7.3,
+        "std_z_mm": 5.9
+      },
+      {
+        "joint": "head",
+        "mean_mm": 37.3,
+        "std_mm": 19.7,
+        "bias_x_mm": -24.1,
+        "bias_y_mm": -7.4,
+        "bias_z_mm": 2.5,
+        "std_x_mm": 31.3,
+        "std_y_mm": 8.4,
+        "std_z_mm": 9.4
+      },
+      {
+        "joint": "l_shoulder",
+        "mean_mm": 20.0,
+        "std_mm": 9.2,
+        "bias_x_mm": -13.0,
+        "bias_y_mm": -3.4,
+        "bias_z_mm": 0.2,
+        "std_x_mm": 16.3,
+        "std_y_mm": 4.4,
+        "std_z_mm": 4.2
+      },
+      {
+        "joint": "l_elbow",
+        "mean_mm": 30.9,
+        "std_mm": 24.6,
+        "bias_x_mm": -12.8,
+        "bias_y_mm": -4.0,
+        "bias_z_mm": 1.6,
+        "std_x_mm": 35.8,
+        "std_y_mm": 9.2,
+        "std_z_mm": 4.0
+      },
+      {
+        "joint": "l_wrist",
+        "mean_mm": 33.8,
+        "std_mm": 28.2,
+        "bias_x_mm": -5.0,
+        "bias_y_mm": -2.0,
+        "bias_z_mm": 3.5,
+        "std_x_mm": 41.7,
+        "std_y_mm": 11.3,
+        "std_z_mm": 5.1
+      },
+      {
+        "joint": "r_shoulder",
+        "mean_mm": 19.4,
+        "std_mm": 11.6,
+        "bias_x_mm": -7.8,
+        "bias_y_mm": -3.8,
+        "bias_z_mm": 1.0,
+        "std_x_mm": 18.9,
+        "std_y_mm": 7.5,
+        "std_z_mm": 4.8
+      },
+      {
+        "joint": "r_elbow",
+        "mean_mm": 22.0,
+        "std_mm": 20.0,
+        "bias_x_mm": -0.3,
+        "bias_y_mm": -4.7,
+        "bias_z_mm": 2.2,
+        "std_x_mm": 27.0,
+        "std_y_mm": 10.7,
+        "std_z_mm": 4.2
+      },
+      {
+        "joint": "r_wrist",
+        "mean_mm": 29.6,
+        "std_mm": 33.1,
+        "bias_x_mm": -5.6,
+        "bias_y_mm": -4.6,
+        "bias_z_mm": 3.1,
+        "std_x_mm": 40.5,
+        "std_y_mm": 15.2,
+        "std_z_mm": 6.0
+      }
+    ]
+  },
+  "structure": {
+    "train": [
+      {
+        "joint": "hip",
+        "bias_mag_mm": 0.0,
+        "rand_mm": 0.0,
+        "systematic_frac": 0.0
+      },
+      {
+        "joint": "r_hip",
+        "bias_mag_mm": 1.3,
+        "rand_mm": 1.7,
+        "systematic_frac": 0.45
+      },
+      {
+        "joint": "r_knee",
+        "bias_mag_mm": 2.0,
+        "rand_mm": 4.3,
+        "systematic_frac": 0.32
+      },
+      {
+        "joint": "r_ankle",
+        "bias_mag_mm": 6.2,
+        "rand_mm": 5.2,
+        "systematic_frac": 0.59
+      },
+      {
+        "joint": "l_hip",
+        "bias_mag_mm": 1.6,
+        "rand_mm": 1.8,
+        "systematic_frac": 0.53
+      },
+      {
+        "joint": "l_knee",
+        "bias_mag_mm": 3.4,
+        "rand_mm": 5.0,
+        "systematic_frac": 0.46
+      },
+      {
+        "joint": "l_ankle",
+        "bias_mag_mm": 7.0,
+        "rand_mm": 4.6,
+        "systematic_frac": 0.7
+      },
+      {
+        "joint": "spine",
+        "bias_mag_mm": 1.4,
+        "rand_mm": 3.9,
+        "systematic_frac": 0.33
+      },
+      {
+        "joint": "neck",
+        "bias_mag_mm": 1.7,
+        "rand_mm": 3.1,
+        "systematic_frac": 0.34
+      },
+      {
+        "joint": "nose",
+        "bias_mag_mm": 2.6,
+        "rand_mm": 4.1,
+        "systematic_frac": 0.38
+      },
+      {
+        "joint": "head",
+        "bias_mag_mm": 4.0,
+        "rand_mm": 4.3,
+        "systematic_frac": 0.49
+      },
+      {
+        "joint": "l_shoulder",
+        "bias_mag_mm": 1.9,
+        "rand_mm": 3.2,
+        "systematic_frac": 0.34
+      },
+      {
+        "joint": "l_elbow",
+        "bias_mag_mm": 3.0,
+        "rand_mm": 6.9,
+        "systematic_frac": 0.31
+      },
+      {
+        "joint": "l_wrist",
+        "bias_mag_mm": 6.4,
+        "rand_mm": 7.4,
+        "systematic_frac": 0.53
+      },
+      {
+        "joint": "r_shoulder",
+        "bias_mag_mm": 1.8,
+        "rand_mm": 3.2,
+        "systematic_frac": 0.34
+      },
+      {
+        "joint": "r_elbow",
+        "bias_mag_mm": 3.8,
+        "rand_mm": 6.1,
+        "systematic_frac": 0.4
+      },
+      {
+        "joint": "r_wrist",
+        "bias_mag_mm": 3.6,
+        "rand_mm": 8.1,
+        "systematic_frac": 0.27
+      }
+    ],
+    "test": [
+      {
+        "joint": "hip",
+        "bias_mag_mm": 0.0,
+        "rand_mm": 0.0,
+        "systematic_frac": 0.0
+      },
+      {
+        "joint": "r_hip",
+        "bias_mag_mm": 2.1,
+        "rand_mm": 3.0,
+        "systematic_frac": 0.39
+      },
+      {
+        "joint": "r_knee",
+        "bias_mag_mm": 15.6,
+        "rand_mm": 12.2,
+        "systematic_frac": 0.84
+      },
+      {
+        "joint": "r_ankle",
+        "bias_mag_mm": 12.6,
+        "rand_mm": 19.0,
+        "systematic_frac": 0.43
+      },
+      {
+        "joint": "l_hip",
+        "bias_mag_mm": 0.9,
+        "rand_mm": 2.8,
+        "systematic_frac": 0.19
+      },
+      {
+        "joint": "l_knee",
+        "bias_mag_mm": 13.3,
+        "rand_mm": 17.2,
+        "systematic_frac": 0.55
+      },
+      {
+        "joint": "l_ankle",
+        "bias_mag_mm": 22.9,
+        "rand_mm": 22.4,
+        "systematic_frac": 0.65
+      },
+      {
+        "joint": "spine",
+        "bias_mag_mm": 12.2,
+        "rand_mm": 8.5,
+        "systematic_frac": 0.58
+      },
+      {
+        "joint": "neck",
+        "bias_mag_mm": 12.1,
+        "rand_mm": 13.8,
+        "systematic_frac": 0.54
+      },
+      {
+        "joint": "nose",
+        "bias_mag_mm": 18.3,
+        "rand_mm": 15.6,
+        "systematic_frac": 0.68
+      },
+      {
+        "joint": "head",
+        "bias_mag_mm": 25.3,
+        "rand_mm": 19.7,
+        "systematic_frac": 0.68
+      },
+      {
+        "joint": "l_shoulder",
+        "bias_mag_mm": 13.4,
+        "rand_mm": 9.2,
+        "systematic_frac": 0.67
+      },
+      {
+        "joint": "l_elbow",
+        "bias_mag_mm": 13.5,
+        "rand_mm": 24.6,
+        "systematic_frac": 0.44
+      },
+      {
+        "joint": "l_wrist",
+        "bias_mag_mm": 6.4,
+        "rand_mm": 28.2,
+        "systematic_frac": 0.19
+      },
+      {
+        "joint": "r_shoulder",
+        "bias_mag_mm": 8.7,
+        "rand_mm": 11.6,
+        "systematic_frac": 0.45
+      },
+      {
+        "joint": "r_elbow",
+        "bias_mag_mm": 5.2,
+        "rand_mm": 20.0,
+        "systematic_frac": 0.24
+      },
+      {
+        "joint": "r_wrist",
+        "bias_mag_mm": 7.9,
+        "rand_mm": 33.1,
+        "systematic_frac": 0.27
+      }
+    ]
+  },
+  "residual_by_phase_mm": {
+    "train": {
+      "address": 7.8,
+      "backswing": 7.0,
+      "top": 6.9,
+      "downswing": 6.3,
+      "impact": 7.2,
+      "follow_through": 7.2
+    },
+    "test": {
+      "address": 22.2,
+      "backswing": 20.0,
+      "top": 30.0,
+      "downswing": 21.1,
+      "impact": 23.1,
+      "follow_through": 26.8
+    }
+  },
+  "align_compare_mm": {
+    "train": {
+      "per_swing_procrustes": 8.0,
+      "per_frame_procrustes": 7.3
+    },
+    "test": {
+      "per_swing_procrustes": 23.5,
+      "per_frame_procrustes": 22.0
+    }
+  }
+}

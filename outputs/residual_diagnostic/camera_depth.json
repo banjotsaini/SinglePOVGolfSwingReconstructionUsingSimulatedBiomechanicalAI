@@ -1,0 +1,66 @@
+{
+  "train": {
+    "mean_inplane_mm": 3.2,
+    "mean_depth_mm": 5.7,
+    "depth_energy_share": 0.79,
+    "depth_by_phase_mm": {
+      "address": 6.6,
+      "backswing": 5.8,
+      "top": 5.4,
+      "downswing": 5.1,
+      "impact": 5.7,
+      "follow_through": 5.4
+    },
+    "depth_frac_by_joint": {
+      "hip": 0.0,
+      "r_hip": 0.77,
+      "r_knee": 0.87,
+      "r_ankle": 0.62,
+      "l_hip": 0.71,
+      "l_knee": 0.81,
+      "l_ankle": 0.53,
+      "spine": 0.92,
+      "neck": 0.84,
+      "nose": 0.88,
+      "head": 0.8,
+      "l_shoulder": 0.7,
+      "l_elbow": 0.86,
+      "l_wrist": 0.85,
+      "r_shoulder": 0.83,
+      "r_elbow": 0.88,
+      "r_wrist": 0.82
+    }
+  },
+  "test": {
+    "mean_inplane_mm": 6.4,
+    "mean_depth_mm": 20.5,
+    "depth_energy_share": 0.924,
+    "depth_by_phase_mm": {
+      "address": 20.7,
+      "backswing": 17.9,
+      "top": 28.2,
+      "downswing": 18.9,
+      "impact": 20.9,
+      "follow_through": 25.2
+    },
+    "depth_frac_by_joint": {
+      "hip": 0.0,
+      "r_hip": 0.74,
+      "r_knee": 0.87,
+      "r_ankle": 0.88,
+      "l_hip": 0.69,
+      "l_knee": 0.91,
+      "l_ankle": 0.88,
+      "spine": 0.98,
+      "neck": 0.96,
+      "nose": 0.94,
+      "head": 0.94,
+      "l_shoulder": 0.94,
+      "l_elbow": 0.96,
+      "l_wrist": 0.93,
+      "r_shoulder": 0.92,
+      "r_elbow": 0.92,
+      "r_wrist": 0.94
+    }
+  }
+}
