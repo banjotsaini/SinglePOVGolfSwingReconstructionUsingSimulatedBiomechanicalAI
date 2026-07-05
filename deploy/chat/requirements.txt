@@ -1,0 +1,4 @@
+# Chat Lambda deps — deliberately tiny. Everything else the handler uses is stdlib.
+# coaching_chat -> coaching_llm_summary_v2 import only stdlib; the sole third-party
+# dependency is the Anthropic SDK (native tool use, claude-opus-4-8).
+anthropic>=0.111,<1.0
