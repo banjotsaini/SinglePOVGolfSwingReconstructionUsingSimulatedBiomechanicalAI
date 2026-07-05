@@ -1,8 +1,62 @@
 # MotionCaddie — Front-End Deployment Plan & Handoff
 
 **Owner today:** Austin · **Proposed next owner:** Theo
-**Status:** static demo built + working locally; deployment + upload feature not started
-**Last updated:** 2026-07-03
+**Status:** static demo built + working locally; coach chat folded in; deployment + upload feature not started
+**Last updated:** 2026-07-05
+
+---
+
+## 2026-07-05 — Front-end reconciliation (Austin's demo ↔ Banjot's pushed sources)
+
+Banjot pushed editable HTML sources from the same design lineage as this
+`deploy/web/` demo (`coaching_chatbot_demo.html`, `serve_demo.py`,
+`coaching_llm_features.html`, `Checkpoint 2/demo|interactive/`, and a chat backend
+`deploy/chat_handler.py`). Rather than blindly merge, we reconciled: keep
+`deploy/web/` as the shell and fold in only his **genuinely-new** capability.
+
+**Done today (in `deploy/web/`):**
+- **Added the coaching Q&A chat** as an "Ask the coach" tab on the Results screen
+  (`chat.js` + markup in `index.html` + styles in `styles.css`). Engine ported from
+  Banjot's `coaching_chatbot_demo.html`: grounded answers, refusal taxonomy
+  (unmeasured / low-confidence / no-fixes), tool-call trace, grounding verifier,
+  and cross-swing compare.
+- **Unified the data contract:** the chat reads each swing's values from the SAME
+  `assets/<id>/metrics.json` the "numbers" tab renders, so chat and table can't
+  disagree. No new per-clip data files, no fabricated numbers.
+- **Preserved all architecture constraints:** no framework, no build step. Backend
+  swap stays a one-function change — `askChat()` in `chat.js` mirrors
+  `loadClipBundle()`: offline in-page mock by default; set `window.API_BASE` to
+  POST to the live `/chat` agent (`deploy/chat_handler.py`, Lambda container in
+  `deploy/chat/`). Verified end-to-end headless (all metric/summary/refusal/compare
+  paths, zero console errors).
+
+**Deliberately LEFT OUT (with reasons):**
+- **`Checkpoint 2/demo|interactive/1292_preview_3d.html`** — a Three.js 3D viewer
+  loaded from the **unpkg CDN** via ES-module importmap. Violates no-framework /
+  no-external-dependency. Our dependency-free canvas `Replay3D` already covers 3D
+  replay. Kept as Checkpoint collateral only.
+- **`Checkpoint 2/coaching_llm_features.html`** — a **dark-themed** static explainer
+  (own palette, not this design system). It's a presentation artifact, not an app
+  component. Left as slide collateral.
+- **`serve_demo.py`** — kept as-is at repo root (Banjot's local live-chat bridge). It
+  still serves *its own* `coaching_chatbot_demo.html`, not this `deploy/web/` app;
+  wiring this app to its `/api/chat` is a small follow-up (serve `deploy/web/` + set
+  `window.API_BASE`) — see below.
+
+**Deferred (not blocking, do when convenient):**
+1. **Widen the metric set 9 → full 15.** Banjot's sources carry the complete
+   scorecard schema (e.g. `hip_turn_top_deg`, `spine_tilt_impact_deg`,
+   `head_lift_max_pct`, knee-flex pair, trail-arm). This demo still shows Austin's
+   hand-picked 9. The chat already degrades gracefully to whatever keys a clip has.
+2. **Swap in Banjot's real copy/values.** Replace the hand-transcribed
+   `metrics.json` labels/blurbs (and clip 0's values) with the real strings from his
+   indicator dictionary / `1292_scorecard.json` to retire the reverse-engineering.
+3. **Real live-chat wiring for this app** — point `serve_demo.py` (or a thin static
+   server) at `deploy/web/` and set `window.API_BASE`, or stand up the chat Lambda
+   Function URL. Needs per-clip scorecards where `chat_handler.py` expects them
+   (`Data/demo/<id>/<id>_scorecard.json`).
+4. **Fold `Checkpoint 2/demo/1292_*` in as a real-data clip** through the normal
+   `assets/` pipeline (it's real pipeline output, same shape family).
 
 ---
 

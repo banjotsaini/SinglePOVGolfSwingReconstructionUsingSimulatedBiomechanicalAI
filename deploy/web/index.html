@@ -86,6 +86,7 @@
     <div class="view-toggle" role="tablist">
       <button id="tab-plain" class="tab active" role="tab">Plain English</button>
       <button id="tab-numbers" class="tab" role="tab">The numbers</button>
+      <button id="tab-chat" class="tab" role="tab">Ask the coach</button>
     </div>
   </div>
 
@@ -99,6 +100,28 @@
           <span><i class="dot dot-low"></i> low confidence</span>
         </div>
         <div id="metrics-table"><!-- metric rows injected --></div>
+      </div>
+      <div id="view-chat" class="card view-panel" hidden>
+        <div class="chat-ctx">
+          <span class="chat-active" id="chat-active"></span>
+          <label class="chat-compare">Compare with
+            <select id="chat-compare"><option value="">— none —</option></select>
+          </label>
+          <span class="chat-mode" id="chat-mode">offline preview · in-page coach</span>
+        </div>
+        <div id="chat-stream" class="chat-stream"><!-- turns injected --></div>
+        <div class="chat-suggest">
+          <button type="button" class="chip-btn">What were the biggest takeaways?</button>
+          <button type="button" class="chip-btn">How was my tempo?</button>
+          <button type="button" class="chip-btn">Did anything stand out?</button>
+        </div>
+        <div class="chat-input">
+          <input id="chat-q" type="text" placeholder="Ask about this swing…" autocomplete="off">
+          <button id="chat-send" class="btn-primary">Send</button>
+        </div>
+        <p class="muted small chat-foot">Describes what was measured against the tour reference —
+        it never prescribes fixes. Offline demo answers come from the in-page coach; set
+        <code>window.API_BASE</code> to route to the live grounded agent.</p>
       </div>
     </div>
 
@@ -128,6 +151,7 @@
 
 </main>
 
+<script src="chat.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

@@ -123,6 +123,7 @@ function renderResults() {
 
   renderPlain(explanation);
   renderNumbers(metrics.metrics);
+  Chat.activate(state.selectedId);
 
   const vid = $("#overlay-video");
   vid.src = overlayUrl;
@@ -188,8 +189,10 @@ function renderNumbers(metrics) {
 function showTab(which) {
   $("#tab-plain").classList.toggle("active", which === "plain");
   $("#tab-numbers").classList.toggle("active", which === "numbers");
+  $("#tab-chat").classList.toggle("active", which === "chat");
   $("#view-plain").hidden = which !== "plain";
   $("#view-numbers").hidden = which !== "numbers";
+  $("#view-chat").hidden = which !== "chat";
 }
 
 /* =========================================================================
@@ -350,6 +353,21 @@ class Replay3D {
 async function init() {
   state.clips = await loadManifest();
   renderGallery();
+
+  // Prefetch every clip's metrics.json (small) so the coach chat can talk about
+  // any swing and compare across them — same source the "numbers" tab renders.
+  const metricsByClip = {};
+  await Promise.all(state.clips.map(async (c) => {
+    try { metricsByClip[c.id] = await fetch(`assets/${c.id}/metrics.json`).then(r => r.json()); }
+    catch (e) { /* a clip without metrics just won't be chat-enabled */ }
+  }));
+  Chat.setLibrary(state.clips, metricsByClip);
+  Chat.init({
+    stream: $("#chat-stream"), input: $("#chat-q"), send: $("#chat-send"),
+    compare: $("#chat-compare"), active: $("#chat-active"), mode: $("#chat-mode"),
+    chips: [...document.querySelectorAll("#view-chat .chip-btn")],
+  });
+
   $("#btn-analyze").addEventListener("click", runAnalyze);
   $("#btn-restart").addEventListener("click", () => {
     if (state.viewer) { state.viewer.destroy(); state.viewer = null; }
@@ -358,6 +376,7 @@ async function init() {
   });
   $("#tab-plain").addEventListener("click", () => showTab("plain"));
   $("#tab-numbers").addEventListener("click", () => showTab("numbers"));
+  $("#tab-chat").addEventListener("click", () => showTab("chat"));
   goto("pick");
 }
 
