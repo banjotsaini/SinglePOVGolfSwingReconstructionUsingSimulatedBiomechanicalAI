@@ -75,3 +75,12 @@ Data/handoff/
 
 # Retired: Unreal Engine project (handoff dropped)
 Unreal/
+
+# Secrets — NEVER commit (ANTHROPIC_API_KEY, AWS keys, etc. stay in env / Secrets Manager)
+.env
+.env.*
+!.env.example
+*.pem
+*_accessKeys.csv
+aws_credentials*
+credentials.csv
