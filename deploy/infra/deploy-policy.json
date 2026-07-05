@@ -98,6 +98,21 @@
       ]
     },
     {
+      "Sid": "DataApiForDbMigration",
+      "Effect": "Allow",
+      "Action": [
+        "rds-data:ExecuteStatement", "rds-data:BatchExecuteStatement",
+        "rds-data:BeginTransaction", "rds-data:CommitTransaction", "rds-data:RollbackTransaction"
+      ],
+      "Resource": "arn:aws:rds:us-east-1:*:cluster:motion-caddie-app-*"
+    },
+    {
+      "Sid": "ReadDbSecretForDataApi",
+      "Effect": "Allow",
+      "Action": [ "secretsmanager:GetSecretValue", "secretsmanager:DescribeSecret" ],
+      "Resource": "arn:aws:secretsmanager:us-east-1:*:secret:rds!cluster-*"
+    },
+    {
       "Sid": "IamRolesForStackOnly",
       "Effect": "Allow",
       "Action": [
