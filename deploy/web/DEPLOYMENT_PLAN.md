@@ -106,6 +106,18 @@ render of the reconstructed 3D pose (three swing-phase stills: takeaway / mid /
 follow-through). `Scripts/blender_mocap.py` turns the canonical mocap JSON into a
 metric, unisex-scaled, constraint-rigged armature and renders headless.
 
+**Body proxy — stylized capsule/tube mannequin (updated 2026-07-05):** the render
+geometry is a neutral matte **capsule mannequin** — tapered rounded limb capsules, a
+solid torso column, and rounded joint blobs (was ball-and-stick spheres+cylinders).
+Only the *drawn geometry* in `build_in_blender`'s `if add_mesh:` block changed; the
+numpy core, axis conversion, metric scaling, and FK solve are untouched. It's
+deliberately stylized (single colour, no face/hands/clothing) — an artist's mannequin,
+not anatomy. Because a solid body implies proportions that sticks didn't, the caption
+now states the body is a **neutral template shape, not the golfer's actual build**.
+Documented future upgrade if this ever goes production: a skinned mesh / **SMPL-X**
+gender-neutral mannequin (see `BLENDER_HANDOFF_RESEARCH.md` upgrade paths) — not in
+scope for the demo.
+
 **How it works (offline asset step — the whole point):** Blender is an **offline /
 headless asset-generation step**, never in the browser and never required by the
 static site. Flow: `mocap JSON → headless Blender (Scripts/blender_mocap.py --mode
@@ -119,10 +131,11 @@ never show it). Generated with Blender 5.1; PNGs downscaled to 900px and pngquan
 **Current-state note — interim source (be honest):** the render shipping now is
 generated from the **MotionBERT-full lift** of clip 0, **NOT** the golfpose3d/MixSTE
 production lifter (that's the only mocap JSON that exists today). The front-end
-caption is deliberately **lifter-neutral** ("reconstructed 3D swing… estimated pose
-skeleton") so it stays true after the swap, and it never surfaces the FK
-`0.0000 mm` validation figure as an accuracy claim (that number means the render
-*math* is lossless, not that the pose is exact). **TODO(mixste-swap):** once the
+caption is deliberately **lifter-neutral** ("reconstructed 3D swing… reflects captured
+motion and joint angles, not the golfer's actual body proportions") so it stays true
+after the swap, and it never surfaces the FK `0.0000 mm` validation figure as an
+accuracy claim (that number means the render *math* is lossless, not that the pose is
+exact). **TODO(mixste-swap):** once the
 model bundle lands, regenerate `Data/handoff/0/0_mocap.json` through the golfpose3d
 (MixSTE) path and re-run the render command below to **overwrite the PNGs in
 `deploy/web/assets/0/blender/` in place** — same filenames, no front-end change. This
@@ -142,6 +155,33 @@ blender --background --python Scripts/blender_mocap.py -- \
 # then downscale + compress the 3 _f<NNN> stills (sips -Z 900 + pngquant), drop the
 # redundant base PNG, and — for a NEW clip — add a render.phases block to clips.json.
 ```
+
+---
+
+## 2026-07-05 — Interactive 3D replay: capsule mannequin (two versions)
+
+The results-page **"3D replay — drag to spin"** now renders the reconstructed swing as a
+lit, orbitable **capsule/tube mannequin** (matching the Blender stills' look), built
+live in the browser. Two implementations ship:
+
+- **Version B — in-app WebGL (primary).** `deploy/web/replay3d.js` (ES module) uses
+  **three.js**, vendored locally under `deploy/web/vendor/` (`three.module.js` +
+  `OrbitControls.js`, loaded via an importmap — **no CDN**, fully static-hostable). It
+  builds tapered capsules + a torso box from the same `assets/<id>/replay_3d.json` joint
+  positions (no GLB export), with real lighting, a ground shadow, orbit, and play/scrub.
+  This is the one WebGL/framework dependency the project takes on — a deliberate,
+  approved exception, kept self-contained (vendored, ~1.3 MB) rather than CDN.
+- **Version A — standalone canvas (no dependencies).** `deploy/web/replay_capsule.html`
+  is a self-contained page (no framework, no build, no external requests beyond one
+  swing-data JSON) drawing the same capsule mannequin with the 2D canvas. Host it
+  anywhere; it fetches `?data=<url>` (default `assets/0/replay_3d.json`). This is the
+  portable, framework-free version.
+
+`app.js` picks **B when WebGL is available**, else falls back to the original
+dependency-free canvas skeleton (`Replay3D`). The WebGL/canvas capsule viewers frame on
+the **body joints only**, which also fixes the earlier bug where the extrapolated
+clubhead shrank/offset the figure. The geometry recipe (limb radii, joint blobs, torso)
+mirrors `Scripts/blender_mocap.py`, so all three views read as the same mannequin.
 
 ---
 

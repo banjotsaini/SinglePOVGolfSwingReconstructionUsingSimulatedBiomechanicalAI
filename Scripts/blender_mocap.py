@@ -342,41 +342,91 @@ def build_in_blender(prep: dict, fps: float, out_blend: Optional[str],
         st.keep_axis = "PLANE_Z"
     bpy.ops.object.mode_set(mode="OBJECT")
 
-    # --- render proxy: a small sphere at every joint, PARENTED to the
-    # keyframed target empty. Spheres render (empties/armatures don't) and
-    # inherit the exact captured motion, so the preview shows the real pose.
+    # --- stylized CAPSULE/TUBE body proxy (replaces ball-and-stick) --------
+    # A neutral matte mannequin: tapered rounded limb capsules + rounded joint
+    # blobs + a solid torso column. Everything is parented to the keyframed joint
+    # targets and (for limbs/torso) STRETCH_TO'd between two targets — the SAME
+    # rigging the ball-and-stick used, so the numpy core / FK / scaling are
+    # untouched; only the drawn geometry changes. Deliberately stylized (single
+    # matte colour, no face/hands/clothing) — an artist's mannequin, not anatomy.
     if add_mesh:
-        mat = bpy.data.materials.new("Joint")
-        mat.diffuse_color = (0.9, 0.35, 0.1, 1.0)
-        for j in range(17):
-            bpy.ops.mesh.primitive_uv_sphere_add(radius=0.045 if j else 0.06)
-            s = bpy.context.active_object
-            s.name = f"joint_{H36M17_NAMES[j]}"
-            s.data.materials.append(mat)
-            s.parent = targets[j]
-            s.matrix_parent_inverse = mathutils.Matrix()  # child sits AT target
-            s.location = (0, 0, 0)
-        # thin bones: a stretch-to cylinder between each child/parent target
-        bmat = bpy.data.materials.new("Bone")
-        bmat.diffuse_color = (0.85, 0.85, 0.9, 1.0)
-        for j in range(1, 17):
-            p = H36M17_PARENTS[j]
-            bpy.ops.mesh.primitive_cylinder_add(radius=0.022, depth=1.0)
-            cyl = bpy.context.active_object
-            cyl.name = f"bone_{H36M17_NAMES[j]}"
-            cyl.data.materials.append(bmat)
-            # Reorient mesh so length runs 0->1 along +Y (base at origin), which
-            # is the axis STRETCH_TO scales toward its target.
-            for v in cyl.data.vertices:
+        SKIN = bpy.data.materials.new("Mannequin")
+        SKIN.diffuse_color = (0.72, 0.68, 0.60, 1.0)   # neutral warm grey, no detail
+        try:
+            SKIN.roughness = 0.9
+            SKIN.metallic = 0.0
+        except Exception:
+            pass
+
+        def _to_Y(obj):
+            # reorient a Z-axis primitive so its length runs 0->1 along +Y (base at
+            # origin) — the axis STRETCH_TO scales toward the child target.
+            for v in obj.data.vertices:
                 x, y, z = v.co
                 v.co = mathutils.Vector((x, z + 0.5, -y))
-            cyl.parent = targets[p]
-            cyl.matrix_parent_inverse = mathutils.Matrix()
-            cyl.location = (0, 0, 0)
-            con = cyl.constraints.new("STRETCH_TO")  # base at parent, aim at child
-            con.target = targets[j]
-            con.rest_length = 1.0
-            con.volume = "NO_VOLUME"
+
+        def _shaft(name, parent_j, child_j, r_prox, r_dist, hw=None, hd=None):
+            # tapered cone (thicker proximal -> thinner distal) spanning
+            # parent_j -> child_j; hw/hd squash it into a wide, shallow torso.
+            bpy.ops.mesh.primitive_cone_add(radius1=r_prox, radius2=r_dist,
+                                            depth=1.0, vertices=24)
+            o = bpy.context.active_object
+            o.name = name
+            _to_Y(o)
+            if hw is not None:
+                for v in o.data.vertices:
+                    v.co.x *= hw
+                    v.co.z *= hd
+            o.data.materials.append(SKIN)
+            bpy.ops.object.shade_smooth()
+            o.parent = targets[parent_j]
+            o.matrix_parent_inverse = mathutils.Matrix()
+            o.location = (0, 0, 0)
+            c = o.constraints.new("STRETCH_TO")
+            c.target = targets[child_j]
+            c.rest_length = 1.0
+            c.volume = "NO_VOLUME"          # scale length only; keep cross-section
+            return o
+
+        def _blob(name, j, r):
+            # rounded blob at a joint — sized to blend into the incident capsules.
+            bpy.ops.mesh.primitive_uv_sphere_add(radius=r, segments=20, ring_count=12)
+            o = bpy.context.active_object
+            o.name = name
+            o.data.materials.append(SKIN)
+            bpy.ops.object.shade_smooth()
+            o.parent = targets[j]
+            o.matrix_parent_inverse = mathutils.Matrix()
+            o.location = (0, 0, 0)
+            return o
+
+        # limbs: child joint -> (radius at parent, radius at child), in metres.
+        # spine(7)/thorax(8) are omitted — the torso column below covers them.
+        LIMB_R = {
+            1: (0.080, 0.070), 4: (0.080, 0.070),     # pelvis stubs (hip_center->hip)
+            2: (0.078, 0.052), 5: (0.078, 0.052),     # thighs
+            3: (0.050, 0.034), 6: (0.050, 0.034),     # shanks
+            9: (0.042, 0.034),                         # neck
+            10: (0.034, 0.030),                        # head stalk (head blob covers)
+            11: (0.052, 0.046), 14: (0.052, 0.046),   # clavicles (thorax->shoulder)
+            12: (0.050, 0.038), 15: (0.050, 0.038),   # upper arms
+            13: (0.037, 0.028), 16: (0.037, 0.028),   # forearms
+        }
+        for j, (rp, rd) in LIMB_R.items():
+            _shaft(f"limb_{H36M17_NAMES[j]}", H36M17_PARENTS[j], j, rp, rd)
+
+        # solid torso column: hip_center -> thorax, wide (X) + shallow (Z) ovoid.
+        _shaft("torso", 0, 8, 1.0, 0.85, hw=0.16, hd=0.10)
+
+        # rounded joint / end blobs (0 + 8 round the torso ends; 10 is the head).
+        JOINT_R = {
+            0: 0.090, 8: 0.080,
+            1: 0.066, 4: 0.066, 2: 0.058, 5: 0.058, 3: 0.042, 6: 0.042,
+            11: 0.054, 14: 0.054, 12: 0.042, 15: 0.042, 13: 0.034, 16: 0.034,
+            9: 0.036, 10: 0.082,
+        }
+        for j, r in JOINT_R.items():
+            _blob(f"joint_{H36M17_NAMES[j]}", j, r)
 
     # --- world / light / floor / auto-aimed camera for a presentable preview
     world = bpy.data.worlds.new("W")

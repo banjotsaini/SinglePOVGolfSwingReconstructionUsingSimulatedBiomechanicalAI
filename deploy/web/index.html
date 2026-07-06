@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>MotionCaddie — see your golf swing in 3D</title>
 <link rel="stylesheet" href="styles.css">
+<script type="importmap">{ "imports": { "three": "./vendor/three.module.js" } }</script>
 </head>
 <body>
 
@@ -155,10 +156,10 @@
       </div>
       <div id="view-render" class="card view-panel" hidden>
         <div id="render-phases" class="render-phases"><!-- phase images injected --></div>
-        <p class="render-caption muted small">Rendered visualization of the reconstructed 3D swing —
-        a Blender render of the estimated pose skeleton, not raw video analysis and not a physically
-        exact body. Depth is estimated from a single camera, so this shows captured motion and joint
-        angles scaled to a neutral body template. Precomputed for this demo swing.</p>
+        <p class="render-caption muted small">Rendered visualization of the reconstructed 3D swing.
+        The body is a neutral template shape used to make the estimated pose easier to read — it
+        reflects captured motion and joint angles, not the golfer's actual body proportions. Depth
+        is estimated from a single camera. Precomputed for this demo swing.</p>
       </div>
     </div>
 
@@ -252,6 +253,7 @@
   </div>
 </div>
 
+<script type="module" src="replay3d.js"></script>
 <script src="auth.js"></script>
 <script src="chat.js"></script>
 <script src="app.js"></script>

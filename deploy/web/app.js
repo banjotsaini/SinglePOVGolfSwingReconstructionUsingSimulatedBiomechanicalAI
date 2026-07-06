@@ -43,6 +43,15 @@ const state = {
 
 const $ = (sel) => document.querySelector(sel);
 
+/* Replace an element with a fresh clone (keeps id/attrs). Used for the replay
+ * canvas so a new viewer never inherits a stale WebGL/2D drawing context. */
+function resetCanvas(sel) {
+  const old = $(sel);
+  const fresh = old.cloneNode(false);
+  old.replaceWith(fresh);
+  return fresh;
+}
+
 /* ============================ screen router ============================= */
 const SCREENS = { pick: "#screen-pick", analyze: "#screen-analyze", results: "#screen-results" };
 const NAV_ORDER = ["pick", "analyze", "results"];
@@ -173,9 +182,13 @@ function renderResults() {
   vid.load();
 
   if (state.viewer) state.viewer.destroy();
-  state.viewer = new Replay3D($("#replay-canvas"), replay, {
-    scrub: $("#replay-scrub"), label: $("#replay-frame"), playBtn: $("#replay-play"),
-  });
+  // fresh canvas each time so a WebGL/2D context is never reused across viewers
+  const canvas = resetCanvas("#replay-canvas");
+  const ui3d = { scrub: $("#replay-scrub"), label: $("#replay-frame"), playBtn: $("#replay-play") };
+  const Cap = window.CapsuleViewer3D;   // WebGL capsule viewer (module); falls back to canvas
+  state.viewer = (Cap && Cap.supported())
+    ? new Cap(canvas, replay, ui3d)
+    : new Replay3D(canvas, replay, ui3d);
 
   loadRenderView(state.selectedId, isUpload);
   showTab("plain");
