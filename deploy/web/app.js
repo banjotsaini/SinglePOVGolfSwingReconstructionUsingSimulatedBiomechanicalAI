@@ -177,7 +177,36 @@ function renderResults() {
     scrub: $("#replay-scrub"), label: $("#replay-frame"), playBtn: $("#replay-play"),
   });
 
+  loadRenderView(state.selectedId, isUpload);
   showTab("plain");
+}
+
+/* ---- optional "3D Swing View": precomputed headless-Blender render stills ----
+ * Presence-driven off the clips.json manifest: the tab appears only for clips whose
+ * entry carries a `render.phases` list (no per-clip fetch/404). Uploads never show it.
+ *
+ * TODO(mixste-swap): clip 0's render is currently generated from the MotionBERT-full
+ * lift (the mocap JSON that exists today), NOT the golfpose3d/MixSTE production lifter.
+ * Once the model bundle lands, regenerate Data/handoff/0/0_mocap.json through the
+ * golfpose3d (MixSTE) path and re-run Scripts/blender_mocap.py (unisex mode) to
+ * overwrite the PNGs in assets/0/blender/ in place — no front-end change needed (same
+ * filenames = same manifest). The caption is deliberately lifter-neutral so it stays
+ * true after the swap. To add a NEW clip's render: drop its PNGs under
+ * assets/<id>/blender/ and add a `render.phases` block to that clip in clips.json.
+ */
+function loadRenderView(clipId, isUpload) {
+  const tab = $("#tab-render"), panel = $("#render-phases");
+  tab.hidden = true;                       // default: no render for this clip
+  if (isUpload) return;                    // uploads use a sample clip; never claim a render
+  const clip = state.clips.find(c => c.id === clipId);
+  const render = clip && clip.render;
+  if (!render || !Array.isArray(render.phases) || !render.phases.length) return;
+  panel.innerHTML = render.phases.map(p =>
+    `<figure class="render-phase">
+       <img src="assets/${clipId}/blender/${p.src}" alt="${p.label} — rendered 3D pose" loading="lazy">
+       <figcaption>${p.label}</figcaption>
+     </figure>`).join("");
+  tab.hidden = false;
 }
 
 function renderPlain(explanation) {
@@ -233,9 +262,11 @@ function showTab(which) {
   $("#tab-plain").classList.toggle("active", which === "plain");
   $("#tab-numbers").classList.toggle("active", which === "numbers");
   $("#tab-chat").classList.toggle("active", which === "chat");
+  $("#tab-render").classList.toggle("active", which === "render");
   $("#view-plain").hidden = which !== "plain";
   $("#view-numbers").hidden = which !== "numbers";
   $("#view-chat").hidden = which !== "chat";
+  $("#view-render").hidden = which !== "render";
 }
 
 /* =========================================================================
@@ -423,6 +454,7 @@ async function init() {
   $("#tab-plain").addEventListener("click", () => showTab("plain"));
   $("#tab-numbers").addEventListener("click", () => showTab("numbers"));
   $("#tab-chat").addEventListener("click", () => showTab("chat"));
+  $("#tab-render").addEventListener("click", () => showTab("render"));
 
   // prototype account: render the signed-in dashboard on any auth change
   if (window.Auth) Auth.init();

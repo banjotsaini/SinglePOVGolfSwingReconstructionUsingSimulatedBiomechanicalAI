@@ -116,6 +116,7 @@
       <button id="tab-plain" class="tab active" role="tab">Plain English</button>
       <button id="tab-numbers" class="tab" role="tab">The numbers</button>
       <button id="tab-chat" class="tab" role="tab">Ask the coach</button>
+      <button id="tab-render" class="tab" role="tab" hidden>3D Swing View</button>
     </div>
   </div>
 
@@ -151,6 +152,13 @@
         <p class="muted small chat-foot">Describes what was measured against the tour reference —
         it never prescribes fixes. Offline answers come from the in-page coach; set
         <code>window.API_BASE</code> to route to the live grounded agent.</p>
+      </div>
+      <div id="view-render" class="card view-panel" hidden>
+        <div id="render-phases" class="render-phases"><!-- phase images injected --></div>
+        <p class="render-caption muted small">Rendered visualization of the reconstructed 3D swing —
+        a Blender render of the estimated pose skeleton, not raw video analysis and not a physically
+        exact body. Depth is estimated from a single camera, so this shows captured motion and joint
+        angles scaled to a neutral body template. Precomputed for this demo swing.</p>
       </div>
     </div>
 

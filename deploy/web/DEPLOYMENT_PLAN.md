@@ -99,6 +99,52 @@ below actually exists.
 
 ---
 
+## 2026-07-05 — 3D Swing View (headless-Blender render)
+
+Added a **"3D Swing View"** tab on the results screen showing a precomputed Blender
+render of the reconstructed 3D pose (three swing-phase stills: takeaway / mid /
+follow-through). `Scripts/blender_mocap.py` turns the canonical mocap JSON into a
+metric, unisex-scaled, constraint-rigged armature and renders headless.
+
+**How it works (offline asset step — the whole point):** Blender is an **offline /
+headless asset-generation step**, never in the browser and never required by the
+static site. Flow: `mocap JSON → headless Blender (Scripts/blender_mocap.py --mode
+unisex --render) → compressed PNGs committed under deploy/web/assets/<id>/blender/ →
+the static front end just displays them`. The tab is **presence-driven**: it appears
+only for clips whose `clips.json` entry carries a `render.phases` list, so it lights
+up automatically as future clips get renders and stays hidden otherwise (uploads
+never show it). Generated with Blender 5.1; PNGs downscaled to 900px and pngquant'd
+(~48 KB for all three). `.blend` files are **not** committed.
+
+**Current-state note — interim source (be honest):** the render shipping now is
+generated from the **MotionBERT-full lift** of clip 0, **NOT** the golfpose3d/MixSTE
+production lifter (that's the only mocap JSON that exists today). The front-end
+caption is deliberately **lifter-neutral** ("reconstructed 3D swing… estimated pose
+skeleton") so it stays true after the swap, and it never surfaces the FK
+`0.0000 mm` validation figure as an accuracy claim (that number means the render
+*math* is lossless, not that the pose is exact). **TODO(mixste-swap):** once the
+model bundle lands, regenerate `Data/handoff/0/0_mocap.json` through the golfpose3d
+(MixSTE) path and re-run the render command below to **overwrite the PNGs in
+`deploy/web/assets/0/blender/` in place** — same filenames, no front-end change. This
+TODO is mirrored in `app.js` at `loadRenderView()`.
+
+**Asset status:** only **clip 0** has a mocap JSON (and therefore a render). Clips
+**830 / 269 are placeholder swings with no mocap JSON** and are blocked on the model
+bundle before they can be rendered — their `clips.json` entries have no `render`
+block, so the tab correctly stays hidden for them.
+
+**Regenerate / add a render:**
+```bash
+mkdir -p deploy/web/assets/0/blender
+blender --background --python Scripts/blender_mocap.py -- \
+  --input Data/handoff/0/0_mocap.json --height 1.78 --mode unisex \
+  --render deploy/web/assets/0/blender/golfer_0_preview.png
+# then downscale + compress the 3 _f<NNN> stills (sips -Z 900 + pngquant), drop the
+# redundant base PNG, and — for a NEW clip — add a render.phases block to clips.json.
+```
+
+---
+
 ## Going live on S3 — what the upload, accounts, and consent still need
 
 This is the plan to turn the three prototype flows above into real ones once the

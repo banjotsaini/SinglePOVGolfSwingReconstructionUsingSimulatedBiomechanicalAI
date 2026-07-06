@@ -20,7 +20,15 @@
       "title": "Sample swing C",
       "view": "face-on",
       "club": "driver",
-      "placeholder": true
+      "placeholder": true,
+      "_render_note": "Presence of 'render' lights up the '3D Swing View' tab. Headless-Blender stills (Scripts/blender_mocap.py, unisex). SOURCE: currently the MotionBERT-full lift of clip 0, NOT golfpose3d/MixSTE — regenerate via the MixSTE path once the model bundle lands and overwrite assets/0/blender/*.png in place (same filenames = no manifest change).",
+      "render": {
+        "phases": [
+          { "label": "Takeaway", "src": "golfer_0_preview_f020.png" },
+          { "label": "Mid-swing", "src": "golfer_0_preview_f069.png" },
+          { "label": "Follow-through", "src": "golfer_0_preview_f117.png" }
+        ]
+      }
     }
   ]
 }
