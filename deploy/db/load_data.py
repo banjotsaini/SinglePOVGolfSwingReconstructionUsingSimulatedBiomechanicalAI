@@ -61,6 +61,11 @@ class Executor:
             self.conn.commit()
 
 
+class PgTextArray(list):
+    """Marker: this list targets a text[] column, not jsonb. psycopg adapts plain
+    lists to arrays natively, but the dry-run SQL renderer needs the distinction."""
+
+
 def _lit(v):
     if v is None:
         return "NULL"
@@ -68,6 +73,9 @@ def _lit(v):
         return "TRUE" if v else "FALSE"
     if isinstance(v, (int, float)):
         return repr(v)
+    if isinstance(v, PgTextArray):
+        items = ", ".join("'" + str(x).replace("'", "''") + "'" for x in v)
+        return f"ARRAY[{items}]::text[]"
     if isinstance(v, (dict, list)):
         return "'" + json.dumps(v).replace("'", "''") + "'::jsonb"
     return "'" + str(v).replace("'", "''") + "'"
@@ -100,9 +108,9 @@ def _indicator_deps():
 
 
 def seed(ex: Executor):
-    kb = json.loads((COACH / "indicator_kb.json").read_text())
-    bands = json.loads((COACH / "reference_bands.json").read_text())
-    conf_raw = json.loads((COACH / "indicator_confidence.json").read_text())
+    kb = json.loads((COACH / "indicator_kb.json").read_text(encoding="utf-8"))
+    bands = json.loads((COACH / "reference_bands.json").read_text(encoding="utf-8"))
+    conf_raw = json.loads((COACH / "indicator_confidence.json").read_text(encoding="utf-8"))
     conf = conf_raw.get("indicators", conf_raw)
     deps = _indicator_deps()
     cards = kb["indicators"]
@@ -118,7 +126,7 @@ def seed(ex: Executor):
                  event_ref=EXCLUDED.event_ref, unit=EXCLUDED.unit,
                  depends_on_joints=EXCLUDED.depends_on_joints""",
             (key, c["label"], c["plain_name"], c["event"],
-             UNIT_MAP.get(c["unit"], "ratio"), deps.get(key, [])),
+             UNIT_MAP.get(c["unit"], "ratio"), PgTextArray(deps.get(key, []))),
         )
 
     # reference_bands (corpus bands are club-agnostic -> club='all')
@@ -186,7 +194,7 @@ def backfill(ex: Executor):
             if cid is None or cid in seen:
                 continue
             seen.add(cid)
-            sc = json.loads(jf.read_text())
+            sc = json.loads(jf.read_text(encoding="utf-8"))
             meta = sc.get("meta", {})
 
             # swing (deterministic uuid from clip id so re-runs are idempotent)
