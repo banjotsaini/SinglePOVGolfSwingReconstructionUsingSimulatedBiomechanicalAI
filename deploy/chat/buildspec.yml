@@ -1,0 +1,13 @@
+# CodeBuild spec — builds + pushes the chat Lambda container (no local Docker needed).
+# Project env vars: ECR_REPO (e.g. <acct>.dkr.ecr.us-east-1.amazonaws.com/motion-caddie/chat)
+#                   IMAGE_TAG (immutable repo — bump per build: v1, v2, …)
+version: 0.2
+phases:
+  pre_build:
+    commands:
+      - aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin "${ECR_REPO%%/*}"
+  build:
+    commands:
+      - docker build -f deploy/chat/Dockerfile -t "$ECR_REPO:$IMAGE_TAG" .
+      - docker push "$ECR_REPO:$IMAGE_TAG"
+      - echo "pushed $ECR_REPO:$IMAGE_TAG"

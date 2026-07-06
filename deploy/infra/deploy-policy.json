@@ -113,6 +113,16 @@
       "Resource": "arn:aws:secretsmanager:us-east-1:*:secret:rds!cluster-*"
     },
     {
+      "Sid": "CodeBuildForContainerImages",
+      "Effect": "Allow",
+      "Action": [
+        "codebuild:CreateProject", "codebuild:UpdateProject", "codebuild:DeleteProject",
+        "codebuild:StartBuild", "codebuild:StopBuild",
+        "codebuild:BatchGetBuilds", "codebuild:BatchGetProjects"
+      ],
+      "Resource": "arn:aws:codebuild:us-east-1:*:project/motion-caddie-*"
+    },
+    {
       "Sid": "IamRolesForStackOnly",
       "Effect": "Allow",
       "Action": [
@@ -124,7 +134,7 @@
       "Resource": "arn:aws:iam::*:role/motion-caddie-app-*",
       "Condition": {
         "StringEqualsIfExists": {
-          "iam:PassedToService": [ "lambda.amazonaws.com", "sagemaker.amazonaws.com" ]
+          "iam:PassedToService": [ "lambda.amazonaws.com", "sagemaker.amazonaws.com", "codebuild.amazonaws.com" ]
         }
       }
     }
