@@ -2,7 +2,8 @@
 
 Pre-rendered, no-backend demo: pick a curated swing → animated "reading your
 swing" checklist → results (plain-English read + metrics vs tour + 2D pose
-overlay + rotatable 3D replay). Plain vanilla HTML/CSS/JS — no build step.
+overlay + rotatable 3D replay + a grounded **coaching Q&A chat**). Plain vanilla
+HTML/CSS/JS — no build step.
 
 ## Run locally
 
@@ -24,6 +25,7 @@ deploy/web/
   app.js              screen flow, rendering, 3D canvas viewer
   assets/
     clips.json        manifest of curated clips
+  chat.js             coaching Q&A engine (offline mock + live seam)
     <clip_id>/
       metrics.json      metric rows: you vs tour band, status, blurb
       explanation.json  plain-English eval (headline + tagged sections)
@@ -31,6 +33,30 @@ deploy/web/
       overlay.mp4       2D pose overlay render
       raw.mp4           original clip (gallery thumbnail)
 ```
+
+## Coaching chat (the "Ask the coach" tab)
+
+Folded in from Banjot's `coaching_chatbot_demo.html` (same design lineage). It's a
+grounded Q&A over the selected swing: it only speaks to measured indicators, refuses
+ball-flight/club questions and low-confidence metrics, never prescribes fixes, and
+shows the tool calls behind each answer. Per-clip values are read from the SAME
+`assets/<id>/metrics.json` the "numbers" tab renders, so chat and table can't disagree.
+
+- **Offline (default):** an in-page mock answers, mirroring the real agent's
+  behaviour + grounding verifier. No key, no network.
+- **Live:** set `window.API_BASE` (e.g. the chat Lambda Function URL, or the origin
+  of `serve_demo.py`). `askChat()` in `chat.js` is the single swap seam — it then
+  POSTs `{clip_id, question, history[], compare_clip_id?}` to `${API_BASE}/chat` and
+  renders the returned `{answer, grounded, violations, tool_log}`. The backend is
+  `deploy/chat_handler.py` (packaged in `deploy/chat/` as a Lambda container).
+
+### Running with the LIVE coach locally
+The static server (`python -m http.server`) serves the demo with the offline mock.
+For live answers, Banjot's `serve_demo.py` (repo root) serves the page AND exposes
+`/api/chat` backed by the real agent — but note it currently serves its own
+`coaching_chatbot_demo.html`, not this `deploy/web/` app. To point this app at it,
+serve `deploy/web/` and set `window.API_BASE` to the `serve_demo.py` origin (see the
+reconciliation note in `DEPLOYMENT_PLAN.md` for the remaining wiring).
 
 ## Data status — IMPORTANT
 

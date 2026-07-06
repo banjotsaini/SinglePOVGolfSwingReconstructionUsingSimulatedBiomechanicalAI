@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MotionCaddie — Capsule Swing Replay</title>
+<!-- Standalone, dependency-free (Version A): a 2D-canvas capsule mannequin viewer.
+     No frameworks, no build, no external requests beyond one swing-data JSON. Host
+     this file anywhere; it fetches ?data=<url> (default assets/0/replay_3d.json). -->
+<style>
+  :root { --bg:#0f2019; --ink:#e8ede9; --muted:#9fb0a6; --accent:#7FE3AC; }
+  * { box-sizing:border-box; }
+  html,body { margin:0; height:100%; background:var(--bg); color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; }
+  .wrap { max-width:760px; margin:0 auto; padding:20px 18px 32px; }
+  h1 { font-size:18px; font-weight:600; margin:0 0 2px; }
+  .sub { color:var(--muted); font-size:13px; margin:0 0 16px; }
+  .stage { width:100%; aspect-ratio:4/3; background:#0c1a14; border-radius:14px; overflow:hidden;
+    box-shadow:0 10px 30px rgba(0,0,0,.35); }
+  canvas { width:100%; height:100%; display:block; cursor:grab; touch-action:none; }
+  canvas:active { cursor:grabbing; }
+  .controls { display:flex; align-items:center; gap:12px; margin-top:12px; }
+  button { background:#17362a; color:var(--ink); border:1px solid #235241; border-radius:9px;
+    padding:7px 12px; font:inherit; font-size:14px; cursor:pointer; }
+  button:hover { background:#1d4536; }
+  input[type=range] { flex:1; accent-color:var(--accent); }
+  .frame { color:var(--muted); font-size:13px; min-width:64px; text-align:right; }
+  .cap { color:var(--muted); font-size:12px; margin-top:14px; line-height:1.5; }
+  .err { color:#ffb4a2; font-size:13px; margin-top:12px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Capsule swing replay</h1>
+  <p class="sub">Drag to spin · reconstructed 3D pose as a neutral capsule mannequin</p>
+  <div class="stage"><canvas id="c" width="760" height="570"></canvas></div>
+  <div class="controls">
+    <button id="play" type="button" aria-label="Play or pause">Pause</button>
+    <input id="scrub" type="range" min="0" max="0" value="0" step="1" aria-label="Frame">
+    <span class="frame" id="frame">0 / 0</span>
+  </div>
+  <p class="cap">Rendered from the reconstructed 3D pose. The body is a neutral template shape used to
+  make the estimated pose easier to read — it reflects captured motion and joint angles, not the
+  golfer's actual body proportions. Depth is estimated from a single camera.</p>
+  <p class="err" id="err" hidden></p>
+</div>
+
+<script>
+"use strict";
+// ---- skeleton (H36M-17) + stylized capsule sizing (mirrors blender_mocap.py) ----
+const PARENTS = [-1,0,1,2,0,4,5,0,7,8,9,8,11,12,8,14,15];
+const LIMB_R = { 1:[.080,.070],4:[.080,.070],2:[.078,.052],5:[.078,.052],3:[.050,.034],6:[.050,.034],
+  9:[.042,.034],10:[.034,.030],11:[.052,.046],14:[.052,.046],12:[.050,.038],15:[.050,.038],
+  13:[.037,.028],16:[.037,.028] };
+const JOINT_R = { 0:.090,8:.080,1:.066,4:.066,2:.058,5:.058,3:.042,6:.042,11:.054,14:.054,
+  12:.042,15:.042,13:.034,16:.034,9:.036,10:.082 };
+const TARGET_H = 1.78, NB = 17;
+
+const canvas = document.getElementById("c"), ctx = canvas.getContext("2d");
+const ui = { play:document.getElementById("play"), scrub:document.getElementById("scrub"),
+             frame:document.getElementById("frame"), err:document.getElementById("err") };
+let V = null;
+
+function dataURL() {
+  const q = new URLSearchParams(location.search).get("data");
+  return q || "assets/0/replay_3d.json";
+}
+
+class Capsule2D {
+  constructor(data) {
+    this.fps = data.fps || 30;
+    this.bones = data.bones || [];
+    // metric scale from median vertical (y-down) span of body joints
+    const spans = data.frames.map(fr => {
+      let lo=Infinity, hi=-Infinity;
+      for (let j=0;j<NB;j++){ lo=Math.min(lo,fr[j][1]); hi=Math.max(hi,fr[j][1]); }
+      return hi-lo;
+    }).sort((a,b)=>a-b);
+    const sc = TARGET_H / (spans[spans.length>>1] || 1);
+    this.frames = data.frames.map(fr => fr.map(p => [p[0]*sc, p[1]*sc, p[2]*sc]));
+    // center on mean hip; body-only radius (ignore clubhead 17 -> good framing)
+    const c=[0,0,0]; for (const fr of this.frames){ c[0]+=fr[0][0]; c[1]+=fr[0][1]; c[2]+=fr[0][2]; }
+    c[0]/=this.frames.length; c[1]/=this.frames.length; c[2]/=this.frames.length; this.center=c;
+    let r=1e-6; for (const fr of this.frames) for (let j=0;j<NB;j++){
+      const dx=fr[j][0]-c[0], dy=fr[j][1]-c[1], dz=fr[j][2]-c[2];
+      r=Math.max(r, Math.hypot(dx,dy,dz)); }
+    this.radius=r;
+    this.frame=0; this.playing=true; this.yaw=0.5; this.pitch=0.06; this._last=0; this._acc=0;
+    this.clubBones = this.bones.filter(b => b.a===17 || b.b===17);
+  }
+  _project(p) {
+    const c=this.center; let x=p[0]-c[0], y=-(p[1]-c[1]), z=p[2]-c[2];
+    // yaw about vertical, then pitch about horizontal
+    let x1=x*Math.cos(this.yaw)+z*Math.sin(this.yaw), z1=-x*Math.sin(this.yaw)+z*Math.cos(this.yaw);
+    let y1=y*Math.cos(this.pitch)-z1*Math.sin(this.pitch), z2=y*Math.sin(this.pitch)+z1*Math.cos(this.pitch);
+    const foc=this.radius*4, persp=foc/(foc+z2);
+    const s=Math.min(this.W,this.H)*0.40/this.radius;
+    return [this.W/2 + x1*s*persp, this.H*0.52 - y1*s*persp, persp, z2, s];
+  }
+  _shade(z) { // farther (larger z) -> darker
+    const t=Math.max(0.55, Math.min(1.08, 1.0 - z/(this.radius*2.4)));
+    const r=Math.round(190*t), g=Math.round(183*t), b=Math.round(168*t);
+    return `rgb(${r},${g},${b})`;
+  }
+  _capsule(pa, pb, ra, rb, color) {
+    const dx=pb[0]-pa[0], dy=pb[1]-pa[1], L=Math.hypot(dx,dy)||1e-6;
+    const nx=-dy/L, ny=dx/L;
+    ctx.fillStyle=color; ctx.strokeStyle=color; ctx.lineJoin="round";
+    ctx.beginPath();
+    ctx.moveTo(pa[0]+nx*ra, pa[1]+ny*ra);
+    ctx.lineTo(pb[0]+nx*rb, pb[1]+ny*rb);
+    ctx.lineTo(pb[0]-nx*rb, pb[1]-ny*rb);
+    ctx.lineTo(pa[0]-nx*ra, pa[1]-ny*ra);
+    ctx.closePath(); ctx.fill();
+    ctx.beginPath(); ctx.arc(pa[0],pa[1],ra,0,7); ctx.fill();
+    ctx.beginPath(); ctx.arc(pb[0],pb[1],rb,0,7); ctx.fill();
+  }
+  draw() {
+    const dpr=window.devicePixelRatio||1;
+    const W=canvas.clientWidth, H=canvas.clientHeight;
+    if (canvas.width!==W*dpr || canvas.height!==H*dpr){ canvas.width=W*dpr; canvas.height=H*dpr; }
+    this.W=W; this.H=H;
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    ctx.clearRect(0,0,W,H);
+    const P = this.frames[this.frame].map(p => this._project(p));
+
+    // ground shadow (flattened, subtle)
+    ctx.save(); ctx.globalAlpha=0.18; ctx.fillStyle="#000";
+    for (let j=0;j<NB;j++){ const pr=P[j]; ctx.beginPath(); ctx.ellipse(pr[0], H*0.9, 10*pr[2], 3*pr[2], 0,0,7); ctx.fill(); }
+    ctx.restore();
+
+    // collect depth-sorted items (torso, limbs, joints, club)
+    const items=[];
+    // torso quad L/R shoulder + R/L hip
+    const tq=[11,14,1,4].map(j=>P[j]); const tz=(P[0][3]+P[8][3])/2;
+    items.push({z:tz, fn:()=>{ ctx.fillStyle=this._shade(tz); ctx.beginPath();
+      ctx.moveTo(tq[0][0],tq[0][1]); for(let k=1;k<4;k++) ctx.lineTo(tq[k][0],tq[k][1]);
+      ctx.closePath(); ctx.fill(); }});
+    for (const j of Object.keys(LIMB_R).map(Number)){ const p=PARENTS[j], pa=P[p], pb=P[j];
+      const [rp,rd]=LIMB_R[j]; const z=(pa[3]+pb[3])/2;
+      items.push({z, fn:()=>this._capsule(pa,pb, rp*pa[4]*pa[2], rd*pb[4]*pb[2], this._shade(z))}); }
+    for (const j of Object.keys(JOINT_R).map(Number)){ const pr=P[j], z=pr[3];
+      items.push({z, fn:()=>{ ctx.fillStyle=this._shade(z); ctx.beginPath();
+        ctx.arc(pr[0],pr[1], JOINT_R[j]*pr[4]*pr[2],0,7); ctx.fill(); }}); }
+    for (const b of this.clubBones){ const pa=P[b.a], pb=P[b.b]; const z=(pa[3]+pb[3])/2;
+      items.push({z, fn:()=>this._capsule(pa,pb, 0.012*pa[4]*pa[2], 0.014*pb[4]*pb[2], "#3a4048")}); }
+    items.sort((a,b)=>b.z-a.z);   // far first
+    for (const it of items) it.fn();
+
+    ui.frame.textContent = `${this.frame+1} / ${this.frames.length}`;
+    ui.scrub.value = this.frame;
+  }
+}
+
+let RAF=null;
+function loop(now){
+  RAF=requestAnimationFrame(loop);
+  if (V.playing){ if(!V._last)V._last=now; V._acc+=(now-V._last)/1000; V._last=now;
+    const dt=1/V.fps; while(V._acc>=dt){ V._acc-=dt; V.frame=(V.frame+1)%V.frames.length; } }
+  else { V._last=now; }
+  V.draw();
+}
+
+function bind(){
+  ui.scrub.min=0; ui.scrub.max=V.frames.length-1;
+  ui.scrub.addEventListener("input", ()=>{ V.playing=false; ui.play.textContent="Play"; V.frame=+ui.scrub.value; });
+  ui.play.addEventListener("click", ()=>{ V.playing=!V.playing; ui.play.textContent=V.playing?"Pause":"Play"; V._last=0; });
+  // drag to orbit
+  let drag=null;
+  canvas.addEventListener("pointerdown", e=>{ drag={x:e.clientX,y:e.clientY}; canvas.setPointerCapture(e.pointerId); });
+  canvas.addEventListener("pointermove", e=>{ if(!drag)return;
+    V.yaw += (e.clientX-drag.x)*0.01; V.pitch += (e.clientY-drag.y)*0.006;
+    V.pitch=Math.max(-1.2,Math.min(1.2,V.pitch)); drag={x:e.clientX,y:e.clientY}; });
+  canvas.addEventListener("pointerup", ()=>drag=null);
+  canvas.addEventListener("pointercancel", ()=>drag=null);
+}
+
+fetch(dataURL()).then(r=>{ if(!r.ok) throw new Error("HTTP "+r.status); return r.json(); })
+  .then(data=>{ V=new Capsule2D(data); bind(); RAF=requestAnimationFrame(loop); })
+  .catch(e=>{ ui.err.hidden=false; ui.err.textContent="Could not load swing data ("+dataURL()+"): "+e.message; });
+</script>
+</body>
+</html>

@@ -28,15 +28,29 @@ async function loadManifest() {
 }
 
 /* ============================== app state =============================== */
+const SAMPLE_ID = "830";   // demo swing used to illustrate a prototype upload result
+
 const state = {
   clips: [],
   selectedId: null,
+  mode: "demo",       // "demo" (real pre-rendered clip) | "upload" (prototype)
+  upload: null,       // { name, url } for a prototype uploaded file
+  uploads: [],        // this session's prototype uploads (for the dashboard)
   bundle: null,       // loaded clip bundle for the results screen
   bundlePromise: null,
   viewer: null,       // Replay3D instance
 };
 
 const $ = (sel) => document.querySelector(sel);
+
+/* Replace an element with a fresh clone (keeps id/attrs). Used for the replay
+ * canvas so a new viewer never inherits a stale WebGL/2D drawing context. */
+function resetCanvas(sel) {
+  const old = $(sel);
+  const fresh = old.cloneNode(false);
+  old.replaceWith(fresh);
+  return fresh;
+}
 
 /* ============================ screen router ============================= */
 const SCREENS = { pick: "#screen-pick", analyze: "#screen-analyze", results: "#screen-results" };
@@ -54,7 +68,7 @@ function goto(screen) {
   window.scrollTo({ top: 0 });
 }
 
-/* ============================ 1 · pick screen =========================== */
+/* ============================ 1 · landing screen ======================= */
 function renderGallery() {
   const gal = $("#clip-gallery");
   gal.innerHTML = "";
@@ -65,17 +79,46 @@ function renderGallery() {
     card.innerHTML = `
       <video src="assets/${clip.id}/raw.mp4" preload="metadata" muted playsinline></video>
       <div class="clip-title">${clip.title}</div>
-      <div class="clip-meta">${clip.view} · ${clip.club}</div>`;
-    card.addEventListener("click", () => selectClip(clip.id));
+      <div class="clip-meta">${clip.view} · ${clip.club}</div>
+      <div class="clip-cta">Open result</div>`;
+    card.addEventListener("click", () => startDemo(clip.id));
     gal.appendChild(card);
   }
-  selectClip(state.clips[0].id);
 }
 
-function selectClip(id) {
+/* start a real pre-rendered demo swing */
+function startDemo(id) {
+  state.mode = "demo";
   state.selectedId = id;
-  document.querySelectorAll(".clip-card").forEach(c =>
-    c.classList.toggle("selected", c.dataset.id === id));
+  state.upload = null;
+  runAnalyze();
+}
+
+/* ---- prototype upload: pick a local file, then run the SAME loader ---- */
+function onFileChosen(file) {
+  if (!file) return;
+  if (state.upload && state.upload.url) URL.revokeObjectURL(state.upload.url);
+  state.upload = { name: file.name, url: URL.createObjectURL(file) };
+  const box = $("#upload-status");
+  box.hidden = false;
+  box.innerHTML = `
+    <div class="upload-file">
+      <span class="upload-file-name" title="${file.name}">${file.name}</span>
+      <span class="upload-badge">Prototype — no real analysis</span>
+    </div>
+    <button id="btn-analyze-upload" class="btn-primary" type="button">Analyze swing</button>`;
+  $("#btn-analyze-upload").addEventListener("click", startUpload);
+}
+
+function startUpload() {
+  if (!state.upload) return;
+  state.mode = "upload";
+  state.selectedId = SAMPLE_ID;   // illustrative results bundle; overlay uses the real file
+  if (!state.uploads.some(u => u.name === state.upload.name)) {
+    state.uploads.push({ name: state.upload.name });
+    renderDashboard();
+  }
+  runAnalyze();
 }
 
 /* ========================== 2 · analyze screen ========================== */
@@ -117,23 +160,66 @@ function metricByKey(key) {
 function renderResults() {
   const { metrics, explanation, overlayUrl, replay } = state.bundle;
   const clip = state.clips.find(c => c.id === state.selectedId);
+  const isUpload = state.mode === "upload";
 
-  $("#results-clip-label").textContent = `${clip.title} · ${clip.view} · ${clip.club}`;
-  $("#results-headline").textContent = explanation.headline;
+  // honesty banner + labelling for prototype uploads
+  $("#results-banner").hidden = !isUpload;
+  if (isUpload) {
+    $("#results-clip-label").textContent = `Your upload · ${state.upload.name}`;
+    $("#results-headline").textContent = "Illustrative result (prototype)";
+  } else {
+    $("#results-clip-label").textContent = `${clip.title} · ${clip.view} · ${clip.club}`;
+    $("#results-headline").textContent = explanation.headline;
+  }
 
   renderPlain(explanation);
   renderNumbers(metrics.metrics);
+  Chat.activate(state.selectedId);
 
   const vid = $("#overlay-video");
-  vid.src = overlayUrl;
+  // upload mode plays back the user's ACTUAL file (truthful — their raw clip, no overlay claimed)
+  vid.src = isUpload ? state.upload.url : overlayUrl;
   vid.load();
 
   if (state.viewer) state.viewer.destroy();
-  state.viewer = new Replay3D($("#replay-canvas"), replay, {
-    scrub: $("#replay-scrub"), label: $("#replay-frame"), playBtn: $("#replay-play"),
-  });
+  // fresh canvas each time so a WebGL/2D context is never reused across viewers
+  const canvas = resetCanvas("#replay-canvas");
+  const ui3d = { scrub: $("#replay-scrub"), label: $("#replay-frame"), playBtn: $("#replay-play") };
+  const Cap = window.CapsuleViewer3D;   // WebGL capsule viewer (module); falls back to canvas
+  state.viewer = (Cap && Cap.supported())
+    ? new Cap(canvas, replay, ui3d)
+    : new Replay3D(canvas, replay, ui3d);
 
+  loadRenderView(state.selectedId, isUpload);
   showTab("plain");
+}
+
+/* ---- optional "3D Swing View": precomputed headless-Blender render stills ----
+ * Presence-driven off the clips.json manifest: the tab appears only for clips whose
+ * entry carries a `render.phases` list (no per-clip fetch/404). Uploads never show it.
+ *
+ * TODO(mixste-swap): clip 0's render is currently generated from the MotionBERT-full
+ * lift (the mocap JSON that exists today), NOT the golfpose3d/MixSTE production lifter.
+ * Once the model bundle lands, regenerate Data/handoff/0/0_mocap.json through the
+ * golfpose3d (MixSTE) path and re-run Scripts/blender_mocap.py (unisex mode) to
+ * overwrite the PNGs in assets/0/blender/ in place — no front-end change needed (same
+ * filenames = same manifest). The caption is deliberately lifter-neutral so it stays
+ * true after the swap. To add a NEW clip's render: drop its PNGs under
+ * assets/<id>/blender/ and add a `render.phases` block to that clip in clips.json.
+ */
+function loadRenderView(clipId, isUpload) {
+  const tab = $("#tab-render"), panel = $("#render-phases");
+  tab.hidden = true;                       // default: no render for this clip
+  if (isUpload) return;                    // uploads use a sample clip; never claim a render
+  const clip = state.clips.find(c => c.id === clipId);
+  const render = clip && clip.render;
+  if (!render || !Array.isArray(render.phases) || !render.phases.length) return;
+  panel.innerHTML = render.phases.map(p =>
+    `<figure class="render-phase">
+       <img src="assets/${clipId}/blender/${p.src}" alt="${p.label} — rendered 3D pose" loading="lazy">
+       <figcaption>${p.label}</figcaption>
+     </figure>`).join("");
+  tab.hidden = false;
 }
 
 function renderPlain(explanation) {
@@ -188,8 +274,12 @@ function renderNumbers(metrics) {
 function showTab(which) {
   $("#tab-plain").classList.toggle("active", which === "plain");
   $("#tab-numbers").classList.toggle("active", which === "numbers");
+  $("#tab-chat").classList.toggle("active", which === "chat");
+  $("#tab-render").classList.toggle("active", which === "render");
   $("#view-plain").hidden = which !== "plain";
   $("#view-numbers").hidden = which !== "numbers";
+  $("#view-chat").hidden = which !== "chat";
+  $("#view-render").hidden = which !== "render";
 }
 
 /* =========================================================================
@@ -350,7 +440,25 @@ class Replay3D {
 async function init() {
   state.clips = await loadManifest();
   renderGallery();
-  $("#btn-analyze").addEventListener("click", runAnalyze);
+
+  // Prefetch every clip's metrics.json (small) so the coach chat can talk about
+  // any swing and compare across them — same source the "numbers" tab renders.
+  const metricsByClip = {};
+  await Promise.all(state.clips.map(async (c) => {
+    try { metricsByClip[c.id] = await fetch(`assets/${c.id}/metrics.json`).then(r => r.json()); }
+    catch (e) { /* a clip without metrics just won't be chat-enabled */ }
+  }));
+  Chat.setLibrary(state.clips, metricsByClip);
+  Chat.init({
+    stream: $("#chat-stream"), input: $("#chat-q"), send: $("#chat-send"),
+    compare: $("#chat-compare"), active: $("#chat-active"), mode: $("#chat-mode"),
+    chips: [...document.querySelectorAll("#view-chat .chip-btn")],
+  });
+
+  // upload (prototype): primary CTA opens the file picker
+  $("#btn-upload").addEventListener("click", () => $("#file-input").click());
+  $("#file-input").addEventListener("change", (e) => onFileChosen(e.target.files[0]));
+
   $("#btn-restart").addEventListener("click", () => {
     if (state.viewer) { state.viewer.destroy(); state.viewer = null; }
     $("#overlay-video").pause();
@@ -358,7 +466,34 @@ async function init() {
   });
   $("#tab-plain").addEventListener("click", () => showTab("plain"));
   $("#tab-numbers").addEventListener("click", () => showTab("numbers"));
+  $("#tab-chat").addEventListener("click", () => showTab("chat"));
+  $("#tab-render").addEventListener("click", () => showTab("render"));
+
+  // prototype account: render the signed-in dashboard on any auth change
+  if (window.Auth) Auth.init();
+  document.addEventListener("mc-auth-change", renderDashboard);
+  renderDashboard();
+
   goto("pick");
+}
+
+/* ---- signed-in "My swings" dashboard (prototype) ---- */
+function renderDashboard() {
+  const dash = $("#dashboard");
+  if (!dash) return;
+  const signedIn = window.Auth && Auth.isSignedIn();
+  dash.hidden = !signedIn;
+  if (!signedIn) return;
+  const user = Auth.currentUser();
+  $("#dash-name").textContent = user.displayName || user.username;
+  const wrap = $("#dash-swings");
+  if (!state.uploads.length) {
+    wrap.innerHTML = `<p class="muted small">No swings yet. Upload a swing video above to get started — analysis is prototype-only in this demo.</p>`;
+    return;
+  }
+  wrap.innerHTML = state.uploads.map(u =>
+    `<div class="dash-swing"><span class="dash-swing-name" title="${u.name}">${u.name}</span>` +
+    `<span class="upload-badge">Prototype</span></div>`).join("");
 }
 
 init();
