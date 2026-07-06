@@ -151,7 +151,7 @@ CREATE TABLE feedback_notes (
     pro_median       real,
     confidence_tier  text,
     message          text NOT NULL,
-    severity         text NOT NULL CHECK (severity IN ('review','info'))
+    severity         text NOT NULL CHECK (severity IN ('review','info','low_confidence'))
 );
 CREATE INDEX idx_feedback_analysis ON feedback_notes (analysis_id);
 
