@@ -12,29 +12,23 @@ aws iam put-group-policy --group-name MotionCaddie-Deploy \
   --policy-name motion-caddie-deploy --policy-document file://deploy/infra/deploy-policy.json
 ```
 
-## Still needed (as of this build pass)
+## ✅ CHAT IS LIVE — Bedrock (bedrock-runtime) + Claude Haiku 4.5, no API key
 
-Live chat answers need ONE of the two options below — either works, both are wired:
+`motion-caddie-chat` runs with `CHAT_BACKEND_PROVIDER=bedrock-runtime` +
+`BEDROCK_MODEL=us.anthropic.claude-haiku-4-5-20251001-v1:0`. Verified end-to-end in
+the hosted UI: live grounded answers with tool-call traces. Entitlement findings:
+- **Classic bedrock-runtime surface: Haiku 4.5 enabled** (Lawrence was right).
+- **Mantle (Messages-API) endpoint: separate entitlement, NOT enabled** — all models
+  return "not available for this account" there.
+- Exec role has both surfaces' IAM (`bedrock:InvokeModel*` on models/profiles,
+  `bedrock-mantle:CreateInference`) — switching later is env-vars only.
 
-### Option A: `ANTHROPIC_API_KEY` — a secret, not a permission
-The chatbot calls Claude via the direct Anthropic API. The deployed Lambda reads env
-`ANTHROPIC_API_KEY`; its exec role can already read a Secrets Manager secret named
-`motion-caddie/anthropic-*`. Provide the key, or set it on `motion-caddie-chat`
-(Console → Configuration → Environment variables). Zero AWS-side changes needed.
-
-### Option B: Bedrock — needs the account-level model-access opt-in (Lawrence, console)
-The chat backend now supports Claude on Amazon Bedrock (SigV4, **no API key**):
-set `CHAT_BACKEND_PROVIDER=bedrock` on `motion-caddie-chat`. Everything IAM-side is
-done (exec role has `bedrock:InvokeModel*` on `anthropic.*` models/profiles +
-`bedrock-mantle:CreateInference` on `project/*` — the Mantle endpoint's own action
-namespace, discovered empirically). The ONLY blocker, verified across Haiku 4.5 /
-Sonnet 4.6 / Sonnet 5 / Opus 4.7 / Opus 4.8:
-> `"<model> is not available for this account"`
-i.e. **Anthropic model access is not enabled for the account** — Bedrock console →
-Model access → enable Anthropic Claude (account-owner action; no IAM policy can fix
-it). ⚠️ Cost note: Bedrock usage bills the AWS account (the team previously excluded
-it believing credits don't cover it) — confirm before enabling; the $40/mo budget
-alarm is the backstop.
+### Optional upgrades (not blockers)
+| Item | Why | Who |
+|---|---|---|
+| Enable more Claude models on bedrock-runtime (Sonnet/Opus) | better coaching answers than Haiku | Lawrence (Bedrock console → Model access) |
+| `ANTHROPIC_API_KEY` (direct API, `CHAT_BACKEND_PROVIDER=anthropic`) | claude-opus-4-8 quality, no Bedrock dependency | Banjot |
+| Lambda quota raises: function memory → 10240 MB; account concurrency → 1000 | processing runs ~3× faster; restores the reserved-concurrency spend cap | Lawrence (Service Quotas → Lambda) |
 
 ## Resolved this pass ✅
 - **SCP blocking public Function URLs** → worked around, no org action needed:

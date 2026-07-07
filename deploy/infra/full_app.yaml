@@ -40,6 +40,21 @@ Parameters:
     Type: Number
     Default: 3
     Description: Hard ceiling on concurrent GPU/CPU jobs (bounds burst spend).
+  ReserveConcurrency:
+    Type: String
+    Default: "true"
+    AllowedValues: ["true", "false"]
+    Description: >
+      Reserve MaxProcessingConcurrency for the processing Lambda. Set "false" on
+      accounts at the minimum account concurrency quota (10), where any reservation
+      is rejected; the SQS event-source MaximumConcurrency cap still applies.
+  ProcessingMemoryMB:
+    Type: Number
+    Default: 10240
+    Description: >
+      Processing Lambda memory (= CPU). 10240 (6 vCPU) is ideal; accounts with the
+      legacy 3008 MB Lambda quota must pass 3008 until AWS raises the limit
+      (Service Quotas -> Lambda -> function memory).
   EnableGpuWorker:
     Type: String
     Default: "false"
@@ -64,6 +79,9 @@ Conditions:
   # Empty ProcessingImageUri (the default) = infra-only stack; flip on later with
   # a single parameter update, no template change.
   HasProcessingImage: !Not [!Equals [!Ref ProcessingImageUri, ""]]
+  # Accounts at the minimum Lambda concurrency quota (10) cannot reserve any —
+  # the SQS event-source MaximumConcurrency still caps burst spend there.
+  UseReservedConcurrency: !Equals [!Ref ReserveConcurrency, "true"]
 
 # ---------------------------------------------------------------------------
 Resources:
@@ -272,9 +290,9 @@ Resources:
         ImageUri: !Ref ProcessingImageUri
       Role: !GetAtt ProcessingRole.Arn
       Timeout: !Ref ProcessingTimeoutSeconds    # hard per-invocation timeout
-      MemorySize: 10240                         # max RAM = max CPU (torch/MixSTE on CPU)
+      MemorySize: !Ref ProcessingMemoryMB       # max RAM = max CPU (torch/MixSTE on CPU)
       EphemeralStorage: { Size: 2048 }          # /tmp for the render
-      ReservedConcurrentExecutions: !Ref MaxProcessingConcurrency  # hard spend ceiling
+      ReservedConcurrentExecutions: !If [UseReservedConcurrency, !Ref MaxProcessingConcurrency, !Ref "AWS::NoValue"]  # hard spend ceiling (quota-permitting)
       Environment:
         Variables:
           ARTIFACTS_BUCKET: !Ref ArtifactsBucket

@@ -365,6 +365,14 @@ class AnthropicBackend(Backend):
             self._client = anthropic.AnthropicBedrockMantle(
                 aws_region=os.environ.get("AWS_REGION", "us-east-1"),
                 timeout=timeout, max_retries=max_retries)
+        elif provider == "bedrock-runtime":
+            # Legacy bedrock-runtime (InvokeModel) path — separate entitlement from
+            # Mantle. Model ids here are inference profiles (us.anthropic....v1:0).
+            self.model = os.environ.get(
+                "BEDROCK_MODEL", "us.anthropic.claude-haiku-4-5-20251001-v1:0")
+            self._client = anthropic.AnthropicBedrock(
+                aws_region=os.environ.get("AWS_REGION", "us-east-1"),
+                timeout=timeout, max_retries=max_retries)
         else:
             self.model = model
             self._client = anthropic.Anthropic(timeout=timeout, max_retries=max_retries)
