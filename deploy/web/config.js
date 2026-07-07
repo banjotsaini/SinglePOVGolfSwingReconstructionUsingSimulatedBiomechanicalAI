@@ -3,25 +3,23 @@
  * Load this BEFORE chat.js / app.js (e.g. <script src="config.js"></script> first).
  * Leave the URLs blank to run the offline/mock preview; set them to go live.
  *
- * NOTE (routing): our backends are separate Lambda **Function URLs**, one per
- * function — not one API_BASE with path routing. chat.js appends `/chat` to
- * API_BASE; a Function URL catches all paths and ignores them, so pointing
- * API_BASE at the chat function works for chat. Uploads use their own URL.
- * If we later want a single origin (one domain, real paths), front both Lambdas
- * with API Gateway or CloudFront and set API_BASE to that instead.
+ * Both backends sit behind ONE API Gateway HTTP API (motion-caddie-api,
+ * bk7s56lvq3) — single origin, real paths, CORS handled at the gateway:
+ *   POST /chat        -> motion-caddie-chat        (grounded coaching chatbot)
+ *   POST /upload-url  -> motion-caddie-upload-url  (presigned S3 POST issuer)
+ * chat.js appends `/chat` to API_BASE, which matches this routing exactly.
  *
- * ⚠️ BLOCKER: these public Function URLs currently return 403 — an account SCP
- * blocks unauthenticated Function URLs. Until that's resolved (org admin) or the
- * Lambdas are fronted by API Gateway/CloudFront, live mode won't reach them.
- * See deploy/infra/PENDING_PERMISSIONS.md. The Lambdas themselves are verified
- * working via direct invoke.
+ * (History: Lambda Function URLs were tried first but an account SCP blocks
+ * unauthenticated Function URLs — API Gateway is the sanctioned front door.
+ * Verified publicly: /chat guardrail 400s, /upload-url issues a real presign,
+ * OPTIONS preflight 204 with ACAO *. Chat answers go live once
+ * ANTHROPIC_API_KEY is set on the chat Lambda.)
  */
 (function () {
-  // chat backend (motion-caddie-chat). Trailing slash trimmed so `${API_BASE}/chat` is clean.
-  window.API_BASE = "https://h4uwq7gcuyg3ayfo45q7zsbwny0pagdu.lambda-url.us-east-1.on.aws".replace(/\/$/, "");
+  window.API_BASE = "https://bk7s56lvq3.execute-api.us-east-1.amazonaws.com";
 
-  // upload-URL issuer (motion-caddie-upload-url) — POST {filename, content_type}
-  window.UPLOAD_URL = "https://ksodla6bakjuis5hfl7wia7lby0xzupx.lambda-url.us-east-1.on.aws/";
+  // upload-URL issuer — POST {filename, content_type} -> {url, fields, job_id, ...}
+  window.UPLOAD_URL = window.API_BASE + "/upload-url";
 
   // demo clip whitelist the chat backend accepts (ALLOWED_CLIPS on the Lambda)
   window.DEMO_CLIPS = [0, 2, 4, 6, 8, 10, 1292];

@@ -1,0 +1,326 @@
+{
+  "meta": {
+    "clip_id": 830,
+    "player": "TIGER WOODS",
+    "club": "driver",
+    "view": "face-on"
+  },
+  "events": {
+    "address": 184,
+    "toe_up": 196,
+    "mid_backswing": 199,
+    "top": 206,
+    "mid_downswing": 210,
+    "impact": 213,
+    "mid_follow_through": 215,
+    "finish": 233
+  },
+  "indicators": {
+    "shoulder_turn_top_deg": {
+      "value": 73.81,
+      "percentile": 81,
+      "pro_median": 53.7,
+      "pro_band": [
+        37.5,
+        68.1
+      ],
+      "confidence_tier": "med"
+    },
+    "hip_turn_top_deg": {
+      "value": 39.85,
+      "percentile": 73,
+      "pro_median": 30.5,
+      "pro_band": [
+        21.2,
+        40.6
+      ],
+      "confidence_tier": "high"
+    },
+    "x_factor_top_deg": {
+      "value": 33.96,
+      "percentile": 81,
+      "pro_median": 21.9,
+      "pro_band": [
+        9.7,
+        30.8
+      ],
+      "confidence_tier": "med"
+    },
+    "hip_turn_impact_deg": {
+      "value": 30.96,
+      "percentile": 81,
+      "pro_median": 16.3,
+      "pro_band": [
+        7.1,
+        26.3
+      ],
+      "confidence_tier": "high"
+    },
+    "spine_tilt_address_deg": {
+      "value": 25.53,
+      "percentile": 39,
+      "pro_median": 27.6,
+      "pro_band": [
+        22.9,
+        31.7
+      ],
+      "confidence_tier": "high"
+    },
+    "spine_tilt_impact_deg": {
+      "value": 20.16,
+      "percentile": 34,
+      "pro_median": 23.4,
+      "pro_band": [
+        18.3,
+        28.4
+      ],
+      "confidence_tier": "med"
+    },
+    "posture_loss_deg": {
+      "value": 5.37,
+      "percentile": 50,
+      "pro_median": 5.3,
+      "pro_band": [
+        2.4,
+        8.9
+      ],
+      "confidence_tier": "med"
+    },
+    "head_sway_max_pct": {
+      "value": 15.74,
+      "percentile": 9,
+      "pro_median": 32.5,
+      "pro_band": [
+        23.6,
+        44.2
+      ],
+      "confidence_tier": "med"
+    },
+    "head_lift_max_pct": {
+      "value": 16.23,
+      "percentile": 48,
+      "pro_median": 16.5,
+      "pro_band": [
+        11.9,
+        23.2
+      ],
+      "confidence_tier": "med"
+    },
+    "left_arm_bend_top_deg": {
+      "value": 89.3,
+      "percentile": 9,
+      "pro_median": 128.1,
+      "pro_band": [
+        110.8,
+        143.5
+      ],
+      "confidence_tier": "low"
+    },
+    "right_arm_bend_top_deg": {
+      "value": 141.32,
+      "percentile": 90,
+      "pro_median": 114.1,
+      "pro_band": [
+        97.2,
+        129.0
+      ],
+      "confidence_tier": "low"
+    },
+    "lead_knee_flex_address_deg": {
+      "value": 146.45,
+      "percentile": 10,
+      "pro_median": 164.8,
+      "pro_band": [
+        158.6,
+        170.3
+      ],
+      "confidence_tier": "med"
+    },
+    "lead_knee_flex_impact_deg": {
+      "value": 167.46,
+      "percentile": 79,
+      "pro_median": 160.0,
+      "pro_band": [
+        152.6,
+        166.2
+      ],
+      "confidence_tier": "med"
+    },
+    "hip_lateral_shift_pct": {
+      "value": 1.18,
+      "percentile": 67,
+      "pro_median": 0.9,
+      "pro_band": [
+        0.5,
+        1.3
+      ],
+      "confidence_tier": "high"
+    },
+    "tempo_ratio": {
+      "value": 3.14,
+      "percentile": 34,
+      "pro_median": 3.4,
+      "pro_band": [
+        3.0,
+        4.1
+      ],
+      "confidence_tier": "high"
+    }
+  },
+  "feedback": [
+    {
+      "indicator": "left_arm_bend_top_deg",
+      "label": "Lead-arm extension",
+      "event": "top",
+      "value": 89.3,
+      "percentile": 9,
+      "pro_median": 128.1,
+      "confidence_tier": "low",
+      "message": "(low-confidence measurement) Lead arm more bent at the top than typical tour swings (less width/structure).",
+      "severity": "low_confidence"
+    }
+  ],
+  "summary": "All confidently-measured indicators fall within the tour-pro range. Clean, repeatable mechanics.",
+  "llm_explanation": "At address, the setup position just before the swing starts, your upper body leaned about as much as a typical tour swing. At the top, where the club changes direction, your hips rotated about as far as a typical tour swing. Your tempo, the timing and rhythm of the swing, was close to the tour-typical pace. Your head stayed about as steady in height as a typical tour swing.\n\nAt the top, your shoulders rotated further than most tour swings. At the top, there was more difference between shoulder turn and hip turn than in most tour swings. At impact, the instant the club meets the ball, your hips were rotated more toward the target than most tour swings. Your head moved less side-to-side than most tour swings. Your lead knee, the knee closer to the target, was more bent at setup than most tour swings. At impact, the lead knee was straighter than most tour swings.\n\nAt impact, your upper body leaned about as much as a typical tour swing. From setup to impact, that upper body lean changed about as much as a typical tour swing. Your hips slid toward the target about as much as a typical tour swing. There is a lot here to feel good about.",
+  "llm_claims": [
+    {
+      "text": "Address is the setup position just before the swing starts.",
+      "indicator_keys": [
+        "spine_tilt_address_deg"
+      ],
+      "claim_type": "gloss"
+    },
+    {
+      "text": "At address, the upper body leaned about as much as a typical tour swing.",
+      "indicator_keys": [
+        "spine_tilt_address_deg"
+      ],
+      "claim_type": "in_range"
+    },
+    {
+      "text": "Top is where the club changes direction.",
+      "indicator_keys": [
+        "hip_turn_top_deg"
+      ],
+      "claim_type": "gloss"
+    },
+    {
+      "text": "At the top, the hips rotated about as far as a typical tour swing.",
+      "indicator_keys": [
+        "hip_turn_top_deg"
+      ],
+      "claim_type": "in_range"
+    },
+    {
+      "text": "Tempo is the timing and rhythm of the swing.",
+      "indicator_keys": [
+        "tempo_ratio"
+      ],
+      "claim_type": "gloss"
+    },
+    {
+      "text": "The tempo was close to the tour-typical pace.",
+      "indicator_keys": [
+        "tempo_ratio"
+      ],
+      "claim_type": "in_range"
+    },
+    {
+      "text": "The head stayed about as steady in height as a typical tour swing.",
+      "indicator_keys": [
+        "head_lift_max_pct"
+      ],
+      "claim_type": "in_range"
+    },
+    {
+      "text": "At the top, the shoulders rotated further than most tour swings.",
+      "indicator_keys": [
+        "shoulder_turn_top_deg"
+      ],
+      "claim_type": "out_of_range"
+    },
+    {
+      "text": "At the top, there was more difference between shoulder turn and hip turn than in most tour swings.",
+      "indicator_keys": [
+        "x_factor_top_deg"
+      ],
+      "claim_type": "out_of_range"
+    },
+    {
+      "text": "Impact is the instant the club meets the ball.",
+      "indicator_keys": [
+        "hip_turn_impact_deg"
+      ],
+      "claim_type": "gloss"
+    },
+    {
+      "text": "At impact, the hips were rotated more toward the target than most tour swings.",
+      "indicator_keys": [
+        "hip_turn_impact_deg"
+      ],
+      "claim_type": "out_of_range"
+    },
+    {
+      "text": "The head moved less side-to-side than most tour swings.",
+      "indicator_keys": [
+        "head_sway_max_pct"
+      ],
+      "claim_type": "out_of_range"
+    },
+    {
+      "text": "Lead knee means the knee closer to the target.",
+      "indicator_keys": [
+        "lead_knee_flex_address_deg"
+      ],
+      "claim_type": "gloss"
+    },
+    {
+      "text": "The lead knee was more bent at setup than most tour swings.",
+      "indicator_keys": [
+        "lead_knee_flex_address_deg"
+      ],
+      "claim_type": "out_of_range"
+    },
+    {
+      "text": "At impact, the lead knee was straighter than most tour swings.",
+      "indicator_keys": [
+        "lead_knee_flex_impact_deg"
+      ],
+      "claim_type": "out_of_range"
+    },
+    {
+      "text": "At impact, the upper body leaned about as much as a typical tour swing.",
+      "indicator_keys": [
+        "spine_tilt_impact_deg"
+      ],
+      "claim_type": "in_range"
+    },
+    {
+      "text": "From setup to impact, the upper body lean changed about as much as a typical tour swing.",
+      "indicator_keys": [
+        "posture_loss_deg"
+      ],
+      "claim_type": "in_range"
+    },
+    {
+      "text": "The hips slid toward the target about as much as a typical tour swing.",
+      "indicator_keys": [
+        "hip_lateral_shift_pct"
+      ],
+      "claim_type": "in_range"
+    },
+    {
+      "text": "There is a lot here to feel good about.",
+      "indicator_keys": [],
+      "claim_type": "encouragement"
+    }
+  ],
+  "llm_grounding": {
+    "grounded": true,
+    "violations": [],
+    "coverage": null,
+    "n_flagged": 0,
+    "n_claims": 19
+  },
+  "llm_feature": "f_strict_grounding"
+}
