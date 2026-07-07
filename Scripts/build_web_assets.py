@@ -24,6 +24,7 @@ import tempfile
 from pathlib import Path
 
 import cv2
+import numpy as np
 import pandas as pd
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -58,14 +59,23 @@ def h264(src: Path, dst: Path) -> None:
                     str(dst)], check=True, capture_output=True)
 
 
-def build_overlay(clip: int, out: Path) -> None:
+def build_overlay(clip: int, out: Path, fps: float = 30.0) -> None:
     sys.path.insert(0, str(ROOT / "Scripts"))
     from pipeline import write_2d_overlay
+    from smoothing import one_euro_filter
     video = ROOT / "Data" / "videos_160" / f"{clip}.mp4"
     pq2d = ROOT / "Data" / "eval_runs" / "mediapipe_lite" / f"{clip}.parquet"
+    # The cache holds RAW landmarks; smooth the drawn skeleton so the overlay
+    # doesn't jitter (same tuned One-Euro as the replay/coaching paths).
+    df = pd.read_parquet(pq2d).sort_values(["frame", "kp_idx"]).reset_index(drop=True)
+    T, K = df["frame"].nunique(), df["kp_idx"].nunique()
+    xy = df[["x", "y"]].to_numpy(dtype=np.float32).reshape(T, K, 2)
+    df[["x", "y"]] = one_euro_filter(xy, fps=fps, min_cutoff=0.3, beta=0.4).reshape(T * K, 2)
     with tempfile.TemporaryDirectory() as td:
+        sm_pq = Path(td) / "smoothed_2d.parquet"
+        df.to_parquet(sm_pq, index=False)
         tmp = Path(td) / "overlay_raw.mp4"
-        write_2d_overlay(video, pq2d, tmp)          # writes mp4v — not browser-safe
+        write_2d_overlay(video, sm_pq, tmp)         # writes mp4v — not browser-safe
         h264(tmp, out)
 
 
@@ -74,11 +84,23 @@ def build_replay(clip: int, out: Path, fps: float) -> None:
     df = pd.read_parquet(pq)
     frames = []
 
+    # The cache holds RAW lifted 3D (events need raw); smooth for the replay so
+    # the viewer isn't jittery — same tuned One-Euro the coaching path uses.
+    from smoothing import one_euro_filter
+    kp_names = sorted(df["kp_name"].unique())
+    wide = df.pivot_table(index="frame", columns="kp_name", values=["x", "y", "z"],
+                          sort=True)
+    arr = np.stack([wide[ax].to_numpy(dtype=np.float32)[:, [kp_names.index(k) for k in kp_names]]
+                    for ax in ("x", "y", "z")], axis=-1)  # (T, K, 3)
+    arr = one_euro_filter(arr, fps=fps, min_cutoff=0.3, beta=0.4)
+    smoothed = {(int(f), k): arr[i, j] for i, f in enumerate(wide.index)
+                for j, k in enumerate(kp_names)}
+
     def mid(a, b):
         return tuple(round((a[i] + b[i]) / 2, 4) for i in range(3))
 
-    for _, g in df.groupby("frame", sort=True):
-        by = {r.kp_name: (round(float(r.x), 4), round(float(r.y), 4), round(float(r.z), 4))
+    for f, g in df.groupby("frame", sort=True):
+        by = {r.kp_name: tuple(round(float(v), 4) for v in smoothed[(int(f), r.kp_name)])
               for r in g.itertuples()}
         # cache is COCO-named — derive the h36m torso chain the front end expects
         by["hip_center"] = mid(by["left_hip"], by["right_hip"])
@@ -178,7 +200,7 @@ def build(clip: int) -> None:
 
     h264(video, dst / "raw.mp4")
     print(f"[{clip}] raw.mp4")
-    build_overlay(clip, dst / "overlay.mp4")
+    build_overlay(clip, dst / "overlay.mp4", fps)
     print(f"[{clip}] overlay.mp4 (H.264)")
     build_replay(clip, dst / "replay_3d.json", fps)
     print(f"[{clip}] replay_3d.json")

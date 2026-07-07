@@ -70,6 +70,48 @@ UNISEX_BONE_FRAC = {
 # 1. PURE-NUMPY CORE  (no bpy)
 # ===========================================================================
 
+def one_euro_filter(xyz: np.ndarray,
+                    fps: float = 30.0,
+                    min_cutoff: float = 0.3,
+                    beta: float = 0.4,
+                    d_cutoff: float = 1.0) -> np.ndarray:
+    """One Euro filter (Casiez et al. 2012) per joint/axis.
+
+    Port of Scripts/smoothing.py:one_euro_filter (kept local: this file must run
+    inside Blender's bundled Python with no repo deps). Defaults are the
+    accuracy-benchmark-tuned coaching params (min_cutoff=0.3, beta=0.4) rather
+    than smoothing.py's generic defaults.
+    """
+    import math
+    T = xyz.shape[0]
+    if T < 2:
+        return xyz.astype(np.float32, copy=True)
+    dt = 1.0 / float(fps) if fps and fps > 0 else 1.0 / 30.0
+    out = np.empty_like(xyz, dtype=np.float32)
+    x_prev = xyz[0].astype(np.float32)
+    dx_prev = np.zeros_like(x_prev)
+    out[0] = x_prev
+    a_d = 1.0 / (1.0 + (1.0 / (2.0 * math.pi * d_cutoff)) / dt)
+    for t in range(1, T):
+        x = xyz[t].astype(np.float32)
+        dx = (x - x_prev) / dt
+        dx_hat = a_d * dx + (1.0 - a_d) * dx_prev
+        cutoff = min_cutoff + beta * np.abs(dx_hat)
+        tau = 1.0 / (2.0 * math.pi * cutoff)
+        a = 1.0 / (1.0 + tau / dt)
+        x_hat = a * x + (1.0 - a) * x_prev
+        out[t] = x_hat
+        x_prev = x_hat
+        dx_prev = dx_hat
+    return out
+
+
+def jitter_mean(xyz: np.ndarray) -> float:
+    """Mean per-frame joint acceleration magnitude (the pipeline's jitter metric)."""
+    if xyz.shape[0] < 3:
+        return 0.0
+    return float(np.linalg.norm(np.diff(xyz, n=2, axis=0), axis=-1).mean())
+
 def load_mocap_json(path: str | Path) -> tuple[np.ndarray, float, dict]:
     """Return (positions (T,17,3) float64, fps, raw_meta). Coordinates are in
     the pipeline's native h36m-camera frame (x=right, y=DOWN, z=forward)."""
@@ -499,9 +541,26 @@ def main() -> None:
     ap.add_argument("--render", default=None, help="output preview PNG (Blender)")
     ap.add_argument("--video", default=None, help="output MP4 animation (Blender)")
     ap.add_argument("--no-mesh", action="store_true")
+    ap.add_argument("--no-smooth", action="store_true",
+                    help="skip One-Euro smoothing of the input 3D (default: smooth; "
+                         "the mocap JSON carries RAW lifted 3D, which animates jittery)")
+    ap.add_argument("--smooth-min-cutoff", type=float, default=0.3)
+    ap.add_argument("--smooth-beta", type=float, default=0.4)
     args = ap.parse_args(_argv_after_ddash())
 
     pos_cam, fps, meta = load_mocap_json(args.input)
+    jit_raw = jitter_mean(pos_cam)
+    if not args.no_smooth:
+        pos_cam = one_euro_filter(pos_cam, fps=fps,
+                                  min_cutoff=args.smooth_min_cutoff,
+                                  beta=args.smooth_beta)
+        print(f"[smooth]   One-Euro(min_cutoff={args.smooth_min_cutoff}, "
+              f"beta={args.smooth_beta}): jitter {jit_raw:.5f} -> "
+              f"{jitter_mean(pos_cam):.5f} "
+              f"({(1 - jitter_mean(pos_cam) / jit_raw) * 100:.0f}% less)" if jit_raw > 0
+              else "[smooth]   One-Euro applied (input had no measurable jitter)")
+    else:
+        print(f"[smooth]   OFF (raw input jitter {jit_raw:.5f})")
     prep = prepare(pos_cam, target_height_m=args.height, mode=args.mode)
 
     print(f"[load]     {args.input}")
