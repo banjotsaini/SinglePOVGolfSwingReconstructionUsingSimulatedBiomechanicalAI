@@ -1,0 +1,17 @@
+# CodeBuild spec — builds + pushes the processing container.
+# Stages the model bundle from S3 into the build context first (models are
+# gitignored, too big for the source zip).
+# Project env: ECR_REPO, IMAGE_TAG, MODELS_S3 (e.g.
+#   s3://motioncaddie-capstone-data-lj-2026/01_inputs/Models)
+version: 0.2
+phases:
+  pre_build:
+    commands:
+      - aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin "${ECR_REPO%%/*}"
+      - mkdir -p deploy/processing/models
+      - aws s3 sync "$MODELS_S3" deploy/processing/models --only-show-errors
+  build:
+    commands:
+      - docker build -f deploy/processing/Dockerfile -t "$ECR_REPO:$IMAGE_TAG" .
+      - docker push "$ECR_REPO:$IMAGE_TAG"
+      - echo "pushed $ECR_REPO:$IMAGE_TAG — set ProcessingImageUri to it and update the stack"
