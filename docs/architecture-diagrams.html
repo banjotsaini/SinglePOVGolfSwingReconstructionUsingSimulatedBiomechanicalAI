@@ -1,0 +1,352 @@
+<meta charset="utf-8">
+<title>MotionCaddie — Architecture Diagrams</title>
+<style>
+  :root{
+    --bg:#faf9f5; --ink:#1d2b24; --muted:#6b7a72; --green:#0C5C3A; --green-soft:#e6f4ec;
+    --mint:#7FE3AC; --amber:#E8B23E; --amber-soft:#fdf3dd; --purple:#6d4ad0; --purple-soft:#f2ecfc;
+    --gray:#9AA3AE; --gray-soft:#f0f1f3; --card:#ffffff; --line:#d9ded9;
+  }
+  html,body{background:var(--bg);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;margin:0;}
+  .wrap{max-width:1320px;margin:0 auto;padding:40px 28px 64px;display:flex;flex-direction:column;gap:36px;}
+  header h1{font-size:26px;margin:0 0 6px;letter-spacing:-.01em}
+  header p{margin:0;color:var(--muted);font-size:14px}
+  header .meta{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;color:var(--muted);margin-top:8px}
+  .slide{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:22px 26px 18px;
+    box-shadow:0 1px 3px rgba(29,43,36,.06);overflow-x:auto;}
+  .slide h2{font-size:19px;margin:0;letter-spacing:-.01em}
+  .slide .sub{color:var(--muted);font-size:13px;margin:4px 0 0}
+  .slide-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:14px;flex-wrap:wrap}
+  .legend{display:flex;gap:14px;flex-wrap:wrap;align-items:center;font-size:11.5px;color:var(--muted);padding-top:4px}
+  .legend span{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+  .sw{width:14px;height:14px;border-radius:4px;border:2px solid var(--line);background:#fff;flex:none}
+  .sw.g{border-color:var(--green)} .sw.a{border-color:var(--amber)} .sw.p{border-color:var(--purple)}
+  .sw.d{border-style:dashed;border-color:var(--gray)}
+  .sw.live{background:var(--mint);border-color:var(--mint)}
+  svg{display:block;min-width:1100px;width:100%;height:auto}
+  svg text{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+  .tier{font-size:10.5px;font-weight:600;letter-spacing:.14em;fill:var(--muted)}
+  .t{font-size:14.5px;font-weight:600;fill:var(--ink)}
+  .s{font-size:10.5px;fill:var(--muted);font-family:ui-monospace,Menlo,Consolas,monospace}
+  .n{fill:#fff;stroke:var(--line);stroke-width:1.5;rx:10}
+  .flowlab{font-size:10.5px;fill:var(--muted)}
+  .num{font-size:12px;font-weight:700;fill:var(--green)}
+  footer{color:var(--muted);font-size:12.5px}
+  footer code{font-family:ui-monospace,Menlo,Consolas,monospace}
+</style>
+
+<div class="wrap">
+<header>
+  <h1>MotionCaddie — System Architecture</h1>
+  <p>Single-POV golf-swing reconstruction &amp; AI coaching · as deployed on AWS</p>
+  <div class="meta">account 084375574654 · us-east-1 · serverless, scale-to-zero · live at d3oak5k3h8fdvi.cloudfront.net</div>
+</header>
+
+<!-- ============ DIAGRAM 1: FULL SYSTEM ============ -->
+<section class="slide">
+  <div class="slide-head">
+    <div>
+      <h2>1 · Full system — everything scales to zero</h2>
+      <p class="sub">No servers idle. Every tier is request-priced or auto-pauses; a $40/mo budget alarm backstops it all.</p>
+    </div>
+    <div class="legend">
+      <span><i class="sw live"></i>live</span>
+      <span><i class="sw g"></i>compute</span>
+      <span><i class="sw a"></i>async messaging</span>
+      <span><i class="sw p"></i>AI model</span>
+      <span><i class="sw"></i>storage / data</span>
+      <span><i class="sw d"></i>deferred / off</span>
+    </div>
+  </div>
+  <svg viewBox="0 0 1240 640" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="MotionCaddie full system architecture">
+    <defs>
+      <marker id="mi" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L8,4.5 L0,9 z" fill="#1d2b24"/></marker>
+      <marker id="mp" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L8,4.5 L0,9 z" fill="#6d4ad0"/></marker>
+      <marker id="ma" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L8,4.5 L0,9 z" fill="#E8B23E"/></marker>
+      <marker id="mg" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L8,4.5 L0,9 z" fill="#9AA3AE"/></marker>
+    </defs>
+
+    <!-- ROW LABELS -->
+    <text class="tier" x="40" y="50">WEB DELIVERY</text>
+    <text class="tier" x="290" y="178">API TIER</text>
+    <text class="tier" x="40" y="352">ASYNC PROCESSING PIPELINE</text>
+    <text class="tier" x="40" y="540">BUILD &amp; GUARDRAILS</text>
+
+    <!-- Browser (spans rows 1-2) -->
+    <rect class="n" x="40" y="64" width="180" height="256" rx="10"/>
+    <text class="t" x="60" y="96">Golfer&#8217;s browser</text>
+    <text class="s" x="60" y="116">static demo app</text>
+    <text class="s" x="60" y="132">pick &#183; analyze &#183; results</text>
+    <text class="s" x="60" y="148">3D replay &#183; chat</text>
+    <rect x="60" y="276" width="42" height="20" rx="10" fill="#7FE3AC"/>
+    <text x="70" y="290" font-size="11" font-weight="700" fill="#0C5C3A">LIVE</text>
+
+    <!-- Row 1: CloudFront + S3 web -->
+    <rect class="n" x="300" y="64" width="200" height="72" rx="10"/>
+    <text class="t" x="318" y="94">CloudFront CDN</text>
+    <text class="s" x="318" y="114">HTTPS &#183; OAC &#183; E1OPRZIXL2IZX</text>
+    <rect class="n" x="560" y="64" width="215" height="72" rx="10"/>
+    <text class="t" x="578" y="94">S3 &#183; web bucket</text>
+    <text class="s" x="578" y="114">private &#183; motion-caddie-web-&#8230;</text>
+    <line x1="220" y1="100" x2="292" y2="100" stroke="#1d2b24" stroke-width="1.6" marker-end="url(#mi)"/>
+    <line x1="500" y1="100" x2="552" y2="100" stroke="#1d2b24" stroke-width="1.6" marker-end="url(#mi)"/>
+    <text class="flowlab" x="508" y="92">OAC read</text>
+    <rect x="820" y="80" width="330" height="34" rx="17" fill="#e6f4ec"/>
+    <text class="s" x="838" y="101" fill="#0C5C3A">https://d3oak5k3h8fdvi.cloudfront.net</text>
+
+    <!-- Row 2: API GW -> lambdas -->
+    <rect class="n" x="300" y="192" width="200" height="100" rx="10"/>
+    <text class="t" x="318" y="224">API Gateway</text>
+    <text class="s" x="318" y="244">HTTP API &#183; CORS</text>
+    <text class="s" x="318" y="260">POST /chat &#183; /upload-url</text>
+    <line x1="220" y1="242" x2="292" y2="242" stroke="#1d2b24" stroke-width="1.6" marker-end="url(#mi)"/>
+
+    <rect class="n" x="560" y="176" width="215" height="64" rx="10" stroke="#0C5C3A"/>
+    <text class="t" x="578" y="202">Chat Lambda</text>
+    <text class="s" x="578" y="222">zip &#183; grounded tool-use loop</text>
+    <rect class="n" x="560" y="256" width="215" height="64" rx="10" stroke="#0C5C3A"/>
+    <text class="t" x="578" y="282">Upload-URL Lambda</text>
+    <text class="s" x="578" y="302">presigned S3 POST &#183; 200 MB cap</text>
+    <line x1="500" y1="222" x2="552" y2="206" stroke="#1d2b24" stroke-width="1.6" marker-end="url(#mi)"/>
+    <line x1="500" y1="262" x2="552" y2="286" stroke="#1d2b24" stroke-width="1.6" marker-end="url(#mi)"/>
+
+    <rect class="n" x="835" y="176" width="255" height="64" rx="10" stroke="#6d4ad0"/>
+    <text class="t" x="853" y="202" fill="#6d4ad0">Claude on Amazon Bedrock</text>
+    <text class="s" x="853" y="222">Haiku 4.5 &#183; SigV4 &#183; no API key</text>
+    <line x1="775" y1="208" x2="827" y2="208" stroke="#6d4ad0" stroke-width="1.6" marker-end="url(#mp)"/>
+    <rect x="835" y="266" width="255" height="44" rx="10" fill="#f0f1f3"/>
+    <text class="s" x="853" y="284" fill="#6b7a72">baked demo scorecards &#183; 9 clips</text>
+    <text class="s" x="853" y="300" fill="#6b7a72">served as tool results (measured data)</text>
+    <line x1="775" y1="288" x2="827" y2="288" stroke="#9AA3AE" stroke-width="1.4" marker-end="url(#mg)"/>
+
+    <!-- Row 3: async pipeline -->
+    <rect class="n" x="40" y="366" width="190" height="86" rx="10"/>
+    <text class="t" x="58" y="396">S3 &#183; uploads</text>
+    <text class="s" x="58" y="416">01_inputs/uploads/&lt;job&gt;/</text>
+    <text class="s" x="58" y="432">raw video &#183; 30-day TTL</text>
+    <path d="M 620 324 C 620 350, 300 340, 240 366" fill="none" stroke="#9AA3AE" stroke-width="1.4" stroke-dasharray="5 4" marker-end="url(#mg)"/>
+    <text class="flowlab" x="300" y="352">browser uploads direct (presigned)</text>
+
+    <rect class="n" x="278" y="366" width="165" height="86" rx="10" stroke="#E8B23E"/>
+    <text class="t" x="296" y="396">EventBridge</text>
+    <text class="s" x="296" y="416">ObjectCreated rule</text>
+    <rect class="n" x="491" y="366" width="170" height="86" rx="10" stroke="#E8B23E"/>
+    <text class="t" x="509" y="396">SQS ingest</text>
+    <text class="s" x="509" y="416">+ DLQ &#183; maxReceive 3</text>
+    <rect class="n" x="709" y="366" width="240" height="86" rx="10" stroke="#0C5C3A"/>
+    <text class="t" x="727" y="392">Processing Lambda</text>
+    <text class="s" x="727" y="411">container &#183; torch + MediaPipe</text>
+    <text class="s" x="727" y="427">2D pose &#8594; MixSTE 3D &#8594; scorecard</text>
+    <rect x="727" y="434" width="42" height="16" rx="8" fill="#7FE3AC"/>
+    <text x="734" y="446" font-size="10" font-weight="700" fill="#0C5C3A">LIVE</text>
+
+    <line x1="230" y1="409" x2="270" y2="409" stroke="#E8B23E" stroke-width="1.6" marker-end="url(#ma)"/>
+    <line x1="443" y1="409" x2="483" y2="409" stroke="#E8B23E" stroke-width="1.6" marker-end="url(#ma)"/>
+    <line x1="661" y1="409" x2="701" y2="409" stroke="#E8B23E" stroke-width="1.6" marker-end="url(#ma)"/>
+
+    <rect class="n" x="997" y="360" width="203" height="50" rx="10"/>
+    <text class="t" x="1013" y="381">S3 &#183; artifacts</text>
+    <text class="s" x="1013" y="398">03_outputs/&lt;job&gt;/ &#183; 90d</text>
+    <rect class="n" x="997" y="424" width="203" height="50" rx="10"/>
+    <text class="t" x="1013" y="445">Aurora Serverless v2</text>
+    <text class="s" x="1013" y="462">Data API &#183; pauses to $0</text>
+    <line x1="949" y1="392" x2="989" y2="385" stroke="#1d2b24" stroke-width="1.6" marker-end="url(#mi)"/>
+    <line x1="949" y1="430" x2="989" y2="444" stroke="#1d2b24" stroke-width="1.6" marker-end="url(#mi)"/>
+
+    <!-- Row 4: guardrails strip -->
+    <rect class="n" x="40" y="556" width="222" height="58" rx="10"/>
+    <text class="t" x="56" y="580" font-size="13">CodeBuild &#8594; ECR</text>
+    <text class="s" x="56" y="598">chat v1 &#183; processing v1</text>
+    <rect class="n" x="286" y="556" width="222" height="58" rx="10"/>
+    <text class="t" x="302" y="580" font-size="13">Alarms &#8594; SNS email</text>
+    <text class="s" x="302" y="598">Lambda errors &#183; DLQ depth</text>
+    <rect class="n" x="532" y="556" width="180" height="58" rx="10"/>
+    <text class="t" x="548" y="580" font-size="13">AWS Budget</text>
+    <text class="s" x="548" y="598">$40/mo &#183; 80% alert</text>
+    <rect class="n" x="736" y="556" width="230" height="58" rx="10" stroke="#9AA3AE" stroke-dasharray="6 4"/>
+    <text class="t" x="752" y="580" font-size="13" fill="#6b7a72">Cognito auth</text>
+    <text class="s" x="752" y="598">deferred to week 12</text>
+    <rect class="n" x="990" y="556" width="210" height="58" rx="10" stroke="#9AA3AE" stroke-dasharray="6 4"/>
+    <text class="t" x="1006" y="580" font-size="13" fill="#6b7a72">SageMaker GPU</text>
+    <text class="s" x="1006" y="598">off &#183; one-flag enable</text>
+  </svg>
+</section>
+
+<!-- ============ DIAGRAM 2: UPLOAD JOURNEY ============ -->
+<section class="slide">
+  <div class="slide-head">
+    <div>
+      <h2>2 · A swing&#8217;s journey — upload to results</h2>
+      <p class="sub">Big files never touch compute: the browser uploads straight to S3, and the pipeline wakes up only when work arrives.</p>
+    </div>
+    <div class="legend"><span><i class="sw g"></i>compute</span><span><i class="sw a"></i>event / queue</span><span><i class="sw"></i>storage</span></div>
+  </div>
+  <svg viewBox="0 0 1240 500" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Upload to results sequence">
+    <defs>
+      <marker id="m2i" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L8,4.5 L0,9 z" fill="#1d2b24"/></marker>
+      <marker id="m2a" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L8,4.5 L0,9 z" fill="#E8B23E"/></marker>
+    </defs>
+
+    <!-- top row -->
+    <g>
+      <circle cx="58" cy="86" r="14" fill="#7FE3AC"/><text class="num" x="53" y="91">1</text>
+      <rect class="n" x="84" y="52" width="220" height="70" rx="10"/>
+      <text class="t" x="100" y="80">Ask for an upload slot</text>
+      <text class="s" x="100" y="99">POST /upload-url {file, type}</text>
+    </g>
+    <line x1="304" y1="87" x2="352" y2="87" stroke="#1d2b24" stroke-width="1.6" marker-end="url(#m2i)"/>
+    <g>
+      <circle cx="378" cy="86" r="14" fill="#7FE3AC"/><text class="num" x="373" y="91">2</text>
+      <rect class="n" x="404" y="52" width="230" height="70" rx="10" stroke="#0C5C3A"/>
+      <text class="t" x="420" y="80">Lambda signs a pass</text>
+      <text class="s" x="420" y="99">presigned POST &#183; type + size caps</text>
+    </g>
+    <line x1="634" y1="87" x2="682" y2="87" stroke="#1d2b24" stroke-width="1.6" marker-end="url(#m2i)"/>
+    <g>
+      <circle cx="708" cy="86" r="14" fill="#7FE3AC"/><text class="num" x="703" y="91">3</text>
+      <rect class="n" x="734" y="52" width="230" height="70" rx="10"/>
+      <text class="t" x="750" y="80">Browser &#8594; S3, direct</text>
+      <text class="s" x="750" y="99">multipart POST &#183; job_id minted</text>
+    </g>
+    <line x1="964" y1="87" x2="1012" y2="87" stroke="#E8B23E" stroke-width="1.6" marker-end="url(#m2a)"/>
+    <g>
+      <circle cx="1038" cy="86" r="14" fill="#7FE3AC"/><text class="num" x="1033" y="91">4</text>
+      <rect class="n" x="1064" y="52" width="150" height="70" rx="10" stroke="#E8B23E"/>
+      <text class="t" x="1080" y="80">Event fires</text>
+      <text class="s" x="1080" y="99">EventBridge&#8594;SQS</text>
+    </g>
+
+    <!-- connector down -->
+    <path d="M 1139 122 C 1139 180, 1139 180, 1080 208" fill="none" stroke="#E8B23E" stroke-width="1.6" marker-end="url(#m2a)"/>
+
+    <!-- middle row (right to left) -->
+    <g>
+      <circle cx="1038" cy="248" r="14" fill="#7FE3AC"/><text class="num" x="1033" y="253">5</text>
+      <rect class="n" x="694" y="208" width="330" height="86" rx="10" stroke="#0C5C3A"/>
+      <text class="t" x="710" y="236">Container wakes &amp; reconstructs</text>
+      <text class="s" x="710" y="256">MediaPipe 2D &#8594; MixSTE 3D lift &#8594; One-Euro smooth</text>
+      <text class="s" x="710" y="272">&#8594; swing events &#8594; coaching scorecard</text>
+    </g>
+    <line x1="686" y1="251" x2="638" y2="251" stroke="#1d2b24" stroke-width="1.6" marker-end="url(#m2i)"/>
+    <g>
+      <circle cx="612" cy="250" r="14" fill="#7FE3AC"/><text class="num" x="607" y="255">6</text>
+      <rect class="n" x="368" y="208" width="230" height="86" rx="10"/>
+      <text class="t" x="384" y="236">Artifacts land</text>
+      <text class="s" x="384" y="256">overlay.mp4 &#183; replay_3d.json</text>
+      <text class="s" x="384" y="272">metrics &#183; explanation &#8594; S3</text>
+    </g>
+    <line x1="360" y1="251" x2="312" y2="251" stroke="#1d2b24" stroke-width="1.6" marker-end="url(#m2i)"/>
+    <g>
+      <circle cx="286" cy="250" r="14" fill="#7FE3AC"/><text class="num" x="281" y="255">7</text>
+      <rect class="n" x="42" y="208" width="230" height="86" rx="10"/>
+      <text class="t" x="58" y="236">Rows written</text>
+      <text class="s" x="58" y="256">swings &#183; analyses &#183; indicators</text>
+      <text class="s" x="58" y="272">Aurora via Data API &#183; idempotent</text>
+    </g>
+
+    <!-- connector down -->
+    <path d="M 157 294 C 157 350, 157 350, 216 378" fill="none" stroke="#1d2b24" stroke-width="1.6" marker-end="url(#m2i)"/>
+
+    <!-- bottom row -->
+    <g>
+      <circle cx="190" cy="418" r="14" fill="#7FE3AC"/><text class="num" x="185" y="423">8</text>
+      <rect class="n" x="216" y="378" width="330" height="80" rx="10"/>
+      <text class="t" x="232" y="406">Front end fetches results</text>
+      <text class="s" x="232" y="426">polls 03_outputs/&lt;job_id&gt;/ &#183; same asset shape</text>
+      <text class="s" x="232" y="442">as the demo &#8594; zero UI changes</text>
+    </g>
+    <rect x="600" y="392" width="560" height="52" rx="12" fill="#e6f4ec"/>
+    <text x="622" y="415" font-size="13" font-weight="600" fill="#0C5C3A">Idle cost of this entire pipeline: $0</text>
+    <text class="s" x="622" y="433" fill="#0C5C3A">no queue traffic &#183; Lambda asleep &#183; Aurora auto-paused &#183; S3 request-priced</text>
+  </svg>
+</section>
+
+<!-- ============ DIAGRAM 3: GROUNDED CHAT ============ -->
+<section class="slide">
+  <div class="slide-head">
+    <div>
+      <h2>3 · The grounded coach — every number is measured, never invented</h2>
+      <p class="sub">Claude can only speak through tools that read the swing&#8217;s actual scorecard; a verifier rejects any answer whose numbers don&#8217;t match.</p>
+    </div>
+    <div class="legend"><span><i class="sw g"></i>compute</span><span><i class="sw p"></i>AI model</span><span><i class="sw"></i>measured data</span></div>
+  </div>
+  <svg viewBox="0 0 1240 470" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Grounded chat request flow">
+    <defs>
+      <marker id="m3i" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L8,4.5 L0,9 z" fill="#1d2b24"/></marker>
+      <marker id="m3p" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L8,4.5 L0,9 z" fill="#6d4ad0"/></marker>
+    </defs>
+
+    <!-- browser -->
+    <rect class="n" x="40" y="80" width="200" height="96" rx="10"/>
+    <text class="t" x="58" y="112">Browser</text>
+    <text class="s" x="58" y="132">&#8220;How was my tempo?&#8221;</text>
+    <text class="s" x="58" y="148">+ prior turns (text only)</text>
+    <circle cx="66" cy="60" r="13" fill="#7FE3AC"/><text class="num" x="62" y="65">1</text>
+
+    <line x1="240" y1="128" x2="296" y2="128" stroke="#1d2b24" stroke-width="1.6" marker-end="url(#m3i)"/>
+    <text class="flowlab" x="248" y="118">POST /chat</text>
+
+    <!-- lambda big box -->
+    <rect class="n" x="304" y="52" width="560" height="356" rx="12" stroke="#0C5C3A"/>
+    <text class="t" x="324" y="82">Chat Lambda &#183; grounded tool-use loop</text>
+
+    <rect x="324" y="100" width="520" height="46" rx="9" fill="#fdf3dd"/>
+    <text class="s" x="340" y="119" fill="#8a6d1f">TRUST BOUNDARY &#183; client history accepted as plain text only;</text>
+    <text class="s" x="340" y="134" fill="#8a6d1f">tool blocks dropped &#8212; every number re-fetched server-side this turn</text>
+    <circle cx="344" cy="76" r="13" fill="#7FE3AC"/><text class="num" x="340" y="81">2</text>
+
+    <rect class="n" x="324" y="166" width="240" height="104" rx="9"/>
+    <text class="t" x="340" y="192" font-size="13">SwingContext</text>
+    <text class="s" x="340" y="212">clip 830 scorecard (measured)</text>
+    <text class="s" x="340" y="228">15 indicators &#183; events &#183; bands</text>
+    <text class="s" x="340" y="244">+ optional compare clip</text>
+
+    <rect class="n" x="604" y="166" width="240" height="104" rx="9"/>
+    <text class="t" x="620" y="192" font-size="13">Server-side tools</text>
+    <text class="s" x="620" y="212">get_indicator &#183; list_indicators</text>
+    <text class="s" x="620" y="228">explain_term &#183; compare_indicator</text>
+    <text class="s" x="620" y="244">read ONLY from SwingContext</text>
+    <line x1="564" y1="218" x2="596" y2="218" stroke="#1d2b24" stroke-width="1.4" marker-end="url(#m3i)"/>
+    <circle cx="624" cy="146" r="13" fill="#7FE3AC"/><text class="num" x="620" y="151">4</text>
+
+    <rect class="n" x="324" y="292" width="520" height="94" rx="9"/>
+    <text class="t" x="340" y="320" font-size="13">Grounding verifier</text>
+    <text class="s" x="340" y="340">every numeric claim in the answer matched against tool results;</text>
+    <text class="s" x="340" y="356">mismatches flagged &#8594; response carries grounded: true/false + full tool trace</text>
+    <circle cx="344" cy="268" r="13" fill="#7FE3AC"/><text class="num" x="340" y="273">6</text>
+
+    <!-- bedrock -->
+    <rect class="n" x="944" y="120" width="256" height="120" rx="10" stroke="#6d4ad0"/>
+    <text class="t" x="962" y="150" fill="#6d4ad0">Claude &#183; Haiku 4.5</text>
+    <text class="s" x="962" y="170">Amazon Bedrock &#183; us-east-1</text>
+    <text class="s" x="962" y="186">SigV4 (IAM role) &#183; no API key</text>
+    <text class="s" x="962" y="202">native tool use</text>
+    <circle cx="968" cy="100" r="13" fill="#7FE3AC"/><text class="num" x="964" y="105">3</text>
+
+    <path d="M 864 160 C 900 160, 908 160, 936 160" fill="none" stroke="#6d4ad0" stroke-width="1.6" marker-end="url(#m3p)"/>
+    <path d="M 936 200 C 908 200, 900 200, 864 200" fill="none" stroke="#6d4ad0" stroke-width="1.6" marker-end="url(#m3p)"/>
+    <text class="flowlab" x="874" y="150" fill="#6d4ad0">tool_use &#215;N</text>
+    <text class="flowlab" x="872" y="220" fill="#6d4ad0">tool_result &#215;N</text>
+    <circle cx="898" cy="184" r="13" fill="#7FE3AC"/><text class="num" x="894" y="189">5</text>
+
+    <!-- answer back -->
+    <path d="M 304 360 C 200 360, 150 300, 145 184" fill="none" stroke="#1d2b24" stroke-width="1.6" marker-end="url(#m3i)"/>
+    <circle cx="180" cy="330" r="13" fill="#7FE3AC"/><text class="num" x="176" y="335">7</text>
+    <text class="flowlab" x="86" y="330">answer + grounded flag</text>
+    <text class="flowlab" x="86" y="344">+ tool-call trace (shown in UI)</text>
+
+    <!-- sample -->
+    <rect x="944" y="292" width="256" height="116" rx="12" fill="#e6f4ec"/>
+    <text x="962" y="318" font-size="12.5" font-weight="600" fill="#0C5C3A">Live answer (verified)</text>
+    <text class="s" x="962" y="338" fill="#0C5C3A">&#8220;Your tempo was in the tour range</text>
+    <text class="s" x="962" y="354" fill="#0C5C3A">at 3.14-to-1 &#8230; a solid, controlled</text>
+    <text class="s" x="962" y="370" fill="#0C5C3A">rhythm.&#8221;</text>
+    <text class="s" x="962" y="392" fill="#0C5C3A">grounded: true &#183; get_indicator</text>
+  </svg>
+</section>
+
+<footer>
+  Drop any card into a 16:9 slide via screenshot, or print this page to PDF. Source of truth:
+  <code>deploy/infra/full_app.yaml</code> · <code>deploy/web/DEPLOYMENT_PLAN.md</code> · branch <code>aws-deploy-handoff</code>.
+</footer>
+</div>
