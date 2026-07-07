@@ -1,0 +1,281 @@
+{
+  "meta": {
+    "clip_id": 417,
+    "player": "DANIELLE KANG",
+    "club": "iron",
+    "view": "face-on"
+  },
+  "events": {
+    "address": 47,
+    "toe_up": 100,
+    "mid_backswing": 119,
+    "top": 149,
+    "mid_downswing": 166,
+    "impact": 180,
+    "mid_follow_through": 190,
+    "finish": 254
+  },
+  "indicators": {
+    "shoulder_turn_top_deg": {
+      "value": 43.85,
+      "percentile": 35,
+      "pro_median": 53.7,
+      "pro_band": [
+        37.5,
+        68.1
+      ],
+      "confidence_tier": "med"
+    },
+    "hip_turn_top_deg": {
+      "value": 38.15,
+      "percentile": 69,
+      "pro_median": 30.5,
+      "pro_band": [
+        21.2,
+        40.6
+      ],
+      "confidence_tier": "high"
+    },
+    "x_factor_top_deg": {
+      "value": 5.7,
+      "percentile": 19,
+      "pro_median": 21.9,
+      "pro_band": [
+        9.7,
+        30.8
+      ],
+      "confidence_tier": "med"
+    },
+    "hip_turn_impact_deg": {
+      "value": 12.83,
+      "percentile": 41,
+      "pro_median": 16.3,
+      "pro_band": [
+        7.1,
+        26.3
+      ],
+      "confidence_tier": "high"
+    },
+    "spine_tilt_address_deg": {
+      "value": 17.85,
+      "percentile": 10,
+      "pro_median": 27.6,
+      "pro_band": [
+        22.9,
+        31.7
+      ],
+      "confidence_tier": "high"
+    },
+    "spine_tilt_impact_deg": {
+      "value": 21.03,
+      "percentile": 38,
+      "pro_median": 23.4,
+      "pro_band": [
+        18.3,
+        28.4
+      ],
+      "confidence_tier": "med"
+    },
+    "posture_loss_deg": {
+      "value": 3.18,
+      "percentile": 31,
+      "pro_median": 5.3,
+      "pro_band": [
+        2.4,
+        8.9
+      ],
+      "confidence_tier": "med"
+    },
+    "head_sway_max_pct": {
+      "value": 38.56,
+      "percentile": 63,
+      "pro_median": 32.5,
+      "pro_band": [
+        23.6,
+        44.2
+      ],
+      "confidence_tier": "med"
+    },
+    "head_lift_max_pct": {
+      "value": 16.85,
+      "percentile": 51,
+      "pro_median": 16.5,
+      "pro_band": [
+        11.9,
+        23.2
+      ],
+      "confidence_tier": "med"
+    },
+    "left_arm_bend_top_deg": {
+      "value": 72.9,
+      "percentile": 8,
+      "pro_median": 128.1,
+      "pro_band": [
+        110.8,
+        143.5
+      ],
+      "confidence_tier": "low"
+    },
+    "right_arm_bend_top_deg": {
+      "value": 128.37,
+      "percentile": 74,
+      "pro_median": 114.1,
+      "pro_band": [
+        97.2,
+        129.0
+      ],
+      "confidence_tier": "low"
+    },
+    "lead_knee_flex_address_deg": {
+      "value": 163.17,
+      "percentile": 43,
+      "pro_median": 164.8,
+      "pro_band": [
+        158.6,
+        170.3
+      ],
+      "confidence_tier": "med"
+    },
+    "lead_knee_flex_impact_deg": {
+      "value": 170.06,
+      "percentile": 86,
+      "pro_median": 160.0,
+      "pro_band": [
+        152.6,
+        166.2
+      ],
+      "confidence_tier": "med"
+    },
+    "hip_lateral_shift_pct": {
+      "value": 0.24,
+      "percentile": 8,
+      "pro_median": 0.9,
+      "pro_band": [
+        0.5,
+        1.3
+      ],
+      "confidence_tier": "high"
+    },
+    "tempo_ratio": {
+      "value": 3.29,
+      "percentile": 44,
+      "pro_median": 3.4,
+      "pro_band": [
+        3.0,
+        4.1
+      ],
+      "confidence_tier": "high"
+    }
+  },
+  "feedback": [
+    {
+      "indicator": "left_arm_bend_top_deg",
+      "label": "Lead-arm extension",
+      "event": "top",
+      "value": 72.9,
+      "percentile": 8,
+      "pro_median": 128.1,
+      "confidence_tier": "low",
+      "message": "(low-confidence measurement) Lead arm more bent at the top than typical tour swings (less width/structure).",
+      "severity": "low_confidence"
+    },
+    {
+      "indicator": "hip_lateral_shift_pct",
+      "label": "Weight shift",
+      "event": "impact",
+      "value": 0.2,
+      "percentile": 8,
+      "pro_median": 0.9,
+      "confidence_tier": "high",
+      "message": "Less lateral hip drive toward target than typical \u2014 possible reverse/limited weight shift.",
+      "severity": "review"
+    }
+  ],
+  "summary": "1 indicator(s) fall outside the typical tour range \u2014 see notes below.",
+  "llm_explanation": "Your shoulder turn at the top of the backswing, where the club changes direction, was in the tour range. Your hip turn at the top was also in the tour range. Your hip rotation at impact, the instant the club meets the ball, was in the tour range. Your posture, the spine and body angle held during the swing, stayed about as steady as a typical tour swing. Your tempo, the timing and rhythm of the swing, was close to the tour-typical pace.\n\nAt impact, your hips slid toward the target less than most tour swings. There is a lot of good motion here already.",
+  "llm_claims": [
+    {
+      "text": "Shoulder turn at the top was in the tour range.",
+      "indicator_keys": [
+        "shoulder_turn_top_deg"
+      ],
+      "claim_type": "in_range"
+    },
+    {
+      "text": "Top means the top of the backswing, where the club changes direction.",
+      "indicator_keys": [
+        "shoulder_turn_top_deg"
+      ],
+      "claim_type": "gloss"
+    },
+    {
+      "text": "Hip turn at the top was in the tour range.",
+      "indicator_keys": [
+        "hip_turn_top_deg"
+      ],
+      "claim_type": "in_range"
+    },
+    {
+      "text": "Hip rotation at impact was in the tour range.",
+      "indicator_keys": [
+        "hip_turn_impact_deg"
+      ],
+      "claim_type": "in_range"
+    },
+    {
+      "text": "Impact means the instant the club meets the ball.",
+      "indicator_keys": [
+        "hip_turn_impact_deg"
+      ],
+      "claim_type": "gloss"
+    },
+    {
+      "text": "Posture stayed about as steady as a typical tour swing.",
+      "indicator_keys": [
+        "posture_loss_deg"
+      ],
+      "claim_type": "in_range"
+    },
+    {
+      "text": "Posture means the spine and body angle held during the swing.",
+      "indicator_keys": [
+        "posture_loss_deg"
+      ],
+      "claim_type": "gloss"
+    },
+    {
+      "text": "Tempo was close to the tour-typical pace.",
+      "indicator_keys": [
+        "tempo_ratio"
+      ],
+      "claim_type": "in_range"
+    },
+    {
+      "text": "Tempo means the timing and rhythm of the swing.",
+      "indicator_keys": [
+        "tempo_ratio"
+      ],
+      "claim_type": "gloss"
+    },
+    {
+      "text": "At impact, the hips slid toward the target less than most tour swings.",
+      "indicator_keys": [
+        "hip_lateral_shift_pct"
+      ],
+      "claim_type": "out_of_range"
+    },
+    {
+      "text": "There is a lot of good motion here already.",
+      "indicator_keys": [],
+      "claim_type": "encouragement"
+    }
+  ],
+  "llm_grounding": {
+    "grounded": true,
+    "violations": [],
+    "coverage": 1.0,
+    "n_flagged": 1,
+    "n_claims": 11
+  },
+  "llm_feature": "f_strict_grounding"
+}

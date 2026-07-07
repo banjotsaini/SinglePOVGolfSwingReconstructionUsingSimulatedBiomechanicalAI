@@ -73,7 +73,9 @@ def _iter_s3_records(event: dict):
 
 def _run(cmd: list[str], desc: str) -> None:
     print(f"[proc] {desc}: {' '.join(cmd)}", flush=True)
-    res = subprocess.run(cmd, cwd=str(SCRIPTS), capture_output=True, text=True)
+    # Lambda: only /tmp is writable — torch/mediapipe/matplotlib all try to write caches
+    env = {**os.environ, "HOME": "/tmp", "MPLCONFIGDIR": "/tmp/mpl", "XDG_CACHE_HOME": "/tmp/xdg"}
+    res = subprocess.run(cmd, cwd=str(SCRIPTS), capture_output=True, text=True, env=env)
     if res.returncode != 0:
         raise RuntimeError(f"{desc} failed (rc={res.returncode}): {res.stderr[-800:]}")
 
@@ -81,10 +83,16 @@ def _run(cmd: list[str], desc: str) -> None:
 def _pipeline(video: Path, work: Path) -> dict:
     """Run the 3-step pipeline; return the paths of the produced artifacts."""
     stem = video.stem
+    cache = work / "cache"  # pipeline defaults to <repo>/Data/eval_runs — read-only in Lambda
     _run([PY, str(SCRIPTS / "pipeline.py"), str(video),
-          "--backbone", BACKBONE, "--lifter", LIFTER, "--out-dir", str(work)],
+          "--backbone", BACKBONE, "--lifter", LIFTER,
+          "--out-dir", str(work), "--cache-dir", str(cache)],
          "2D->3D pipeline + overlay + replay")
-    parquet_3d = work / f"{stem}_3d.parquet"
+    # 3D parquet lands in out-dir or under the lifter's cache subdir — find it robustly
+    cands = list(work.glob(f"*{stem}*3d*.parquet")) or list(cache.rglob(f"{stem}.parquet"))
+    if not cands:
+        raise RuntimeError(f"pipeline produced no 3D parquet for {stem} in {work} or {cache}")
+    parquet_3d = cands[0]
     scorecard = work / f"{stem}_scorecard.json"
     _run([PY, str(SCRIPTS / "scorecard_step.py"), "--parquet", str(parquet_3d),
           "--out", str(scorecard)], "event detection + scorecard")
@@ -161,7 +169,11 @@ def handler(event, _ctx=None):
         work = Path("/tmp") / job_id
         work.mkdir(parents=True, exist_ok=True)
         video = work / Path(key).name
-        _s3.download_file(bucket, key, str(video))
+        try:
+            _s3.download_file(bucket, key, str(video))
+        except Exception as e:  # deleted/expired upload (30d TTL) — drop, don't poison retries
+            print(f"[proc] job {job_id}: source object gone ({type(e).__name__}) — skipping", flush=True)
+            continue
         out = _pipeline(video, work)
         uploaded = _upload_artifacts(work, out["stem"], job_id)
         _write_db(job_id, out["scorecard"], key)

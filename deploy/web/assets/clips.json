@@ -1,6 +1,18 @@
 {
-  "_note": "Curated demo clips. 'placeholder: true' means the data files were seeded from the design-spec reference example, NOT the real pipeline — replace by running Scripts/demo.py per clip once the model/data bundle is available.",
+  "_note": "Curated demo clips. 417 and 886 are REAL pipeline output (Scripts/build_web_assets.py). 'placeholder: true' entries were seeded from the design-spec example and predate the model bundle.",
   "clips": [
+    {
+      "id": "417",
+      "title": "Iron — tour-shaped tempo",
+      "view": "face-on",
+      "club": "iron"
+    },
+    {
+      "id": "886",
+      "title": "Driver — power with a story",
+      "view": "face-on",
+      "club": "driver"
+    },
     {
       "id": "830",
       "title": "Sample swing A",
@@ -24,9 +36,18 @@
       "_render_note": "Presence of 'render' lights up the '3D Swing View' tab. Headless-Blender stills (Scripts/blender_mocap.py, unisex). SOURCE: currently the MotionBERT-full lift of clip 0, NOT golfpose3d/MixSTE — regenerate via the MixSTE path once the model bundle lands and overwrite assets/0/blender/*.png in place (same filenames = no manifest change).",
       "render": {
         "phases": [
-          { "label": "Takeaway", "src": "golfer_0_preview_f020.png" },
-          { "label": "Mid-swing", "src": "golfer_0_preview_f069.png" },
-          { "label": "Follow-through", "src": "golfer_0_preview_f117.png" }
+          {
+            "label": "Takeaway",
+            "src": "golfer_0_preview_f020.png"
+          },
+          {
+            "label": "Mid-swing",
+            "src": "golfer_0_preview_f069.png"
+          },
+          {
+            "label": "Follow-through",
+            "src": "golfer_0_preview_f117.png"
+          }
         ]
       }
     }
