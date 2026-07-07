@@ -612,6 +612,25 @@ def _norm(text: str) -> str:
         "’": "'", "‘": "'", "“": '"', "”": '"', "–": "-", "—": "-"}))
 
 
+# In "38-68" (an en/em-dash range after _norm, or a plain hyphen range) the "-"
+# is a separator, not a minus sign — only read it as a sign when it does NOT
+# directly follow a digit or decimal point.
+_NUM_TOKEN = re.compile(r"(?<![\d.])-?\d+(?:\.\d+)?")
+
+
+def _is_measurementish(tok: str) -> bool:
+    """Number tokens the verifier holds to grounding (see _SMALL_INT_CUTOFF)."""
+    return ("." in tok) or abs(float(tok)) >= _SMALL_INT_CUTOFF
+
+
+def _display_match(tok: str, target: float) -> bool:
+    """True if `tok` restates `target` at the token's own displayed precision —
+    "21" for 21.25, "38" for 37.5, "68" for 68.1. Floor of 0.05 keeps the old
+    flat tolerance for decimal tokens."""
+    decimals = len(tok.split(".", 1)[1]) if "." in tok else 0
+    return abs(float(tok) - target) <= max(0.05, 0.5 * 10.0 ** -decimals) + 1e-9
+
+
 def verify_chat_grounding(ctx: SwingContext, result: TurnResult) -> dict:
     """Check the final answer against the tool log:
       - low_confidence_leak : answer states a low-confidence metric's value or judges its range
@@ -637,31 +656,37 @@ def verify_chat_grounding(ctx: SwingContext, result: TurnResult) -> dict:
                 for vf in ("value", "current_value", "earlier_value"):
                     if isinstance(r.get(vf), (int, float)):
                         lowconf_values[key] = round(float(r[vf]), 2)
-                continue  # a low-confidence number is NEVER allowed → keep it out of grounded_nums
+                # the tour band/median are KB constants, citable even in a refusal
+                for n in _numbers_in([r.get("pro_band"), r.get("tour_median")]):
+                    grounded_nums.add(round(n, 2))
+                continue  # the low-confidence MEASUREMENT is never allowed → keep it out of grounded_nums
             if r.get("measured") or r.get("comparable"):
                 fetched_ok.add(key)
         for n in _numbers_in(r):  # reliable indicators + summary/flagged/list tool numbers
             grounded_nums.add(round(n, 2))
 
-    answer_nums = [float(t) for t in re.findall(r"-?\d+(?:\.\d+)?", answer)]
+    answer_tokens = _NUM_TOKEN.findall(answer)
 
-    # leak = the low-conf VALUE is stated, or a range judgment is made about it while NOT refusing
+    # leak = the low-conf VALUE is stated (exactly, or display-rounded for a
+    # measurement-looking token), or a range judgment is made while NOT refusing
     for key in fetched_lowconf:
         val = lowconf_values.get(key)
-        leaked_value = val is not None and any(abs(val - n) <= 0.05 for n in answer_nums)
+        leaked_value = val is not None and any(
+            abs(val - float(t)) <= 0.05 or (_is_measurementish(t) and _display_match(t, val))
+            for t in answer_tokens)
         label = ctx.kb.get("indicators", {}).get(key, {}).get("label", "").lower()
         judged = (not is_refusal) and bool(label) and label in answer_l and \
             any(w in answer_l for w in _RANGE_WORDS)
         if leaked_value or judged:
             violations.append({"type": "low_confidence_leak", "key": key})
 
-    # every "measurement-looking" number in the answer must trace to a reliable tool result
-    for tok in re.findall(r"-?\d+(?:\.\d+)?", answer):
-        val = float(tok)
-        if not (("." in tok) or abs(val) >= _SMALL_INT_CUTOFF):
+    # every "measurement-looking" number in the answer must trace to a reliable
+    # tool result — allowing display rounding ("21 degrees" for a fetched 21.25)
+    for tok in answer_tokens:
+        if not _is_measurementish(tok):
             continue
-        if not any(abs(val - g) <= 0.05 for g in grounded_nums):
-            violations.append({"type": "ungrounded_number", "value": val})
+        if not any(_display_match(tok, g) for g in grounded_nums):
+            violations.append({"type": "ungrounded_number", "value": float(tok)})
 
     # range words present but no reliable get_indicator/compare call → ungrounded
     if any(p in answer_l for p in _RANGE_WORDS) and not fetched_ok:

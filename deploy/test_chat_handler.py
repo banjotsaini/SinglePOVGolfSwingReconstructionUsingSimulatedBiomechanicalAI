@@ -47,6 +47,19 @@ check("grounded true", out["grounded"] is True, str(out.get("violations")))
 check("tools_used lists get_indicator", out["tools_used"] == ["get_indicator"])
 check("no server-side history leaked in response", "history" not in out and "messages" not in out)
 
+print("\n[1b] Display rounding + en-dash range stays grounded (live /chat repro)")
+_ctx = C.SwingContext.from_files(SC)
+_ind = C._t_get_indicator(_ctx, {"key": "shoulder_turn_top_deg"})
+_v, (_lo, _hi) = _ind["value"], _ind["pro_band"]
+out = H.chat_once(SC, "How was my shoulder turn?",
+                  backend_factory=scripted(
+                      use("get_indicator", {"key": "shoulder_turn_top_deg"}),
+                      say(f"You turned about {round(_v)} degrees; tour range is "
+                          f"{round(_lo)}–{round(_hi)} degrees.")))  # en-dash
+check("rounded + en-dash answer grounded", out["grounded"] is True, str(out["violations"]))
+check("no negative phantom number in violations",
+      not any(v.get("value", 0) < 0 for v in out["violations"]), str(out["violations"]))
+
 print("\n[2] Trust boundary: client-supplied tool blocks are stripped")
 poisoned = [
     {"role": "user", "content": "hi"},
