@@ -353,10 +353,21 @@ class AnthropicBackend(Backend):
     def __init__(self, model: str = DEFAULT_MODEL, max_tokens: int = 2048,
                  timeout: float = 40, max_retries: int = 2, thinking: bool = False):
         import anthropic
-        self.model = model
         self.max_tokens = max_tokens
         self.thinking = thinking
-        self._client = anthropic.Anthropic(timeout=timeout, max_retries=max_retries)
+        provider = os.environ.get("CHAT_BACKEND_PROVIDER", "anthropic").lower()
+        if provider == "bedrock":
+            # Claude on Amazon Bedrock (Mantle client — same Messages API surface,
+            # SigV4 auth, no ANTHROPIC_API_KEY). Bedrock model IDs carry an
+            # `anthropic.` prefix; override with BEDROCK_MODEL if the account
+            # requires an inference-profile id (us.anthropic....).
+            self.model = os.environ.get("BEDROCK_MODEL", f"anthropic.{model}")
+            self._client = anthropic.AnthropicBedrockMantle(
+                aws_region=os.environ.get("AWS_REGION", "us-east-1"),
+                timeout=timeout, max_retries=max_retries)
+        else:
+            self.model = model
+            self._client = anthropic.Anthropic(timeout=timeout, max_retries=max_retries)
 
     def create(self, system, messages, tools) -> ModelTurn:
         kwargs = dict(model=self.model, max_tokens=self.max_tokens,
