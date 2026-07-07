@@ -71,13 +71,15 @@ def _iter_s3_records(event: dict):
                 yield r["s3"]["bucket"]["name"], r["s3"]["object"]["key"]
 
 
-def _run(cmd: list[str], desc: str) -> None:
+def _run(cmd: list[str], desc: str, extra_env: dict | None = None) -> None:
     print(f"[proc] {desc}: {' '.join(cmd)}", flush=True)
     # Lambda: only /tmp is writable — torch/mediapipe/matplotlib all try to write caches
-    env = {**os.environ, "HOME": "/tmp", "MPLCONFIGDIR": "/tmp/mpl", "XDG_CACHE_HOME": "/tmp/xdg"}
+    env = {**os.environ, "HOME": "/tmp", "MPLCONFIGDIR": "/tmp/mpl", "XDG_CACHE_HOME": "/tmp/xdg",
+           **(extra_env or {})}
     res = subprocess.run(cmd, cwd=str(SCRIPTS), capture_output=True, text=True, env=env)
     if res.returncode != 0:
-        raise RuntimeError(f"{desc} failed (rc={res.returncode}): {res.stderr[-800:]}")
+        raise RuntimeError(f"{desc} failed (rc={res.returncode}): "
+                           f"stderr={res.stderr[-1200:]} stdout={res.stdout[-400:]}")
 
 
 def _pipeline(video: Path, work: Path) -> dict:
@@ -87,7 +89,9 @@ def _pipeline(video: Path, work: Path) -> dict:
     _run([PY, str(SCRIPTS / "pipeline.py"), str(video),
           "--backbone", BACKBONE, "--lifter", LIFTER,
           "--out-dir", str(work), "--cache-dir", str(cache)],
-         "2D->3D pipeline + overlay + replay")
+         "2D->3D pipeline + overlay + replay",
+         # adapters read the upstream-2D cache through this env override
+         extra_env={"PIPELINE_CACHE_DIR": str(cache)})
     # 3D parquet lands in out-dir or under the lifter's cache subdir — find it robustly
     cands = list(work.glob(f"*{stem}*3d*.parquet")) or list(cache.rglob(f"{stem}.parquet"))
     if not cands:

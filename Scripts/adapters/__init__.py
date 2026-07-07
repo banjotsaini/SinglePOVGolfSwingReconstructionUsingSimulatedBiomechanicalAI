@@ -2,6 +2,27 @@
 canonical COCO-17 landmarks per frame so they can be benchmarked against
 each other in eval_utils.compute_all_metrics()."""
 
+import os as _os
+from pathlib import Path as _Path
+
+
+def _torch_device() -> str:
+    """cuda when available, else cpu — the Lambda container has no GPU."""
+    try:
+        import torch
+        return "cuda" if torch.cuda.is_available() else "cpu"
+    except Exception:
+        return "cpu"
+
+
+def _eval_runs_dir() -> _Path:
+    """Upstream-2D cache root. Overridable because the repo default is
+    read-only inside the Lambda container (PIPELINE_CACHE_DIR points at /tmp)."""
+    return _Path(_os.environ.get(
+        "PIPELINE_CACHE_DIR",
+        str(_Path(__file__).parent.parent.parent / "Data" / "eval_runs")))
+
+
 from .mediapipe_adapter import MediaPipeAdapter
 from .yolo_adapter import YoloPoseAdapter
 from .movenet_adapter import MoveNetAdapter
@@ -28,9 +49,9 @@ def _motionbert(variant: str = "lite", upstream: str = "mediapipe_heavy"):
     from .motionbert_adapter import MotionBERTAdapter
     from pathlib import Path
     return MotionBERTAdapter(
-        upstream_2d_cache_dir=Path(__file__).parent.parent.parent / "Data" / "eval_runs",
+        upstream_2d_cache_dir=_eval_runs_dir(),
         upstream_2d_model=upstream,
-        device="cuda", variant=variant,
+        device=_torch_device(), variant=variant,
     )
 
 def _golfpose(upstream: str = "mediapipe_heavy"):
@@ -40,8 +61,9 @@ def _golfpose(upstream: str = "mediapipe_heavy"):
     ckpt = repo / "Models" / "golfpose" / "golfpose_17plus0.bin"
     return GolfPose3DAdapter(
         ckpt_path=ckpt,
-        upstream_2d_cache_dir=repo / "Data" / "eval_runs",
+        upstream_2d_cache_dir=_eval_runs_dir(),
         upstream_2d_model=upstream,
+        device=_torch_device(),
     )
 
 ADAPTER_REGISTRY = {
