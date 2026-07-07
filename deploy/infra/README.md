@@ -1,9 +1,13 @@
-# MotionCaddie full-app infrastructure
+# MotionCaddie infrastructure
 
 `full_app.yaml` — the net-new tier for real user uploads (async processing + data +
 auth), on top of the serverless demo stack. **cfn-lint clean (0 errors, 0 warnings).**
 Designed around one constraint: **limited AWS credits → nothing idles, everything has a
 ceiling.**
+
+`web_hosting.yaml` — Phase 1 of `deploy/web/DEPLOYMENT_PLAN.md`: hosts the static
+`deploy/web/` front end. See its own section below; it's a separate, independently
+teardownable stack from `full_app.yaml`.
 
 ## GPU decision — you probably don't need one
 
@@ -90,3 +94,58 @@ aws cloudformation delete-stack --stack-name motion-caddie-app
   `pipeline.py` on the uploaded mp4 and writes artifacts + rows via `load_data.py` accessors.
 - The **upload-URL issuer** + a Cognito-authorized HTTP API route (thin; presigned S3 PUT).
 - If GPU: package MixSTE as a SageMaker model artifact + inference container.
+
+---
+
+# Web hosting (`web_hosting.yaml`) — Phase 1
+
+Puts the static `deploy/web/` site (vanilla HTML/CSS/JS, no build step) on a real
+`https://` URL: a **private** S3 bucket (no static-website-hosting mode, no
+public-read) fronted by **CloudFront** via **Origin Access Control (OAC)**. This is
+the **web bucket**, distinct from `full_app.yaml`'s upload/artifact **data buckets** —
+it never receives user video, only site files.
+
+## Resource inventory
+S3 bucket (private, SSE, `PublicAccessBlockConfiguration` fully on) · CloudFront OAC ·
+CloudFront distribution (HTTP/2, gzip/br compression, `PriceClass_100` by default,
+managed `CachingOptimized` policy, 403→`/index.html` fallback for bare-domain /
+trailing-slash requests) · bucket policy scoped to `s3:GetObject` from this exact
+distribution's ARN only.
+
+## Deploy & sync
+
+```bash
+# validate offline (no AWS creds)
+cfn-lint deploy/infra/web_hosting.yaml
+
+aws cloudformation deploy \
+  --template-file deploy/infra/web_hosting.yaml \
+  --stack-name motion-caddie-web
+
+# get the bucket name + public URL
+aws cloudformation describe-stacks --stack-name motion-caddie-web \
+  --query "Stacks[0].Outputs"
+
+# ship the site (re-run after any deploy/web/ change)
+aws s3 sync deploy/web/ s3://<WebBucketName>/ --delete
+
+# CloudFront caches aggressively — bust the cache after a sync
+aws cloudfront create-invalidation --distribution-id <DistributionId> --paths "/*"
+```
+
+## Teardown
+```bash
+aws s3 rm s3://<WebBucketName> --recursive
+aws cloudformation delete-stack --stack-name motion-caddie-web
+```
+
+## Open items (need Lawrence's sign-off per DEPLOYMENT_PLAN.md)
+- Confirm `ProjectName` (default `motion-caddie` → bucket `motion-caddie-web-<acct>`)
+  doesn't collide with anything already in his account.
+- No custom domain / ACM cert wired yet — ships on the default
+  `*.cloudfront.net` domain. Adding a custom domain later is a template addition
+  (`Aliases` + `ViewerCertificate`), not a rebuild.
+- H.264/yuv420p video assets under `deploy/web/assets/` sync and serve as plain
+  objects — no special CloudFront behavior needed, `GET`/`HEAD` + compression is
+  enough (video isn't re-compressed twice; compression only applies where CloudFront
+  detects a compressible content-type).
