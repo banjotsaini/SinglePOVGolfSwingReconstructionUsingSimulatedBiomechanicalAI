@@ -278,5 +278,64 @@ check("an invented number is flagged ungrounded",
       any(v["type"] == "ungrounded_number" for v in g["violations"]), str(g["violations"]))
 
 # =========================================================================== #
+print("\n[12] Display rounding + dash ranges are grounded (live-endpoint repro)")
+# live bug: "21 degrees" for a fetched 21.25 and "38–68" (en-dash) for pro_band
+# [37.5, 68.1] were flagged as violations [21.0, 38.0, -68.0]
+ctx = ctx_single()
+ind = C._t_get_indicator(ctx, {"key": "shoulder_turn_top_deg"})
+val, (lo, hi) = ind["value"], ind["pro_band"]
+backend = C.ScriptedBackend([
+    use("get_indicator", {"key": "shoulder_turn_top_deg"}),
+    say(f"Your shoulder turn was about {round(val)} degrees at the top; "
+        f"the tour range is {round(lo)}–{round(hi)} degrees."),  # en-dash
+])
+g = C.verify_chat_grounding(ctx, C.Conversation(ctx, backend).ask("shoulder turn?"))
+check("rounded value + en-dash tour range is grounded", g["grounded"], str(g["violations"]))
+check("en-dash never parsed as a minus sign",
+      not any(v.get("value", 0) < 0 for v in g["violations"]), str(g["violations"]))
+# em-dash and plain hyphen ranges behave the same
+backend = C.ScriptedBackend([
+    use("get_indicator", {"key": "shoulder_turn_top_deg"}),
+    say(f"Tour range: {round(lo)}—{round(hi)} degrees; you turned {round(val)}."),
+])
+g = C.verify_chat_grounding(ctx, C.Conversation(ctx, backend).ask("shoulder turn?"))
+check("em-dash range is grounded too", g["grounded"], str(g["violations"]))
+# a genuinely negative number is still parsed as negative (sign not after a digit)
+neg_toks = C._NUM_TOKEN.findall("swayed -3.1 inches, range 38-68")
+check("standalone minus kept, range dash split",
+      neg_toks == ["-3.1", "38", "68"], str(neg_toks))
+# display rounding must NOT excuse an invented number
+backend = C.ScriptedBackend([
+    use("get_indicator", {"key": "shoulder_turn_top_deg"}),
+    say(f"Your shoulder turn was {round(val) + 7} degrees at the top."),
+])
+g = C.verify_chat_grounding(ctx, C.Conversation(ctx, backend).ask("shoulder turn?"))
+check("a number ~7 off the fetched value is still flagged",
+      any(v["type"] == "ungrounded_number" for v in g["violations"]), str(g["violations"]))
+
+# =========================================================================== #
+print("\n[13] Low-conf: tour band citable in a refusal; rounded value leak caught")
+ctx = ctx_single()
+lc_ind = C._t_get_indicator(ctx, {"key": LC})
+lc_val, lc_band = lc_ind["value"], lc_ind.get("pro_band")
+if lc_band:
+    backend = C.ScriptedBackend([
+        use("get_indicator", {"key": LC}),
+        say(f"Tour pros are typically {round(lc_band[0])}–{round(lc_band[1])} here, but this "
+            f"measurement isn't reliable enough from a single camera, so I can't assess yours."),
+    ])
+    g = C.verify_chat_grounding(ctx, C.Conversation(ctx, backend).ask("lead arm?"))
+    check("citing the tour band of a low-conf metric in a refusal is grounded",
+          g["grounded"], str(g["violations"]))
+if abs(round(lc_val)) >= 13 and all(abs(round(lc_val) - round(b)) > 1 for b in (lc_band or [])):
+    backend = C.ScriptedBackend([
+        use("get_indicator", {"key": LC}),
+        say(f"It measured about {round(lc_val)} at the top."),
+    ])
+    g = C.verify_chat_grounding(ctx, C.Conversation(ctx, backend).ask("lead arm?"))
+    check("stating the ROUNDED low-conf value is still a leak",
+          any(v["type"] == "low_confidence_leak" for v in g["violations"]), str(g["violations"]))
+
+# =========================================================================== #
 print(f"\n{'='*50}\n  {_PASS} passed, {_FAIL} failed\n{'='*50}")
 sys.exit(1 if _FAIL else 0)
