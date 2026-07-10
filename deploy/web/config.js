@@ -22,5 +22,5 @@
   window.UPLOAD_URL = window.API_BASE + "/upload-url";
 
   // demo clip whitelist the chat backend accepts (ALLOWED_CLIPS on the Lambda)
-  window.DEMO_CLIPS = [0, 2, 4, 6, 8, 10, 1292];
+  window.DEMO_CLIPS = [417, 886, 830, 269, 0];
 })();

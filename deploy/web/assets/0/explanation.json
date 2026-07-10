@@ -1,32 +1,21 @@
 {
-  "clip_id": "0",
-  "placeholder": true,
-  "_note": "PLACEHOLDER copy (not Claude output). Replace with real coaching_explain.py --backend anthropic output.",
-  "headline": "Quiet body, quick clock — tempo and head movement carry the read.",
-  "sections": [
-    {
-      "title": "What lined up well",
-      "tag": "good",
-      "body": "The body positions measure clean: shoulder turn at the top (48.3°), X-factor (18.5°), hip rotation at impact (12.8°), spine tilt at address (25.4°), posture change (4.1°) and lateral weight shift (0.8%) all sit inside the typical tour bands.",
-      "chips": ["shoulder_turn_top_deg", "x_factor_top_deg", "hip_turn_impact_deg", "spine_tilt_address_deg", "posture_loss_deg", "hip_lateral_shift_pct"]
-    },
-    {
-      "title": "The main thing that stood out",
-      "tag": "watch",
-      "body": "Your tempo measured 2.72 : 1 — noticeably quicker than the 3.1–3.7 range most tour swings show. The backswing takes less time relative to the downswing than the reference set.",
-      "chips": ["tempo_ratio"]
-    },
-    {
-      "title": "Also worth a look",
-      "tag": "watch",
-      "body": "Your head moved sideways 44.2% of body scale during the swing, a bit past the typical 20–40% tour band.",
-      "chips": ["head_sway_max_pct"]
-    },
-    {
-      "title": "One we left out",
-      "tag": "low",
-      "body": "Lead-arm extension measured 131.0°, but wrist depth is unreliable from a single camera, so that number is low-confidence and wasn't factored into the read.",
-      "chips": ["left_arm_bend_top_deg"]
-    }
-  ]
+ "clip_id": "0",
+ "headline": "A tour-shaped swing \u2014 the measurements mostly sit inside the pro bands.",
+ "sections": [
+  {
+   "title": "What lined up well",
+   "tag": "good",
+   "body": "Inside the typical tour spread: how open the hips are at impact, how much the upper body leans at setup, how much the upper body leans at impact, how bent the lead knee is at setup, how much the hips slide toward the target, the rhythm of the swing."
+  },
+  {
+   "title": "Worth a look",
+   "tag": "watch",
+   "body": "Your how far the shoulders rotate at the top measured less than most tour swings. Your how far the hips rotate at the top measured less than most tour swings. Your the gap between shoulder turn and hip turn at the top measured less than most tour swings. Your how much the spine angle changes from setup to impact measured less than most tour swings."
+  },
+  {
+   "title": "How to read this",
+   "tag": "info",
+   "body": "Every number here is measured from your video against a 400-swing tour reference \u2014 nothing is estimated by the AI. Ask the coach about any metric for the full story."
+  }
+ ]
 }

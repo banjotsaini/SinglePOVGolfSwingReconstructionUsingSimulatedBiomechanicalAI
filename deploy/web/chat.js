@@ -285,7 +285,10 @@ const Chat = (() => {
     const w = el("div", "chat-turn"); w.append(el("div", "who", "MotionCaddie"));
     const m = el("div", "msg bot" + (res.refuse ? " refuse" : ""), res.answer);
     const g = grade(res); const gd = el("span", "grade" + (g.grounded ? "" : " warn"));
-    gd.textContent = g.grounded ? "Grounded in fetched data" : "Grounding check: " + (g.violations || []).join(", ");
+    const vtxt = (g.violations || []).map(v => typeof v === "string" ? v
+      : v.type + (v.value != null ? ` (${v.value})` : "")).join(", ");
+    gd.textContent = g.grounded ? "Grounded in fetched data"
+      : `Grounding check: ${vtxt || "a claim couldn't be verified against the fetched data"}`;
     m.append(document.createElement("br"), gd); w.append(m); dom.stream.append(w); scroll();
   }
   async function ask(q) {

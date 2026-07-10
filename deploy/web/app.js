@@ -214,7 +214,12 @@ function loadRenderView(clipId, isUpload) {
   const clip = state.clips.find(c => c.id === clipId);
   const render = clip && clip.render;
   if (!render || !Array.isArray(render.phases) || !render.phases.length) return;
-  panel.innerHTML = render.phases.map(p =>
+  // optional avatar animation above the stills (presence-driven, like the phases)
+  const vid = render.video
+    ? `<video class="render-video" src="assets/${clipId}/blender/${render.video}"
+         controls muted loop playsinline preload="metadata"></video>`
+    : "";
+  panel.innerHTML = vid + render.phases.map(p =>
     `<figure class="render-phase">
        <img src="assets/${clipId}/blender/${p.src}" alt="${p.label} — rendered 3D pose" loading="lazy">
        <figcaption>${p.label}</figcaption>

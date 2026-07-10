@@ -242,6 +242,7 @@ li.done .check::after {
 
 /* ========================= 3D Swing View (Blender render) ===================== */
 .render-phases { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.render-video { grid-column: 1 / -1; width: 100%; border-radius: 10px; display: block; background: #2b2f36; }
 .render-phase { margin: 0; }
 .render-phase img { width: 100%; border-radius: 10px; display: block; background: #2b2f36; }
 .render-phase figcaption { margin-top: 6px; font-size: 12px; font-weight: 600; color: var(--muted);
