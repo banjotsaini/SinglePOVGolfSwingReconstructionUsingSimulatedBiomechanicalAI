@@ -23,4 +23,12 @@
 
   // demo clip whitelist the chat backend accepts (ALLOWED_CLIPS on the Lambda)
   window.DEMO_CLIPS = [417, 886, 830, 269, 0];
+
+  // Where processed upload results are served from (the pipeline writes
+  // 03_outputs/<job_id>/{metrics,explanation,replay_3d}.json + videos in the
+  // same shape as assets/<clip>/). Leave "" until that prefix is exposed
+  // read-only (CloudFront behavior or presigned GETs) — uploads then land in
+  // S3 and the pipeline runs, but the UI falls back to the illustrative
+  // result with the honest banner instead of polling.
+  window.RESULTS_BASE = "";
 })();

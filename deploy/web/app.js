@@ -13,14 +13,36 @@
  * returning the same shape: { metrics, explanation, replay, overlayUrl, rawUrl }.
  * Nothing else in this file needs to change.
  * ========================================================================= */
-async function loadClipBundle(clipId) {
-  const base = `assets/${clipId}`;
+async function loadClipBundle(clipId, jobBase = null) {
+  // jobBase: absolute prefix for a processed upload (`${RESULTS_BASE}/<job_id>`);
+  // the pipeline writes the same four files + videos as the baked demo assets.
+  const base = jobBase || `assets/${clipId}`;
   const [metrics, explanation, replay] = await Promise.all([
     fetch(`${base}/metrics.json`).then(r => r.json()),
     fetch(`${base}/explanation.json`).then(r => r.json()),
     fetch(`${base}/replay_3d.json`).then(r => r.json()),
   ]);
   return { metrics, explanation, replay, overlayUrl: `${base}/overlay.mp4`, rawUrl: `${base}/raw.mp4` };
+}
+
+/* ================= swing library (persistent, this browser) =============== */
+const LIB_KEY = "mc_library_v1";
+
+function libLoad() {
+  try { return JSON.parse(localStorage.getItem(LIB_KEY)) || []; }
+  catch (e) { return []; }
+}
+function libSave(items) { localStorage.setItem(LIB_KEY, JSON.stringify(items)); }
+function libAdd(entry) {
+  const items = libLoad().filter(i => i.jobId !== entry.jobId);
+  items.unshift(entry);                       // newest first
+  libSave(items.slice(0, 50));
+  renderLibrary();
+}
+function libSetStatus(jobId, status) {
+  const items = libLoad();
+  const it = items.find(i => i.jobId === jobId);
+  if (it) { it.status = status; libSave(items); renderLibrary(); }
 }
 
 async function loadManifest() {
@@ -42,6 +64,15 @@ const state = {
 };
 
 const $ = (sel) => document.querySelector(sel);
+
+/* HTML-escape anything interpolated into innerHTML — upload file names are
+ * user-controlled, and job JSON becomes cloud-controlled once RESULTS_BASE
+ * serves pipeline output. */
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g,
+  c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+/* monotonic navigation token: ignore stale async loads after quick switches */
+let navSeq = 0;
 
 /* Replace an element with a fresh clone (keeps id/attrs). Used for the replay
  * canvas so a new viewer never inherits a stale WebGL/2D drawing context. */
@@ -77,9 +108,9 @@ function renderGallery() {
     card.className = "clip-card";
     card.dataset.id = clip.id;
     card.innerHTML = `
-      <video src="assets/${clip.id}/raw.mp4" preload="metadata" muted playsinline></video>
-      <div class="clip-title">${clip.title}</div>
-      <div class="clip-meta">${clip.view} · ${clip.club}</div>
+      <video src="assets/${esc(clip.id)}/raw.mp4" preload="metadata" muted playsinline></video>
+      <div class="clip-title">${esc(clip.title)}</div>
+      <div class="clip-meta">${esc(clip.view)} · ${esc(clip.club)}</div>
       <div class="clip-cta">Open result</div>`;
     card.addEventListener("click", () => startDemo(clip.id));
     gal.appendChild(card);
@@ -91,34 +122,122 @@ function startDemo(id) {
   state.mode = "demo";
   state.selectedId = id;
   state.upload = null;
+  setHash(id);
   runAnalyze();
 }
 
-/* ---- prototype upload: pick a local file, then run the SAME loader ---- */
+/* quick-switch (recent rail / deep link): skip the analyze animation */
+async function openSwing(id) {
+  const seq = ++navSeq;
+  state.mode = "demo";
+  state.selectedId = id;
+  state.upload = null;
+  setHash(id);
+  try {
+    const bundle = await loadClipBundle(id);
+    if (seq !== navSeq) return;          // user navigated on while we loaded
+    state.bundle = bundle;
+    renderResults();
+    goto("results");
+  } catch (e) {
+    if (seq === navSeq) goto("pick");
+  }
+}
+
+/* ---- deep links: #swing=<id> opens a result directly ---- */
+let suppressHash = false;
+function setHash(id) {
+  suppressHash = true;
+  location.hash = id != null ? `swing=${id}` : "";
+  setTimeout(() => { suppressHash = false; }, 0);
+}
+function onHashChange() {
+  if (suppressHash) return;
+  const m = location.hash.match(/^#swing=([\w-]+)$/);
+  if (m && state.clips.some(c => c.id === m[1])) openSwing(m[1]);
+  else if (!location.hash) goto("pick");
+}
+
+/* ---- upload: real presigned S3 upload + queued cloud analysis ---- */
 function onFileChosen(file) {
   if (!file) return;
+  if (file.size > 200 * 1024 * 1024) {
+    alert("That video is over the 200 MB upload cap — try a shorter clip.");
+    return;
+  }
   if (state.upload && state.upload.url) URL.revokeObjectURL(state.upload.url);
-  state.upload = { name: file.name, url: URL.createObjectURL(file) };
+  state.upload = { name: file.name, url: URL.createObjectURL(file), file };
+  const live = !!window.UPLOAD_URL;
   const box = $("#upload-status");
   box.hidden = false;
   box.innerHTML = `
     <div class="upload-file">
-      <span class="upload-file-name" title="${file.name}">${file.name}</span>
-      <span class="upload-badge">Prototype — no real analysis</span>
+      <span class="upload-file-name" title="${esc(file.name)}">${esc(file.name)}</span>
+      <span class="upload-badge">${live ? "Ready to upload" : "Prototype — no real analysis"}</span>
     </div>
     <button id="btn-analyze-upload" class="btn-primary" type="button">Analyze swing</button>`;
   $("#btn-analyze-upload").addEventListener("click", startUpload);
 }
 
-function startUpload() {
-  if (!state.upload) return;
+async function startUpload() {
+  const upload = state.upload;     // snapshot: state.upload can change mid-await
+  if (!upload) return;
   state.mode = "upload";
-  state.selectedId = SAMPLE_ID;   // illustrative results bundle; overlay uses the real file
-  if (!state.uploads.some(u => u.name === state.upload.name)) {
-    state.uploads.push({ name: state.upload.name });
+  state.selectedId = SAMPLE_ID;   // illustrative results while upload processing rolls out
+  setHash(null);
+  if (!state.uploads.some(u => u.name === upload.name)) {
+    state.uploads.push({ name: upload.name });
     renderDashboard();
   }
-  runAnalyze();
+  runAnalyze();                    // animation + illustrative bundle load in parallel
+
+  if (!window.UPLOAD_URL) return;  // offline preview: nothing to upload to
+  try {
+    // 1 · ask for a presigned slot
+    const pr = await fetch(window.UPLOAD_URL, {
+      method: "POST", headers: { "content-type": "application/json" },
+      body: JSON.stringify({ filename: upload.name,
+                             content_type: upload.file.type || "video/mp4" }),
+    });
+    if (!pr.ok) throw new Error("presign http " + pr.status);
+    const slot = await pr.json();
+    // 2 · browser -> S3, direct
+    const form = new FormData();
+    for (const [k, v] of Object.entries(slot.fields)) form.append(k, v);
+    form.append("file", upload.file);
+    const up = await fetch(slot.url, { method: "POST", body: form });
+    if (!up.ok) throw new Error("s3 http " + up.status);
+    // 3 · remember the job in the library; the cloud pipeline runs async
+    libAdd({ jobId: slot.job_id, name: upload.name,
+             date: new Date().toISOString(), status: "processing" });
+    if (window.RESULTS_BASE) pollJob(slot.job_id);
+  } catch (e) {
+    console.warn("upload failed:", e);
+    libAdd({ jobId: "local-" + Date.now(), name: upload.name,
+             date: new Date().toISOString(), status: "upload failed" });
+  }
+}
+
+/* poll a processed upload until its results land (only when RESULTS_BASE set).
+ * "ready" requires ALL three result JSONs — metrics alone can land first. */
+async function pollJob(jobId, tries = 40, delayMs = 15000) {
+  const files = ["metrics.json", "explanation.json", "replay_3d.json"];
+  for (let i = 0; i < tries; i++) {
+    try {
+      const oks = await Promise.all([
+        ...files.map(f =>
+          fetch(`${window.RESULTS_BASE}/${jobId}/${f}`, { cache: "no-store" })
+            .then(r => r.ok).catch(() => false)),
+        // HEAD the video so "Ready" never opens onto a broken player
+        fetch(`${window.RESULTS_BASE}/${jobId}/overlay.mp4`,
+              { method: "HEAD", cache: "no-store" })
+          .then(r => r.ok).catch(() => false),
+      ]);
+      if (oks.every(Boolean)) { libSetStatus(jobId, "ready"); return; }
+    } catch (e) { /* keep polling */ }
+    await new Promise(res => setTimeout(res, delayMs));
+  }
+  libSetStatus(jobId, "processing (check back)");
 }
 
 /* ========================== 2 · analyze screen ========================== */
@@ -126,6 +245,7 @@ const STEP_MS = 430;  // pre-rendered demo: tick quickly, then reveal results
 
 function runAnalyze() {
   // kick off the data load in parallel with the animation
+  const seq = ++navSeq;
   state.bundlePromise = loadClipBundle(state.selectedId);
   goto("analyze");
 
@@ -141,9 +261,11 @@ function runAnalyze() {
       setTimeout(tick, STEP_MS);
     } else {
       state.bundlePromise.then(bundle => {
+        if (seq !== navSeq) return;          // superseded by a newer navigation
         state.bundle = bundle;
-        setTimeout(() => { renderResults(); goto("results"); }, 350);
+        setTimeout(() => { if (seq === navSeq) { renderResults(); goto("results"); } }, 350);
       }).catch(err => {
+        if (seq !== navSeq) return;
         alert(`Could not load results for clip ${state.selectedId}: ${err}`);
         goto("pick");
       });
@@ -161,12 +283,16 @@ function renderResults() {
   const { metrics, explanation, overlayUrl, replay } = state.bundle;
   const clip = state.clips.find(c => c.id === state.selectedId);
   const isUpload = state.mode === "upload";
+  const isJob = !isUpload && !clip;            // a processed upload from the library
 
   // honesty banner + labelling for prototype uploads
   $("#results-banner").hidden = !isUpload;
   if (isUpload) {
     $("#results-clip-label").textContent = `Your upload · ${state.upload.name}`;
     $("#results-headline").textContent = "Illustrative result (prototype)";
+  } else if (isJob) {
+    $("#results-clip-label").textContent = "Your swing · analyzed by the real pipeline";
+    $("#results-headline").textContent = explanation.headline;
   } else {
     $("#results-clip-label").textContent = `${clip.title} · ${clip.view} · ${clip.club}`;
     $("#results-headline").textContent = explanation.headline;
@@ -174,12 +300,32 @@ function renderResults() {
 
   renderPlain(explanation);
   renderNumbers(metrics.metrics);
-  Chat.activate(state.selectedId);
+  populateNumbersCompare();
+  // chat's grounded backend only knows the curated demo clips today
+  $("#tab-chat").hidden = isJob;
+  if (!isJob) Chat.activate(state.selectedId);
+
+  // share link + scorecard download (demo clips only — uploads have no baked card,
+  // and the hash router only resolves curated clip ids)
+  $("#btn-share").hidden = isUpload || isJob;
+  $("#btn-share").onclick = async () => {
+    const url = `${location.origin}${location.pathname}#swing=${state.selectedId}`;
+    try { await navigator.clipboard.writeText(url); $("#btn-share").textContent = "Link copied ✓"; }
+    catch (e) { prompt("Copy this link:", url); }
+    setTimeout(() => { $("#btn-share").textContent = "Share link"; }, 1800);
+  };
+  const dl = $("#btn-scorecard");
+  dl.hidden = isUpload || isJob;
+  if (!isUpload && !isJob) {
+    dl.href = `assets/${state.selectedId}/scorecard.png`;
+    dl.setAttribute("download", `motioncaddie_swing_${state.selectedId}_scorecard.png`);
+  }
 
   const vid = $("#overlay-video");
   // upload mode plays back the user's ACTUAL file (truthful — their raw clip, no overlay claimed)
   vid.src = isUpload ? state.upload.url : overlayUrl;
   vid.load();
+  renderEventMarkers(vid, metrics, replay, isUpload);
 
   if (state.viewer) state.viewer.destroy();
   // fresh canvas each time so a WebGL/2D context is never reused across viewers
@@ -190,8 +336,76 @@ function renderResults() {
     ? new Cap(canvas, replay, ui3d)
     : new Replay3D(canvas, replay, ui3d);
 
+  wireReplaySync(vid, replay);
+  renderRecentRail();
   loadRenderView(state.selectedId, isUpload);
   showTab("plain");
+}
+
+/* ---- detected-event markers under the overlay video (click to seek) ---- */
+const EVENT_LABELS = {
+  address: "Address", toe_up: "Toe-up", mid_backswing: "Mid-backswing", top: "Top",
+  mid_downswing: "Mid-downswing", impact: "Impact",
+  mid_follow_through: "Follow-through", finish: "Finish",
+};
+function renderEventMarkers(vid, metrics, replay, isUpload) {
+  const bar = $("#event-markers");
+  const events = metrics.events || {};
+  const total = replay && replay.frames ? replay.frames.length : 0;
+  const fps = (replay && replay.fps) || 30;
+  const keys = Object.keys(events);
+  // uploads play the raw local file — the demo clip's frame numbers don't apply
+  if (isUpload || !keys.length || !total) { bar.hidden = true; bar.innerHTML = ""; return; }
+  bar.hidden = false;
+  bar.innerHTML = keys.map(k => {
+    const frame = Number(events[k]);
+    if (!Number.isFinite(frame)) return "";
+    const name = esc(EVENT_LABELS[k] || k);
+    const pct = Math.min(100, Math.max(0, (frame / total) * 100));
+    return `<button type="button" class="ev-tick" style="left:${pct}%"
+              data-t="${(frame / fps).toFixed(3)}" title="${name} · frame ${frame}">
+              <span class="ev-label">${name}</span></button>`;
+  }).join("") + `<div class="ev-track"></div>`;
+  bar.querySelectorAll(".ev-tick").forEach(b =>
+    b.addEventListener("click", () => { vid.currentTime = +b.dataset.t; vid.pause(); }));
+}
+
+/* ---- "Lock to video": one timeline drives the video AND the 3D replay ---- */
+function wireReplaySync(vid, replay) {
+  const box = $("#replay-sync");
+  box.checked = false;
+  const fps = (replay && replay.fps) || 30;
+  const total = replay && replay.frames ? replay.frames.length : 0;
+  const onTime = () => {
+    if (!box.checked || !state.viewer || !total) return;
+    state.viewer.playing = false;
+    const f = Math.min(total - 1, Math.round(vid.currentTime * fps));
+    state.viewer.frame = f;
+    if (state.viewer.ui && state.viewer.ui.scrub) state.viewer.ui.scrub.value = f;
+    if (typeof state.viewer.draw === "function") state.viewer.draw();
+    else if (typeof state.viewer._pose === "function") state.viewer._pose(f);
+  };
+  vid.removeEventListener("timeupdate", vid._mcSync || (() => {}));
+  vid._mcSync = onTime;
+  vid.addEventListener("timeupdate", onTime);
+  box.onchange = () => { if (box.checked) { onTime(); } else if (state.viewer) state.viewer.playing = true; };
+}
+
+/* ---- recent-swings rail: hop between swings without leaving results ---- */
+function renderRecentRail() {
+  const rail = $("#recent-rail"), cards = $("#rail-cards");
+  const others = state.clips.filter(c => c.id !== state.selectedId);
+  if (state.mode === "upload" || !others.length) { rail.hidden = true; return; }
+  rail.hidden = false;
+  cards.innerHTML = "";
+  for (const c of others) {
+    const b = document.createElement("button");
+    b.type = "button"; b.className = "rail-card";
+    b.innerHTML = `<video src="assets/${esc(c.id)}/raw.mp4" preload="metadata" muted playsinline></video>
+                   <span>${esc(c.title)}</span>`;
+    b.addEventListener("click", () => openSwing(c.id));
+    cards.appendChild(b);
+  }
 }
 
 /* ---- optional "3D Swing View": precomputed headless-Blender render stills ----
@@ -216,13 +430,13 @@ function loadRenderView(clipId, isUpload) {
   if (!render || !Array.isArray(render.phases) || !render.phases.length) return;
   // optional avatar animation above the stills (presence-driven, like the phases)
   const vid = render.video
-    ? `<video class="render-video" src="assets/${clipId}/blender/${render.video}"
+    ? `<video class="render-video" src="assets/${esc(clipId)}/blender/${esc(render.video)}"
          controls muted loop playsinline preload="metadata"></video>`
     : "";
   panel.innerHTML = vid + render.phases.map(p =>
     `<figure class="render-phase">
-       <img src="assets/${clipId}/blender/${p.src}" alt="${p.label} — rendered 3D pose" loading="lazy">
-       <figcaption>${p.label}</figcaption>
+       <img src="assets/${esc(clipId)}/blender/${esc(p.src)}" alt="${esc(p.label)} — rendered 3D pose" loading="lazy">
+       <figcaption>${esc(p.label)}</figcaption>
      </figure>`).join("");
   tab.hidden = false;
 }
@@ -234,46 +448,72 @@ function renderPlain(explanation) {
     const tagLabel = { good: "Good", watch: "Watch", low: "Low confidence" }[sec.tag] || sec.tag;
     const chips = (sec.chips || []).map(key => {
       const m = metricByKey(key);
-      return m ? `<span class="chip">${m.label} · <b>${m.you_display}</b></span>` : "";
+      return m ? `<span class="chip">${esc(m.label)} · <b>${esc(m.you_display)}</b></span>` : "";
     }).join("");
     const div = document.createElement("div");
     div.className = "eval-section";
     div.innerHTML = `
       <div class="eval-tagrow">
-        <span class="eval-tag ${sec.tag}">${tagLabel}</span>
-        <h3>${sec.title}</h3>
+        <span class="eval-tag ${esc(sec.tag)}">${esc(tagLabel)}</span>
+        <h3>${esc(sec.title)}</h3>
       </div>
-      <p>${sec.body}</p>
+      <p>${esc(sec.body)}</p>
       <div class="chips">${chips}</div>`;
     el.appendChild(div);
   }
 }
 
-function renderNumbers(metrics) {
+function renderNumbers(metrics, cmp = null) {
   const el = $("#metrics-table");
   el.innerHTML = "";
+  const cmpBy = {};
+  if (cmp) for (const m of cmp.metrics) cmpBy[m.key] = m;
   for (const m of metrics) {
-    const [lo, hi] = m.axis;
+    const other = cmpBy[m.key];
+    // widen the axis so a compared value can never fall off the chart
+    const lo = other ? Math.min(m.axis[0], other.you) : m.axis[0];
+    const hi = other ? Math.max(m.axis[1], other.you) : m.axis[1];
     const pct = v => Math.min(100, Math.max(0, (v - lo) / (hi - lo) * 100));
     const row = document.createElement("div");
     row.className = "metric-row";
     row.innerHTML = `
       <div class="metric-name">
-        <i class="dot dot-${m.status}"></i><strong>${m.label}</strong>
+        <i class="dot dot-${esc(m.status)}"></i>
+        <button type="button" class="metric-label" title="What is this?"><strong>${esc(m.label)}</strong></button>
       </div>
       <div class="axis">
         <div class="axis-track"></div>
         <div class="axis-band" style="left:${pct(m.band[0])}%; width:${pct(m.band[1]) - pct(m.band[0])}%"></div>
-        <div class="axis-tour" style="left:${pct(m.tour)}%" title="tour median ${m.tour_display}"></div>
-        <div class="axis-you ${m.status}" style="left:${pct(m.you)}%" title="you: ${m.you_display}"></div>
+        <div class="axis-tour" style="left:${pct(m.tour)}%" title="tour median ${esc(m.tour_display)}"></div>
+        ${other ? `<div class="axis-cmp" style="left:${pct(other.you)}%" title="compared swing: ${esc(other.you_display)}"></div>` : ""}
+        <div class="axis-you ${esc(m.status)}" style="left:${pct(m.you)}%" title="you: ${esc(m.you_display)}"></div>
       </div>
       <div class="metric-vals">
-        <div class="you-val">${m.you_display}</div>
-        <div class="tour-val">tour ${m.tour_display}</div>
+        <div class="you-val">${esc(m.you_display)}</div>
+        <div class="tour-val">${other ? `vs ${esc(other.you_display)}` : `tour ${esc(m.tour_display)}`}</div>
       </div>
-      <p class="metric-blurb">${m.blurb}</p>`;
+      <p class="metric-blurb">${esc(m.blurb)}</p>
+      ${m.why ? `<p class="metric-why" hidden>${esc(m.why)}</p>` : ""}`;
+    const why = row.querySelector(".metric-why");
+    if (why) row.querySelector(".metric-label").addEventListener("click",
+      () => { why.hidden = !why.hidden; });
     el.appendChild(row);
   }
+}
+
+/* compare selector on the numbers tab — line this swing up against another */
+function populateNumbersCompare() {
+  const sel = $("#numbers-compare");
+  sel.innerHTML = `<option value="">— none —</option>` +
+    state.clips.filter(c => c.id !== state.selectedId)
+      .map(c => `<option value="${esc(c.id)}">${esc(c.title)}</option>`).join("");
+  sel.onchange = async () => {
+    if (!sel.value) { renderNumbers(state.bundle.metrics.metrics); return; }
+    try {
+      const cmp = await fetch(`assets/${sel.value}/metrics.json`).then(r => r.json());
+      renderNumbers(state.bundle.metrics.metrics, cmp);
+    } catch (e) { renderNumbers(state.bundle.metrics.metrics); }
+  };
 }
 
 function showTab(which) {
@@ -460,15 +700,22 @@ async function init() {
     chips: [...document.querySelectorAll("#view-chat .chip-btn")],
   });
 
-  // upload (prototype): primary CTA opens the file picker
+  // upload: file picker or straight-to-camera on phones
   $("#btn-upload").addEventListener("click", () => $("#file-input").click());
+  $("#btn-record").addEventListener("click", () => $("#camera-input").click());
   $("#file-input").addEventListener("change", (e) => onFileChosen(e.target.files[0]));
+  $("#camera-input").addEventListener("change", (e) => onFileChosen(e.target.files[0]));
 
   $("#btn-restart").addEventListener("click", () => {
     if (state.viewer) { state.viewer.destroy(); state.viewer = null; }
     $("#overlay-video").pause();
+    setHash(null);
     goto("pick");
   });
+
+  // deep links + persistent library
+  window.addEventListener("hashchange", onHashChange);
+  renderLibrary();
   $("#tab-plain").addEventListener("click", () => showTab("plain"));
   $("#tab-numbers").addEventListener("click", () => showTab("numbers"));
   $("#tab-chat").addEventListener("click", () => showTab("chat"));
@@ -479,7 +726,57 @@ async function init() {
   document.addEventListener("mc-auth-change", renderDashboard);
   renderDashboard();
 
-  goto("pick");
+  // resume any still-processing jobs from a previous visit
+  if (window.RESULTS_BASE) {
+    for (const it of libLoad()) {
+      if (it.status && it.status.startsWith("processing")) pollJob(it.jobId, 8, 15000);
+    }
+  }
+
+  onHashChange();               // honor a #swing=<id> deep link on first load
+  if (!location.hash) goto("pick");
+}
+
+/* ---- persistent "Your swings" library (localStorage; Aurora later) ---- */
+function renderLibrary() {
+  const box = $("#library"), wrap = $("#library-cards");
+  if (!box) return;
+  const items = libLoad();
+  box.hidden = !items.length;
+  if (!items.length) return;
+  wrap.innerHTML = items.map(it => {
+    const date = new Date(it.date).toLocaleDateString();
+    const ready = it.status === "ready";
+    const badge = ready ? `<span class="upload-badge ok">Ready</span>`
+      : it.status === "upload failed" ? `<span class="upload-badge err">Upload failed</span>`
+      : `<span class="upload-badge">Processing<span class="pulse">…</span></span>`;
+    return `<div class="dash-swing" data-job="${esc(it.jobId)}" data-ready="${ready}">
+      <span class="dash-swing-name" title="${esc(it.name)}">${esc(it.name)}</span>
+      <span class="muted small">${esc(date)}</span>${badge}
+      ${ready ? `<button type="button" class="btn-ghost small lib-open">Open result</button>` : ""}
+    </div>`;
+  }).join("");
+  wrap.querySelectorAll(".lib-open").forEach(b =>
+    b.addEventListener("click", () => openJob(b.closest(".dash-swing").dataset.job)));
+}
+
+/* open a processed upload's results from RESULTS_BASE (same shape as demo clips) */
+async function openJob(jobId) {
+  if (!window.RESULTS_BASE) return;
+  const seq = ++navSeq;
+  try {
+    state.mode = "demo";                       // real results — no prototype banner
+    state.selectedId = jobId;
+    state.upload = null;
+    setHash(null);                             // job ids aren't hash-routable (yet)
+    const bundle = await loadClipBundle(jobId, `${window.RESULTS_BASE}/${jobId}`);
+    if (seq !== navSeq) return;
+    state.bundle = bundle;
+    renderResults();
+    goto("results");
+  } catch (e) {
+    if (seq === navSeq) alert("This swing's results aren't ready yet — check back in a minute.");
+  }
 }
 
 /* ---- signed-in "My swings" dashboard (prototype) ---- */
@@ -497,7 +794,7 @@ function renderDashboard() {
     return;
   }
   wrap.innerHTML = state.uploads.map(u =>
-    `<div class="dash-swing"><span class="dash-swing-name" title="${u.name}">${u.name}</span>` +
+    `<div class="dash-swing"><span class="dash-swing-name" title="${esc(u.name)}">${esc(u.name)}</span>` +
     `<span class="upload-badge">Prototype</span></div>`).join("");
 }
 

@@ -3,7 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0c5c3a">
 <title>MotionCaddie — see your golf swing in 3D</title>
+<link rel="manifest" href="manifest.json">
 <link rel="stylesheet" href="styles.css">
 <script type="importmap">{ "imports": { "three": "./vendor/three.module.js" } }</script>
 </head>
@@ -34,12 +36,25 @@
     you can spin, and a plain-English read of your swing against tour reference.</p>
     <div class="hero-actions">
       <button id="btn-upload" class="btn-primary btn-lg" type="button">Upload swing video</button>
+      <button id="btn-record" class="btn-secondary btn-lg" type="button">Record now</button>
       <input id="file-input" type="file" accept="video/*" hidden>
+      <input id="camera-input" type="file" accept="video/*" capture="environment" hidden>
     </div>
-    <p class="upload-hint muted small">MP4 or MOV from your phone. In this demo, uploaded-video
-    analysis is prototype-only — no real 3D analysis runs on your file yet.</p>
+    <p class="upload-hint muted small" id="upload-hint">MP4 or MOV from your phone. Uploads are
+    stored securely and queued for analysis; result viewing for uploads is still rolling out, so
+    you'll see an illustrative result meanwhile.</p>
     <div id="upload-status" class="upload-status" hidden></div>
   </div>
+
+  <!-- your swings (persistent library, shown when non-empty) -->
+  <section id="library" class="dashboard card" hidden aria-label="Your swings">
+    <div class="dash-head">
+      <h2 class="dash-title">Your swings</h2>
+      <p class="muted small">Uploads from this browser. Processing happens in the cloud — you can
+      leave and come back.</p>
+    </div>
+    <div id="library-cards" class="dash-swings"></div>
+  </section>
 
   <!-- signed-in dashboard (shown by app.js when signed in) -->
   <section id="dashboard" class="dashboard card" hidden aria-label="My swings">
@@ -112,6 +127,10 @@
     <div>
       <p class="results-clip-label" id="results-clip-label"></p>
       <h2 id="results-headline"></h2>
+      <div class="results-actions">
+        <button id="btn-share" class="btn-ghost small" type="button" title="Copy a link to this result">Share link</button>
+        <a id="btn-scorecard" class="btn-ghost small" download hidden>Download scorecard</a>
+      </div>
     </div>
     <div class="view-toggle" role="tablist">
       <button id="tab-plain" class="tab active" role="tab">Plain English</button>
@@ -129,6 +148,9 @@
           <span><i class="dot dot-in"></i> in tour range</span>
           <span><i class="dot dot-watch"></i> worth a look</span>
           <span><i class="dot dot-low"></i> low confidence</span>
+          <label class="numbers-compare">Compare with
+            <select id="numbers-compare"><option value="">— none —</option></select>
+          </label>
         </div>
         <div id="metrics-table"><!-- metric rows injected --></div>
       </div>
@@ -167,10 +189,12 @@
       <div class="card media-card">
         <h3>Pose overlay</h3>
         <video id="overlay-video" controls muted loop playsinline></video>
+        <div id="event-markers" class="event-markers" hidden aria-label="Detected swing events"></div>
       </div>
       <div class="card media-card">
         <h3>3D replay <span class="muted small">— drag to spin</span></h3>
         <canvas id="replay-canvas" width="480" height="420"></canvas>
+        <label class="sync-toggle small"><input type="checkbox" id="replay-sync"> Lock to video</label>
         <div class="replay-controls">
           <button id="replay-play" class="btn-ghost" type="button" title="Play / pause" aria-label="Play or pause">
             <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
@@ -180,6 +204,11 @@
         </div>
       </div>
     </aside>
+  </div>
+
+  <div id="recent-rail" class="recent-rail" hidden aria-label="Other swings">
+    <span class="rail-label muted small">Other swings:</span>
+    <div id="rail-cards" class="rail-cards"></div>
   </div>
 
   <div class="results-footer">

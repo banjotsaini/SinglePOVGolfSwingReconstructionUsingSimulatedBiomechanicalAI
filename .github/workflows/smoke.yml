@@ -1,0 +1,20 @@
+name: live-site-smoke
+# Hourly canary against the deployed site + chat API. Fails loudly if any
+# asset 404s, an explanation regresses to placeholder, or /chat stops
+# returning grounded answers. Manual runs via workflow_dispatch.
+on:
+  schedule:
+    - cron: "17 * * * *"
+  workflow_dispatch:
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Run smoke test (stdlib only)
+        run: python Scripts/smoke_web.py

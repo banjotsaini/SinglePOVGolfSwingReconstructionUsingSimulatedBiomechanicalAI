@@ -146,12 +146,15 @@ def build_metrics(clip: int, sc: dict, out: Path) -> None:
             "band": band,
             "status": "good" if in_band else "watch",
             "blurb": card.get("plain_name", ""),
+            "why": card.get("why", ""),
             "confidence": ind.get("confidence_tier"),
         })
     # front end shows 9: highest-confidence first, keep every "watch" story
     tier = {"high": 0, "med": 1, "low": 2}
     metrics.sort(key=lambda m: (tier.get(m["confidence"], 3), m["status"] == "good"))
-    out.write_text(json.dumps({"clip_id": str(clip), "metrics": metrics[:9]}, indent=1),
+    out.write_text(json.dumps({"clip_id": str(clip),
+                               "events": sc.get("events", {}),
+                               "metrics": metrics[:9]}, indent=1),
                    encoding="utf-8")
 
 

@@ -78,8 +78,8 @@ def main() -> int:
         for c in clips:
             code, d = post_json(args.api + "/chat",
                                 {"clip_id": int(c), "question": "How was my tempo?"})
-            ok(code == 200 and "grounded" in d,
-               f"clip {c}: live answer with grounding verdict"
+            ok(code == 200 and d.get("grounded") is True and bool(d.get("answer")),
+               f"clip {c}: live GROUNDED non-empty answer"
                + (f" (grounded={d.get('grounded')})" if code == 200 else ""))
 
     print(f"\n{'ALL GREEN' if not failures else str(len(failures)) + ' FAILURES'}")

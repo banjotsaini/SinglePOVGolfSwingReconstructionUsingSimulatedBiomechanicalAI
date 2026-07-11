@@ -1,5 +1,15 @@
 {
  "clip_id": "417",
+ "events": {
+  "address": 47,
+  "toe_up": 100,
+  "mid_backswing": 119,
+  "top": 149,
+  "mid_downswing": 166,
+  "impact": 180,
+  "mid_follow_through": 190,
+  "finish": 254
+ },
  "metrics": [
   {
    "key": "spine_tilt_address_deg",
@@ -18,6 +28,7 @@
    ],
    "status": "watch",
    "blurb": "how much the upper body leans at setup",
+   "why": "the spine angle at setup sets the posture the swing is built around",
    "confidence": "high"
   },
   {
@@ -37,6 +48,7 @@
    ],
    "status": "watch",
    "blurb": "how much the hips slide toward the target",
+   "why": "some sideways hip drive toward the target is part of transferring weight through the ball",
    "confidence": "high"
   },
   {
@@ -56,6 +68,7 @@
    ],
    "status": "good",
    "blurb": "how far the hips rotate at the top",
+   "why": "the hips turn alongside the shoulders during the backswing; the difference between the two creates separation",
    "confidence": "high"
   },
   {
@@ -75,6 +88,7 @@
    ],
    "status": "good",
    "blurb": "how open the hips are at impact",
+   "why": "the hips lead the body's rotation through the ball",
    "confidence": "high"
   },
   {
@@ -94,6 +108,7 @@
    ],
    "status": "good",
    "blurb": "the rhythm of the swing",
+   "why": "many tour swings settle near a 3-to-1 backswing-to-downswing rhythm",
    "confidence": "high"
   },
   {
@@ -113,6 +128,7 @@
    ],
    "status": "watch",
    "blurb": "the gap between shoulder turn and hip turn at the top",
+   "why": "this separation is a big part of how the body stores and releases power",
    "confidence": "med"
   },
   {
@@ -132,6 +148,7 @@
    ],
    "status": "watch",
    "blurb": "how bent the lead knee is at impact",
+   "why": "many tour players straighten the lead leg into impact as part of releasing power",
    "confidence": "med"
   },
   {
@@ -151,6 +168,7 @@
    ],
    "status": "good",
    "blurb": "how far the shoulders rotate at the top",
+   "why": "shoulder rotation is the main way the body coils to store energy for the downswing",
    "confidence": "med"
   },
   {
@@ -170,6 +188,7 @@
    ],
    "status": "good",
    "blurb": "how much the upper body leans at impact",
+   "why": "keeping a similar posture from setup to impact helps the swing stay on plane",
    "confidence": "med"
   }
  ]

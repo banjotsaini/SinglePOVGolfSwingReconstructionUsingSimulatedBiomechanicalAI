@@ -196,6 +196,31 @@ const Chat = (() => {
     if (REF.test(ql)) return rundown(tc, call, reliableKeys(ACTIVE), has(PROG, ql) && cmp);
     if (SUMMARY.test(ql) && matchMetrics(ql).length < 2) return summarize(tc, call, cmp);
     { const ms = matchMetrics(ql); if (ms.length >= 2 && (/[,&]|\band\b|\bplus\b/.test(ql) || ms.length >= 3)) return rundown(tc, call, ms, has(PROG, ql) && cmp); }
+    // library-wide superlative: "which swing had the best tempo?" (offline engine;
+    // the live backend is per-swing today, so this answers from the same
+    // metrics.json data the numbers tab renders)
+    if (/\bwhich\b.*\bswing|\bbest\b|\bclosest\b|\bworst\b|\bfurthest\b/.test(ql)) {
+      const k = findKey(ql);
+      const ids = Object.keys(CLIPDATA).filter(id => IND(id) && IND(id)[k]);
+      if (k && ids.length > 1 && tier(k, ACTIVE) !== "low") {
+        const ranked = ids
+          .filter(id => tier(k, id) !== "low")
+          .map(id => {
+            const r = { key: k, clip: id, value: val(k, id), tour_median: tour(k, id) };
+            tc.push({ name: "get_indicator", input: { key: k, clip: id }, result: r });
+            return { id, value: r.value, dist: Math.abs(r.value - r.tour_median) };
+          })
+          .sort((a, b) => a.dist - b.dist);
+        if (ranked.length > 1) {
+          const worst = /\bworst\b|\bfurthest\b/.test(ql);
+          const pick = worst ? ranked[ranked.length - 1] : ranked[0];
+          return { toolCalls: tc, answer:
+            `${worst ? "Furthest from" : "Closest to"} the tour median for ${low(label(k, ACTIVE))}: ` +
+            `${clipName(pick.id)} at ${pick.value}${unit(k, ACTIVE)}. Across the library: ` +
+            `${ranked.map(r => `${clipName(r.id)} ${r.value}${unit(k, ACTIVE)}`).join(", ")}.` };
+        }
+      }
+    }
     if (has(PROG, ql)) {
       if (!cmp) return { toolCalls: tc, refuse: true, answer: "Pick a swing to compare against — use the “Compare with” selector above the chat — and I'll line the two up." };
       const k = findKey(ql);
