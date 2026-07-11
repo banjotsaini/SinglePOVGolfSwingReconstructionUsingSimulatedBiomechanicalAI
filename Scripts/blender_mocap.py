@@ -176,6 +176,39 @@ def rigidify(pos: np.ndarray, bone_len: np.ndarray,
     return out
 
 
+_LEFT_WRIST, _RIGHT_WRIST = H36M17_NAMES.index("left_wrist"), H36M17_NAMES.index("right_wrist")
+
+
+def enforce_grip_constraint(pos: np.ndarray, max_distance: float = 0.12,
+                            left_idx: int = _LEFT_WRIST,
+                            right_idx: int = _RIGHT_WRIST) -> np.ndarray:
+    """Clamp left/right wrist distance (metres) to a plausible golf grip width.
+
+    Both hands hold the same club, so wrist-to-wrist distance should be small
+    and roughly constant, but the lifter predicts every joint independently
+    with no notion of a club or a second hand, so it can drift them apart.
+
+    This is an editorial correction, not a physical reconstruction: it moves
+    the wrist off the elbow->wrist bone axis, so the forearm's Stretch-To
+    bone will visibly stretch/compress a little to reach it. Apply it last,
+    on the `pos_rig` that is actually handed to `build_in_blender` for
+    animation - not on the pose used for the FK rotation round-trip proof in
+    `prepare()`, which must stay bone-length-exact."""
+    out = pos.astype(np.float64, copy=True)
+    T = out.shape[0]
+    for t in range(T):
+        l, r = out[t, left_idx], out[t, right_idx]
+        vec = r - l
+        dist = np.linalg.norm(vec)
+        if dist <= max_distance or dist < 1e-9:
+            continue
+        excess = dist - max_distance
+        direction = vec / dist
+        out[t, left_idx] = l + direction * excess * 0.5
+        out[t, right_idx] = r - direction * excess * 0.5
+    return out
+
+
 def unisex_bone_lengths(stature_m: float) -> np.ndarray:
     """Bone lengths (metres) from the unisex proportion template * stature."""
     out = np.zeros(len(H36M17_NAMES))
@@ -284,10 +317,11 @@ def build_rest_pose(bone_len: np.ndarray, parents=H36M17_PARENTS) -> np.ndarray:
 
 
 def prepare(pos_cam: np.ndarray, target_height_m: float = 1.75,
-            mode: str = "measured") -> dict:
+            mode: str = "measured", grip_lock: bool = True,
+            max_hand_distance: float = 0.12) -> dict:
     """Full numpy pipeline: camera->Blender, metric scale, choose bone lengths
-    (measured|unisex), rigidify, FK-solve, reconstruct. Returns everything the
-    Blender builder needs plus an accuracy report."""
+    (measured|unisex), rigidify, grip-lock, FK-solve, reconstruct. Returns
+    everything the Blender builder needs plus an accuracy report."""
     stat_u = stature_units(pos_cam)
     scale = target_height_m / stat_u
     pos = camera_to_blender(pos_cam) * scale          # now in metres, Z-up
@@ -302,9 +336,19 @@ def prepare(pos_cam: np.ndarray, target_height_m: float = 1.75,
 
     pos_rig = rigidify(pos, bone_len)
     rest = build_rest_pose(bone_len)
+    # FK round-trip proof runs on the clean rigidified pose, BEFORE grip-lock:
+    # grip-lock is a deliberate editorial correction (moves the wrist off the
+    # elbow->wrist bone axis to close the hands), so it would fail the bone
+    # length round-trip by design, not by bug. Keep that proof meaningful for
+    # the retargetable rotation representation; apply grip-lock only to the
+    # positions actually animated below (build_in_blender drives the armature
+    # from pos_rig's Stretch-To targets, not from `quats`).
     q = solve_global_bone_rotations(pos_rig, rest)
     recon = reconstruct_from_rotations(pos_rig[:, 0], q, bone_len, rest)
     err_mm = float(np.linalg.norm(recon - pos_rig, axis=-1).mean() * 1000)
+
+    if grip_lock:
+        pos_rig = enforce_grip_constraint(pos_rig, max_distance=max_hand_distance)
 
     return dict(pos_metric=pos, pos_rig=pos_rig, bone_len=bone_len,
                 measured_len=measured_len, rest=rest, quats=q,
@@ -546,6 +590,11 @@ def main() -> None:
                          "the mocap JSON carries RAW lifted 3D, which animates jittery)")
     ap.add_argument("--smooth-min-cutoff", type=float, default=0.3)
     ap.add_argument("--smooth-beta", type=float, default=0.4)
+    ap.add_argument("--no-grip-lock", action="store_true",
+                    help="skip grip stabilization (clamps wrist-to-wrist distance; "
+                         "default: on, since both hands hold one club)")
+    ap.add_argument("--max-hand-distance", type=float, default=0.12,
+                    help="grip-lock: max plausible wrist-to-wrist distance in metres (default: 0.12)")
     args = ap.parse_args(_argv_after_ddash())
 
     pos_cam, fps, meta = load_mocap_json(args.input)
@@ -561,7 +610,9 @@ def main() -> None:
               else "[smooth]   One-Euro applied (input had no measurable jitter)")
     else:
         print(f"[smooth]   OFF (raw input jitter {jit_raw:.5f})")
-    prep = prepare(pos_cam, target_height_m=args.height, mode=args.mode)
+    prep = prepare(pos_cam, target_height_m=args.height, mode=args.mode,
+                   grip_lock=not args.no_grip_lock,
+                   max_hand_distance=args.max_hand_distance)
 
     print(f"[load]     {args.input}")
     print(f"           frames={pos_cam.shape[0]}  fps={fps:.3f}  mode={args.mode}")
@@ -569,6 +620,8 @@ def main() -> None:
           f"-> {args.height} m   (x{prep['scale']:.3f})")
     print(f"[bones m]  thigh={prep['bone_len'][2]:.3f}  shank={prep['bone_len'][3]:.3f}  "
           f"uparm={prep['bone_len'][15]:.3f}  forearm={prep['bone_len'][16]:.3f}")
+    grip = "off" if args.no_grip_lock else f"on (max {args.max_hand_distance:.2f} m)"
+    print(f"[grip]     {grip}")
     print(f"[ACCURACY] FK round-trip mean joint error = {prep['recon_err_mm']:.4f} mm "
           f"({'PASS' if prep['recon_err_mm'] < 1.0 else 'CHECK'})")
 
