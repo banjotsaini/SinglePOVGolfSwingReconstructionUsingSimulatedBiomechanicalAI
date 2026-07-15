@@ -309,6 +309,10 @@ def main():
                    help="Disable L/R identity-swap repair of the 2D landmarks before lifting")
     p.add_argument("--no-level", action="store_true",
                    help="Disable floor leveling/grounding of the 3D output")
+    p.add_argument("--no-grip-lock", action="store_true",
+                   help="Disable grip stabilization (clamps wrist-to-wrist distance to a plausible grip width)")
+    p.add_argument("--max-hand-distance", type=float, default=0.12,
+                   help="Grip-lock: max plausible wrist-to-wrist distance in metres (default: 0.12)")
     args = p.parse_args()
 
     video_path = Path(args.video).resolve()
@@ -404,19 +408,22 @@ def main():
         print(f"[pipeline] pose diag failed (non-fatal): {type(e).__name__}: {e}")
 
     # --- 2c. Smoothing (de-jitter the 3D trajectory) ---
-    if args.smooth != "none" or not args.no_bone_lock:
+    if args.smooth != "none" or not args.no_bone_lock or not args.no_grip_lock:
         conf_h36m = _load_3d_conf_as_h36m(parquet_3d, xyz_h36m.shape[0])
         jitter_before = _mean_acceleration(xyz_h36m)
         xyz_h36m = smooth_sequence(
             xyz_h36m, conf=conf_h36m, method=args.smooth, fps=fps,
             bone_lock=not args.no_bone_lock,
+            grip_lock=not args.no_grip_lock,
             min_cutoff=args.smooth_min_cutoff, beta=args.smooth_beta,
             window=args.smooth_window,
+            max_hand_distance=args.max_hand_distance,
         )
         jitter_after = _mean_acceleration(xyz_h36m)
         bone = "off" if args.no_bone_lock else "on"
+        grip = "off" if args.no_grip_lock else "on"
         pct = (1.0 - jitter_after / jitter_before) * 100.0 if jitter_before else 0.0
-        print(f"[pipeline] smoothing: {args.smooth} (bone-lock {bone})  "
+        print(f"[pipeline] smoothing: {args.smooth} (bone-lock {bone}, grip-lock {grip})  "
               f"jitter {jitter_before:.5f} -> {jitter_after:.5f}  ({pct:+.1f}%)")
 
     # --- 2d. Floor leveling + grounding ---

@@ -14,6 +14,14 @@ Pipeline order inside `smooth_sequence`:
   1. interpolate_gaps  - linear-fill short low-confidence runs (needs conf)
   2. temporal filter   - one_euro_filter | savgol_smooth
   3. enforce_bone_lengths (optional) - rigidify the skeleton frame-to-frame
+  4. enforce_grip_constraint (optional) - pull the wrists back together
+
+Grip constraint: both hands hold the same club, so the lifter (which predicts
+every joint independently, per frame, with no rig or club) can drift the
+wrists apart in a way that is never physically possible. Step 4 runs last and
+clamps left/right wrist distance to a plausible grip width; it necessarily
+trades a little bone-length precision (step 3's forearm lengths) for a much
+larger, more visible error (hands floating apart).
 """
 from __future__ import annotations
 
@@ -24,7 +32,7 @@ from pathlib import Path
 import numpy as np
 
 sys.path.insert(0, str(Path(__file__).parent))
-from export_ue5 import H36M17_PARENTS
+from export_ue5 import H36M17_IDX, H36M17_PARENTS
 
 
 # ---------------------------------------------------------------------------
@@ -194,7 +202,7 @@ def enforce_bone_lengths(xyz: np.ndarray,
 
 
 # ---------------------------------------------------------------------------
-# 4. Floor leveling + grounding
+# 5. Floor leveling + grounding
 # ---------------------------------------------------------------------------
 
 def level_and_ground(xyz: np.ndarray,
@@ -273,6 +281,52 @@ def level_and_ground(xyz: np.ndarray,
 
 
 # ---------------------------------------------------------------------------
+# 4. Grip stabilization (two-hand coupling)
+# ---------------------------------------------------------------------------
+
+def enforce_grip_constraint(xyz: np.ndarray,
+                            conf: np.ndarray | None = None,
+                            left_idx: int = H36M17_IDX["left_wrist"],
+                            right_idx: int = H36M17_IDX["right_wrist"],
+                            max_distance: float = 0.12) -> np.ndarray:
+    """Clamp left/right wrist distance so the hands never exceed a plausible
+    golf grip width, per frame.
+
+    Both hands share one club, so wrist-to-wrist distance is small (roughly a
+    hand's width for an overlap/interlock grip, a bit more for ten-finger) and
+    should not vary much through the swing. The lifter has no notion of a
+    club or a second hand, so nothing stops it drifting the wrists apart.
+
+    For any frame where the wrists are farther than `max_distance`, both are
+    moved along the line between them until the distance equals
+    `max_distance`. If `conf` is given, the less confident wrist absorbs more
+    of the correction (it's the one more likely to be wrong); otherwise the
+    correction is split evenly.
+    """
+    out = xyz.astype(np.float32, copy=True)
+    T = out.shape[0]
+    for t in range(T):
+        l = out[t, left_idx]
+        r = out[t, right_idx]
+        vec = r - l
+        dist = np.linalg.norm(vec)
+        if dist <= max_distance or dist < 1e-8:
+            continue
+        excess = dist - max_distance
+        direction = vec / dist
+        if conf is not None:
+            cl, cr = float(conf[t, left_idx]), float(conf[t, right_idx])
+            total = cl + cr
+            w_left = cr / total if total > 1e-8 else 0.5
+        else:
+            w_left = 0.5
+        w_right = 1.0 - w_left
+        out[t, left_idx] = l + direction * excess * w_left
+        out[t, right_idx] = r - direction * excess * w_right
+    return out
+
+
+# ---------------------------------------------------------------------------
 # Dispatcher
 # ---------------------------------------------------------------------------
 
@@ -281,16 +335,19 @@ def smooth_sequence(xyz: np.ndarray,
                     method: str = "oneeuro",
                     fps: float = 30.0,
                     bone_lock: bool = True,
+                    grip_lock: bool = True,
                     min_conf: float = 0.3,
                     max_gap: int = 5,
                     min_cutoff: float = 1.0,
                     beta: float = 0.3,
                     window: int = 7,
-                    polyorder: int = 2) -> np.ndarray:
+                    polyorder: int = 2,
+                    max_hand_distance: float = 0.12) -> np.ndarray:
     """Smooth a (T, 17, 3) H36M-17 sequence.
 
     method: "none" | "oneeuro" | "savgol". Gap interpolation runs first when
-    `conf` is provided; bone-length stabilization runs last when `bone_lock`.
+    `conf` is provided; bone-length stabilization runs next when `bone_lock`;
+    grip stabilization runs last when `grip_lock`.
     """
     if xyz.ndim != 3 or xyz.shape[1:] != (17, 3):
         raise ValueError(f"expected (T,17,3) H36M array, got {xyz.shape}")
@@ -308,4 +365,6 @@ def smooth_sequence(xyz: np.ndarray,
 
     if bone_lock:
         out = enforce_bone_lengths(out)
+    if grip_lock:
+        out = enforce_grip_constraint(out, conf=conf, max_distance=max_hand_distance)
     return out
