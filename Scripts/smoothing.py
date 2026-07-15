@@ -194,6 +194,85 @@ def enforce_bone_lengths(xyz: np.ndarray,
 
 
 # ---------------------------------------------------------------------------
+# 4. Floor leveling + grounding
+# ---------------------------------------------------------------------------
+
+def level_and_ground(xyz: np.ndarray,
+                     l_ankle: int = 6,
+                     r_ankle: int = 3,
+                     still_quantile: float = 0.3,
+                     max_tilt_deg: float = 20.0) -> tuple[np.ndarray, dict]:
+    """Level the stance and pin the feet to y=0 (camera coords, y DOWN).
+
+    The lifter output is hip-relative in CAMERA orientation, so a pitched or
+    rolled phone leaks depth/side offsets into apparent height — measured on
+    GolfDB as a median 1.3%-of-height ankle gap that makes one leg float above
+    the viewer's floor plane. Both feet are planted at address, so the
+    ankle-to-ankle line during the stillest frames is the one reliable
+    horizontal in the scene:
+
+      1. find the stillest `still_quantile` of frames (median joint speed),
+      2. rotate the whole trajectory (about the mid-ankle pivot) by the
+         minimal rotation that zeroes the y-component of the median
+         ankle-to-ankle vector — corrects camera roll on face-on views and
+         camera pitch on down-the-line views in one step,
+      3. translate so the address ankle level sits exactly at y = 0.
+
+    Rotations beyond `max_tilt_deg` are refused (bad tracking / real slope).
+    Default ankle indices are H36M-17; pass COCO or custom indices for other
+    orderings. Returns (xyz_out, info) where info records what was applied —
+    downstream replay JSON should carry {"grounded": true, "floor_y": 0.0}
+    so viewers can place the floor plane exactly instead of guessing.
+    """
+    T = xyz.shape[0]
+    out = xyz.astype(np.float32, copy=True)
+    info = {"applied": False, "tilt_deg": 0.0, "floor_shift": 0.0}
+    if T < 2:
+        return out, info
+
+    # stillest frames by median joint speed (address / post-finish)
+    v = np.median(np.linalg.norm(np.diff(out, axis=0), axis=2), axis=1)
+    v = np.concatenate([v[:1], v])
+    still = v <= np.quantile(v, still_quantile)
+    if not still.any():
+        still = np.ones(T, dtype=bool)
+
+    ankle_vec = np.median(out[still, l_ankle] - out[still, r_ankle], axis=0)
+    norm = float(np.linalg.norm(ankle_vec))
+    if norm > 1e-6:
+        tilt = math.degrees(math.asin(float(np.clip(ankle_vec[1] / norm, -1, 1))))
+        target = ankle_vec.copy()
+        target[1] = 0.0
+        tnorm = float(np.linalg.norm(target))
+        if 0.5 < abs(tilt) <= max_tilt_deg and tnorm > 1e-6:
+            a = ankle_vec / norm
+            b = target / tnorm
+            axis = np.cross(a, b)
+            axis_n = float(np.linalg.norm(axis))
+            if axis_n > 1e-8:
+                axis = axis / axis_n
+                angle = math.atan2(axis_n, float(np.dot(a, b)))
+                # Rodrigues rotation matrix
+                K = np.array([[0, -axis[2], axis[1]],
+                              [axis[2], 0, -axis[0]],
+                              [-axis[1], axis[0], 0]], dtype=np.float32)
+                R = (np.eye(3, dtype=np.float32) + math.sin(angle) * K
+                     + (1 - math.cos(angle)) * (K @ K))
+                pivot = np.median((out[still, l_ankle] + out[still, r_ankle]) / 2,
+                                  axis=0).astype(np.float32)
+                out = (out - pivot) @ R.T + pivot
+                info["applied"] = True
+                info["tilt_deg"] = float(tilt)
+
+    # ground: address ankle level (the lower foot) -> y = 0
+    floor_y = float(np.median(np.maximum(out[still, l_ankle, 1],
+                                         out[still, r_ankle, 1])))
+    out[..., 1] -= floor_y
+    info["floor_shift"] = floor_y
+    return out, info
+
+
+# ---------------------------------------------------------------------------
 # Dispatcher
 # ---------------------------------------------------------------------------
 

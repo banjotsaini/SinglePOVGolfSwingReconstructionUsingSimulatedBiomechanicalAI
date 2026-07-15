@@ -94,3 +94,15 @@ ADAPTER_REGISTRY = {
     "motionbert_full_from_sapiens_pose_1b":  lambda: _motionbert("full", "sapiens_pose_1b"),
     "motionbert_lite_from_sapiens_pose_1b":  lambda: _motionbert("lite", "sapiens_pose_1b"),
 }
+
+# Repaired-2D variants: pipeline.py writes L/R-unswapped landmarks into a
+# sibling "<backbone>_lrfix" cache dir (raw eval caches stay untouched); the
+# same lifters then read that cache. Registered for every 2D backbone the
+# production lifters are bound to above.
+for _bb in ("mediapipe_heavy", "mediapipe_lite", "vitpose_base"):
+    ADAPTER_REGISTRY[f"golfpose3d_from_{_bb}_lrfix"] = \
+        (lambda _b=_bb: _golfpose(f"{_b}_lrfix"))
+    ADAPTER_REGISTRY[f"motionbert_full_from_{_bb}_lrfix"] = \
+        (lambda _b=_bb: _motionbert("full", f"{_b}_lrfix"))
+    ADAPTER_REGISTRY[f"motionbert_lite_from_{_bb}_lrfix"] = \
+        (lambda _b=_bb: _motionbert("lite", f"{_b}_lrfix"))

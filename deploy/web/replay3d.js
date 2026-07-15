@@ -80,6 +80,14 @@ class CapsuleViewer3D {
       radius = Math.max(radius, fr[j].length());
       floorY = Math.min(floorY, fr[j].y);
     }
+    // grounded replays declare the floor exactly (data y=0 = leveled stance
+    // line, y-down) — map that plane through the same convert/recenter/scale
+    // as the joints instead of guessing from the lowest joint of the clip,
+    // which floated one foot whenever the ankles didn't match heights.
+    if (data.grounded === true) {
+      const fy = typeof data.floor_y === "number" ? data.floor_y : 0;
+      floorY = (-fy - mh[1]) * scale;
+    }
     this.radius = radius;
 
     this._initScene(floorY);

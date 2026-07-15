@@ -63,6 +63,14 @@ Resources:
             OriginAccessControlId: !GetAtt WebOriginAccessControl.Id
             S3OriginConfig:
               OriginAccessIdentity: ""
+          # full_app.yaml's artifacts bucket — serves processed-upload results
+          # (03_outputs/<job_id>/*) read-only through the same distribution, so
+          # the front end polls same-origin with no CORS. Reuses the OAC.
+          - Id: artifacts-bucket-origin
+            DomainName: !Sub "${ProjectName}-artifacts-${AWS::AccountId}.s3.${AWS::Region}.amazonaws.com"
+            OriginAccessControlId: !GetAtt WebOriginAccessControl.Id
+            S3OriginConfig:
+              OriginAccessIdentity: ""
         DefaultCacheBehavior:
           TargetOriginId: web-bucket-origin
           ViewerProtocolPolicy: redirect-to-https
@@ -71,13 +79,28 @@ Resources:
           CachedMethods: [GET, HEAD]
           # Managed-CachingOptimized: https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/using-managed-cache-policies.html
           CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6
+        CacheBehaviors:
+          # processed-upload results: the front end polls these until the job's
+          # JSONs land, so never cache — a cached miss would delay "Ready".
+          - PathPattern: "03_outputs/*"
+            TargetOriginId: artifacts-bucket-origin
+            ViewerProtocolPolicy: redirect-to-https
+            Compress: true
+            AllowedMethods: [GET, HEAD]
+            CachedMethods: [GET, HEAD]
+            # Managed-CachingDisabled
+            CachePolicyId: 4135ea2d-6df8-44a3-9df3-4b5a84be39ad
         CustomErrorResponses:
           # index.html is loaded via a real path in this multi-page site (not a
           # client-router SPA); only paper over an S3 "no such key" 403 so a
-          # trailing-slash / bare-domain request still resolves.
+          # trailing-slash / bare-domain request still resolves. NOTE: this
+          # rewrite is distribution-wide, so a not-yet-written results JSON also
+          # comes back 200/index.html — pollJob() therefore checks content-type,
+          # and the short TTL keeps "not ready yet" from sticking.
           - ErrorCode: 403
             ResponseCode: 200
             ResponsePagePath: /index.html
+            ErrorCachingMinTTL: 5
 
   # ---- Bucket policy: allow ONLY this distribution (via OAC) to read the bucket ----
   WebBucketPolicy:
@@ -92,6 +115,26 @@ Resources:
             Principal: { Service: cloudfront.amazonaws.com }
             Action: s3:GetObject
             Resource: !Sub "${WebBucket.Arn}/*"
+            Condition:
+              StringEquals:
+                AWS:SourceArn: !Sub "arn:${AWS::Partition}:cloudfront::${AWS::AccountId}:distribution/${WebDistribution}"
+
+  # ---- Artifacts-bucket policy: let this distribution read ONLY the results
+  # prefix. The bucket lives in full_app.yaml (which defines no bucket policy),
+  # so attaching the policy here is safe; if full_app.yaml ever grows its own
+  # AWS::S3::BucketPolicy the statement must move there (one policy per bucket).
+  ArtifactsBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Sub "${ProjectName}-artifacts-${AWS::AccountId}"
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: AllowCloudFrontReadResultsViaOAC
+            Effect: Allow
+            Principal: { Service: cloudfront.amazonaws.com }
+            Action: s3:GetObject
+            Resource: !Sub "arn:${AWS::Partition}:s3:::${ProjectName}-artifacts-${AWS::AccountId}/03_outputs/*"
             Condition:
               StringEquals:
                 AWS:SourceArn: !Sub "arn:${AWS::Partition}:cloudfront::${AWS::AccountId}:distribution/${WebDistribution}"

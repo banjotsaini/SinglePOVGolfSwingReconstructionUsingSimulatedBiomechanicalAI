@@ -193,7 +193,8 @@ class MotionBERTAdapter(BaseAdapter):
     def predict(self, video_path) -> InferenceResult:
         from eval_utils import video_info
         info = video_info(video_path)
-        clip_id = int(Path(video_path).stem)
+        # stem used verbatim as the cache key — uploads have non-numeric names
+        clip_id = Path(video_path).stem
         xy_coco_px = self._load_upstream_xy(clip_id)
         if xy_coco_px is None:
             raise FileNotFoundError(

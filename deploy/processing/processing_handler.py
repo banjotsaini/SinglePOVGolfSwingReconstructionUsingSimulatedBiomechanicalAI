@@ -8,9 +8,10 @@ Per message it:
   2. downloads it to /tmp,
   3. runs the SAME pipeline the local demo runs (2D -> 3D lift -> smoothing ->
      overlay + 3D replay; then event detection + coaching scorecard; then the
-     grounded Claude eval) as subprocesses — each step is torch-heavy and isolated,
+     grounded Claude eval; then web_artifacts.py for metrics/explanation JSON)
+     as subprocesses — each step is torch-heavy and isolated,
   4. uploads the artifacts (overlay.mp4, replay_3d.json, metrics.json,
-     explanation.json, scorecard.json) to 03_outputs/<job_id>/,
+     explanation.json, pose_debug.mp4, pose_diag.json) to 03_outputs/<job_id>/,
   5. writes queryable rows (swings/analyses/indicators/swing_events) via the RDS
      Data API, mirroring deploy/db/load_data.py's backfill shape.
 
@@ -43,7 +44,14 @@ _s3 = boto3.client("s3")
 _rd = boto3.client("rds-data") if DB_CLUSTER_ARN else None
 
 # artifacts the front end consumes, keyed by the suffix each pipeline step emits.
-ARTIFACTS = ["overlay.mp4", "replay_3d.json", "metrics.json", "explanation.json"]
+# pose_debug.mp4 / pose_diag.json are diagnostics (L/R-colored MediaPipe skeleton
+# + swap/jitter metrics) — not consumed by the app UI but kept with every job so
+# limb-crossing and jitter reports can be triaged from S3 alone.
+ARTIFACTS = ["overlay.mp4", "replay_3d.json", "metrics.json", "explanation.json",
+             "pose_debug.mp4", "pose_diag.json"]
+# the web app's pollJob() marks a job ready only once ALL of these exist — fail
+# the message loudly (SQS retry) rather than leave a job that never completes
+REQUIRED_ARTIFACTS = {"overlay.mp4", "replay_3d.json", "metrics.json", "explanation.json"}
 
 
 # --------------------------------------------------------------------------
@@ -92,20 +100,33 @@ def _pipeline(video: Path, work: Path) -> dict:
          "2D->3D pipeline + overlay + replay",
          # adapters read the upstream-2D cache through this env override
          extra_env={"PIPELINE_CACHE_DIR": str(cache)})
-    # 3D parquet lands in out-dir or under the lifter's cache subdir — find it robustly
-    cands = list(work.glob(f"*{stem}*3d*.parquet")) or list(cache.rglob(f"{stem}.parquet"))
+    # 3D parquet lands under the lifter's cache subdir (possibly the "_lrfix"
+    # variant when the L/R swap repair rewrote the 2D input) — prefer the
+    # repaired lift, then any lifter output, then a bare rglob as last resort.
+    cands = (sorted(cache.glob(f"{LIFTER}_from_*/{stem}.parquet"),
+                    key=lambda p: "_lrfix" not in p.parent.name)
+             or list(work.glob(f"*{stem}*3d*.parquet"))
+             or list(cache.rglob(f"{stem}.parquet")))
     if not cands:
         raise RuntimeError(f"pipeline produced no 3D parquet for {stem} in {work} or {cache}")
     parquet_3d = cands[0]
     scorecard = work / f"{stem}_scorecard.json"
     _run([PY, str(SCRIPTS / "scorecard_step.py"), "--parquet", str(parquet_3d),
-          "--out", str(scorecard)], "event detection + scorecard")
-    # grounded Claude eval (needs ANTHROPIC_API_KEY in env); non-fatal if it fails
+          "--out-dir", str(work), "--stem", stem], "event detection + scorecard")
+    # grounded Claude eval (needs ANTHROPIC_API_KEY in env) — writes the LLM
+    # explanation back INTO the scorecard JSON; non-fatal if it fails
     try:
-        _run([PY, str(SCRIPTS / "coaching_explain.py"), "--scorecard", str(scorecard),
-              "--backend", "anthropic"], "coaching eval")
+        _run([PY, str(SCRIPTS / "coaching_explain.py"), "--scorecard", str(scorecard)],
+             "coaching eval")
     except RuntimeError as e:
         print(f"[proc] coaching eval skipped: {e}", flush=True)
+    # metrics.json + explanation.json from the (possibly LLM-augmented) scorecard —
+    # two of the three JSONs the web app's pollJob() requires. --parquet-3d is the
+    # backstop for replay_3d.json in case pipeline.py's own emit failed (non-fatal
+    # there); skipped when the pipeline already wrote it.
+    _run([PY, str(SCRIPTS / "web_artifacts.py"), "--scorecard", str(scorecard),
+          "--out-dir", str(work), "--stem", stem, "--parquet-3d", str(parquet_3d)],
+         "web artifacts (metrics + explanation)")
     return {"scorecard": scorecard, "work": work, "stem": stem}
 
 
@@ -148,11 +169,12 @@ def _write_db(job_id: str, scorecard: Path, raw_key: str) -> None:
          [_p("aid", stringValue=_as_uuid(job_id + "a")), _p("sid", stringValue=_as_uuid(job_id)),
           _p("ver", stringValue="mixste+oneeuro@2026-07"), _p("lifter", stringValue=LIFTER),
           _p("blob", stringValue=json.dumps(sc))])
-    for ind in sc.get("indicators", []):
+    # scorecard indicators are a dict keyed by indicator name (coaching_scorecard)
+    for key, ind in (sc.get("indicators") or {}).items():
         _sql("""INSERT INTO indicators (analysis_id, indicator_key, value, percentile, confidence_tier)
                 VALUES (:aid::uuid, :key, :val, :pct, :tier)
                 ON CONFLICT (analysis_id, indicator_key) DO NOTHING""",
-             [_p("aid", stringValue=_as_uuid(job_id + "a")), _p("key", stringValue=ind["indicator"]),
+             [_p("aid", stringValue=_as_uuid(job_id + "a")), _p("key", stringValue=key),
               _p("val", doubleValue=float(ind.get("value") or 0)),
               _p("pct", doubleValue=float(ind.get("percentile") or 0)),
               _p("tier", stringValue=str(ind.get("confidence_tier") or "unknown"))])
@@ -180,6 +202,10 @@ def handler(event, _ctx=None):
             continue
         out = _pipeline(video, work)
         uploaded = _upload_artifacts(work, out["stem"], job_id)
+        missing = REQUIRED_ARTIFACTS - {Path(k).name for k in uploaded}
+        if missing:
+            raise RuntimeError(f"job {job_id}: required artifacts never produced: "
+                               f"{sorted(missing)} — front end would poll forever")
         _write_db(job_id, out["scorecard"], key)
         print(f"[proc] job {job_id} done; artifacts: {uploaded}", flush=True)
         processed.append(job_id)

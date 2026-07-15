@@ -42,7 +42,9 @@ from export_ue5 import (
     load_3d_parquet_as_h36m, load_2d_parquet_as_h36m,
     export_csv, export_json, export_bvh,
 )
-from smoothing import smooth_sequence
+from smoothing import smooth_sequence, level_and_ground
+from pose_diagnostics import (diagnose_clip, write_pose_debug_overlay,
+                              repair_lr_swaps, write_2d_parquet, load_2d)
 
 
 def _mean_acceleration(xyz: np.ndarray) -> float:
@@ -303,6 +305,10 @@ def main():
                    help="Savgol window length (odd; clamped to clip length)")
     p.add_argument("--no-bone-lock", action="store_true",
                    help="Disable bone-length stabilization (rigid skeleton pass)")
+    p.add_argument("--no-lr-fix", action="store_true",
+                   help="Disable L/R identity-swap repair of the 2D landmarks before lifting")
+    p.add_argument("--no-level", action="store_true",
+                   help="Disable floor leveling/grounding of the 3D output")
     args = p.parse_args()
 
     video_path = Path(args.video).resolve()
@@ -333,13 +339,71 @@ def main():
     df2.to_csv(csv2d_path, index=False)
     print(f"[pipeline] wrote {csv2d_path.name}")
 
+    # --- 1b. L/R identity-swap repair (feeds the lifter and the overlay) ---
+    # MediaPipe swaps wrist/ankle identities at HIGH confidence (45% of GolfDB
+    # clips) and the steps punch through the velocity-adaptive One-Euro filter,
+    # so they must be repaired in 2D before lifting. Repaired landmarks go to a
+    # sibling "<backbone>_lrfix" cache so raw eval caches stay untouched.
+    backbone_eff = args.backbone
+    parquet_2d_used = parquet_2d
+    repair_stats = None
+    if not args.no_lr_fix:
+        xy_raw, conf_raw = load_2d(parquet_2d)
+        xy_fix, conf_fix, repair_stats = repair_lr_swaps(xy_raw, conf_raw)
+        n_rep = sum(repair_stats.values())
+        if n_rep:
+            backbone_eff = f"{args.backbone}_lrfix"
+            fixed_dir = cache_dir / backbone_eff
+            fixed_dir.mkdir(parents=True, exist_ok=True)
+            parquet_2d_used = fixed_dir / f"{video_path.stem}.parquet"
+            # invalidate the cached 3D lift only when the repaired 2D changed
+            stale = True
+            if parquet_2d_used.exists():
+                try:
+                    prev_xy, _ = load_2d(parquet_2d_used)
+                    stale = prev_xy.shape != xy_fix.shape or not np.allclose(prev_xy, xy_fix)
+                except Exception:
+                    pass
+            write_2d_parquet(xy_fix, conf_fix, parquet_2d_used)
+            old_3d = cache_dir / f"{args.lifter}_from_{backbone_eff}" / f"{video_path.stem}.parquet"
+            if stale and old_3d.exists():
+                old_3d.unlink()
+            print(f"[pipeline] L/R swap repair: {repair_stats} -> lifting from repaired landmarks")
+        else:
+            print("[pipeline] L/R swap repair: no swaps detected")
+
     # --- 2. 3D lift ---
-    parquet_3d = run_3d_lift(video_path, args.lifter, args.backbone, cache_dir)
+    parquet_3d = run_3d_lift(video_path, args.lifter, backbone_eff, cache_dir)
     xyz_h36m = load_3d_parquet_as_h36m(parquet_3d)
     print(f"[pipeline] 3D output: shape {xyz_h36m.shape}, "
           f"range [{xyz_h36m.min():.3f}, {xyz_h36m.max():.3f}]")
 
-    # --- 2b. Smoothing (de-jitter the 3D trajectory) ---
+    # --- 2b. Pose-quality diagnostics (L/R swap detection, jitter, ankle gap) ---
+    # Cheap (reads the cached parquets) and always on: the diag JSON + the
+    # L/R-colored debug skeleton are the first thing to check when a user
+    # reports jitter or crossed limbs in the 3D replay.
+    import json as _json
+    diag = None
+    try:
+        diag = diagnose_clip(parquet_2d, parquet_3d)
+        if repair_stats is not None:
+            diag["repair"] = {"n_swaps_repaired": repair_stats,
+                              "lifted_from": backbone_eff}
+        diag_path = out_dir / f"{video_path.stem}_pose_diag.json"
+        diag_path.write_text(_json.dumps(diag, indent=1), encoding="utf-8")
+        w = diag["swaps"]["wrist"]
+        a3 = diag.get("ankle_3d", {})
+        print(f"[pipeline] pose diag: {w['n_swaps']} wrist L/R swaps, "
+              f"wrists merged {w['merged_frac']*100:.0f}% of frames, "
+              f"still-frame wrist jitter {diag['jitter_2d']['wrists_still']:.2f} "
+              f"(hips {diag['jitter_2d']['hips_still']:.2f}), "
+              f"ankle gap {a3.get('ankle_dy_frac', float('nan'))*100:+.1f}% of height "
+              f"({a3.get('higher_leg', '?')} higher)")
+        print(f"[pipeline] wrote {diag_path.name}")
+    except Exception as e:
+        print(f"[pipeline] pose diag failed (non-fatal): {type(e).__name__}: {e}")
+
+    # --- 2c. Smoothing (de-jitter the 3D trajectory) ---
     if args.smooth != "none" or not args.no_bone_lock:
         conf_h36m = _load_3d_conf_as_h36m(parquet_3d, xyz_h36m.shape[0])
         jitter_before = _mean_acceleration(xyz_h36m)
@@ -355,8 +419,18 @@ def main():
         print(f"[pipeline] smoothing: {args.smooth} (bone-lock {bone})  "
               f"jitter {jitter_before:.5f} -> {jitter_after:.5f}  ({pct:+.1f}%)")
 
+    # --- 2d. Floor leveling + grounding ---
+    # Rotate so the address stance line is horizontal (undoes camera pitch/roll
+    # leaking into joint heights) and pin the feet to y=0 so every downstream
+    # viewer can place its floor plane exactly — no more floating lead foot.
+    if not args.no_level:
+        xyz_h36m, lvl = level_and_ground(xyz_h36m)
+        print(f"[pipeline] leveling: tilt {lvl['tilt_deg']:+.1f} deg "
+              f"({'corrected' if lvl['applied'] else 'within tolerance / skipped'}), "
+              f"feet grounded at y=0 (shift {lvl['floor_shift']:+.3f})")
+
     # --- 3. 3D exports (CSV + canonical JSON; BVH is opt-in) ---
-    full_lifter_name = f"{args.lifter}_from_{args.backbone}"
+    full_lifter_name = f"{args.lifter}_from_{backbone_eff}"
     paths = {}
     paths["csv_3d"]  = export_csv(xyz_h36m, out_dir / f"{video_path.stem}_landmarks_3d.csv",
                                     fps=fps,
@@ -375,8 +449,31 @@ def main():
     # --- 4. Visualizations ---
     if not args.no_overlay:
         overlay_path = out_dir / f"{video_path.stem}_overlay.mp4"
-        write_2d_overlay(video_path, parquet_2d, overlay_path)
+        # player-facing overlay draws the REPAIRED landmarks; the debug overlay
+        # below intentionally draws the raw ones (it exists to show the swaps)
+        write_2d_overlay(video_path, parquet_2d_used, overlay_path)
         print(f"[pipeline] wrote {overlay_path.name}")
+        # MediaPipe debug skeleton (L=orange / R=cyan, conf-colored joints,
+        # swap banners) — ships with every upload so limb crossings are
+        # diagnosable straight from the job's artifacts.
+        try:
+            debug_path = out_dir / f"{video_path.stem}_pose_debug.mp4"
+            write_pose_debug_overlay(video_path, parquet_2d, debug_path, diag)
+            print(f"[pipeline] wrote {debug_path.name}")
+        except Exception as e:
+            print(f"[pipeline] pose debug overlay failed (non-fatal): {type(e).__name__}: {e}")
+    # Browser replay JSON — the deploy/web viewer's format (replay3d.js), and one
+    # of the three JSONs the web app's pollJob() requires before a real upload is
+    # marked ready. Built from the RAW lifted parquet with the tuned One-Euro
+    # (0.3/0.4) inside the builder — the exact path build_web_assets.py bakes the
+    # demo clips with, so uploads and demos render identically.
+    try:
+        from web_artifacts import build_replay_json
+        replay_path = out_dir / f"{video_path.stem}_replay_3d.json"
+        build_replay_json(parquet_3d, replay_path, fps=fps)
+        print(f"[pipeline] wrote {replay_path.name}")
+    except Exception as e:
+        print(f"[pipeline] replay_3d.json failed (non-fatal): {type(e).__name__}: {e}")
     if not args.no_preview:
         html_path = out_dir / f"{video_path.stem}_preview_3d.html"
         write_3d_preview_html(xyz_h36m, html_path, fps=fps,

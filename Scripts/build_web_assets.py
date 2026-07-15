@@ -27,24 +27,14 @@ import cv2
 import numpy as np
 import pandas as pd
 
+# the JSON builders live in web_artifacts.py, SHARED with the real upload path
+# (pipeline.py + the processing Lambda) so demo and upload assets can't drift
+from web_artifacts import (load_kb, build_replay_json, build_metrics_json,
+                           build_explanation_json)
+
 ROOT = Path(__file__).resolve().parent.parent
 WEB = ROOT / "deploy" / "web" / "assets"
-KB = json.loads((ROOT / "Data" / "coaching" / "indicator_kb.json").read_text(encoding="utf-8"))
-
-# h36m joint order the front end's replay3d.js expects (17 + estimated clubhead)
-REPLAY_JOINTS = ["hip_center", "right_hip", "right_knee", "right_ankle", "left_hip",
-                 "left_knee", "left_ankle", "spine", "thorax", "neck", "head",
-                 "left_shoulder", "left_elbow", "left_wrist", "right_shoulder",
-                 "right_elbow", "right_wrist"]
-BONES = [{"a":0,"b":7,"color":"#E0314B"},{"a":7,"b":8,"color":"#E0314B"},
-         {"a":8,"b":9,"color":"#E0314B"},{"a":9,"b":10,"color":"#E0314B"},
-         {"a":8,"b":11,"color":"#17B6C4"},{"a":8,"b":14,"color":"#17B6C4"},
-         {"a":11,"b":12,"color":"#19B6C4"},{"a":12,"b":13,"color":"#19B6C4"},
-         {"a":14,"b":15,"color":"#2FB36B"},{"a":15,"b":16,"color":"#2FB36B"},
-         {"a":0,"b":4,"color":"#6D5BD0"},{"a":0,"b":1,"color":"#6D5BD0"},
-         {"a":4,"b":5,"color":"#37C26B"},{"a":5,"b":6,"color":"#37C26B"},
-         {"a":1,"b":2,"color":"#F0A12E"},{"a":2,"b":3,"color":"#F0A12E"},
-         {"a":13,"b":17,"color":"#9AA3AE"},{"a":16,"b":17,"color":"#9AA3AE"}]
+KB = load_kb()
 
 
 def ffmpeg() -> str:
@@ -63,14 +53,18 @@ def build_overlay(clip: int, out: Path, fps: float = 30.0) -> None:
     sys.path.insert(0, str(ROOT / "Scripts"))
     from pipeline import write_2d_overlay
     from smoothing import one_euro_filter
+    from pose_diagnostics import load_2d, repair_lr_swaps
     video = ROOT / "Data" / "videos_160" / f"{clip}.mp4"
     pq2d = ROOT / "Data" / "eval_runs" / "mediapipe_lite" / f"{clip}.parquet"
-    # The cache holds RAW landmarks; smooth the drawn skeleton so the overlay
-    # doesn't jitter (same tuned One-Euro as the replay/coaching paths).
+    # The cache holds RAW landmarks; un-swap L/R identities then smooth the
+    # drawn skeleton so the overlay neither crosses limbs nor jitters (same
+    # repair + tuned One-Euro as the replay/coaching paths).
     df = pd.read_parquet(pq2d).sort_values(["frame", "kp_idx"]).reset_index(drop=True)
     T, K = df["frame"].nunique(), df["kp_idx"].nunique()
-    xy = df[["x", "y"]].to_numpy(dtype=np.float32).reshape(T, K, 2)
-    df[["x", "y"]] = one_euro_filter(xy, fps=fps, min_cutoff=0.3, beta=0.4).reshape(T * K, 2)
+    xy_r, conf_r = load_2d(pq2d)
+    xy_r, _, _ = repair_lr_swaps(xy_r, conf_r)
+    df[["x", "y"]] = one_euro_filter(xy_r[:T, :K], fps=fps,
+                                     min_cutoff=0.3, beta=0.4).reshape(T * K, 2)
     with tempfile.TemporaryDirectory() as td:
         sm_pq = Path(td) / "smoothed_2d.parquet"
         df.to_parquet(sm_pq, index=False)
@@ -80,117 +74,20 @@ def build_overlay(clip: int, out: Path, fps: float = 30.0) -> None:
 
 
 def build_replay(clip: int, out: Path, fps: float) -> None:
-    pq = ROOT / "Data" / "eval_runs" / "golfpose3d_from_mediapipe_lite" / f"{clip}.parquet"
-    df = pd.read_parquet(pq)
-    frames = []
-
-    # The cache holds RAW lifted 3D (events need raw); smooth for the replay so
-    # the viewer isn't jittery — same tuned One-Euro the coaching path uses.
-    from smoothing import one_euro_filter
-    kp_names = sorted(df["kp_name"].unique())
-    wide = df.pivot_table(index="frame", columns="kp_name", values=["x", "y", "z"],
-                          sort=True)
-    arr = np.stack([wide[ax].to_numpy(dtype=np.float32)[:, [kp_names.index(k) for k in kp_names]]
-                    for ax in ("x", "y", "z")], axis=-1)  # (T, K, 3)
-    arr = one_euro_filter(arr, fps=fps, min_cutoff=0.3, beta=0.4)
-    smoothed = {(int(f), k): arr[i, j] for i, f in enumerate(wide.index)
-                for j, k in enumerate(kp_names)}
-
-    def mid(a, b):
-        return tuple(round((a[i] + b[i]) / 2, 4) for i in range(3))
-
-    for f, g in df.groupby("frame", sort=True):
-        by = {r.kp_name: tuple(round(float(v), 4) for v in smoothed[(int(f), r.kp_name)])
-              for r in g.itertuples()}
-        # cache is COCO-named — derive the h36m torso chain the front end expects
-        by["hip_center"] = mid(by["left_hip"], by["right_hip"])
-        by["thorax"] = mid(by["left_shoulder"], by["right_shoulder"])
-        by["spine"] = mid(by["hip_center"], by["thorax"])
-        by["head"] = mid(by["left_ear"], by["right_ear"]) if "left_ear" in by else by["nose"]
-        by["neck"] = mid(by["thorax"], by["head"])
-        pose = [list(by[j]) for j in REPLAY_JOINTS]
-        # clubhead: extrapolate the lead (left) forearm past the wrist ~2.2x
-        ex, ey, ez = by["left_elbow"]; wx, wy, wz = by["left_wrist"]
-        pose.append([round(wx + (wx-ex)*2.2, 4), round(wy + (wy-ey)*2.2, 4),
-                     round(wz + (wz-ez)*2.2, 4)])
-        frames.append(pose)
-    out.write_text(json.dumps({
-        "fps": fps,
-        "axis_convention": "h36m-camera (x right, y DOWN, z depth)",
-        "joint_names": REPLAY_JOINTS + ["clubhead_est"],
-        "bones": BONES,
-        "frames": frames,
-    }, separators=(",", ":")), encoding="utf-8")
+    # prefer the lift from L/R-repaired landmarks (pipeline.py writes it to the
+    # sibling _lrfix cache) — fall back to the raw-2D lift
+    pq = ROOT / "Data" / "eval_runs" / "golfpose3d_from_mediapipe_lite_lrfix" / f"{clip}.parquet"
+    if not pq.exists():
+        pq = ROOT / "Data" / "eval_runs" / "golfpose3d_from_mediapipe_lite" / f"{clip}.parquet"
+    build_replay_json(pq, out, fps)
 
 
 def build_metrics(clip: int, sc: dict, out: Path) -> None:
-    cards = KB["indicators"]
-    metrics = []
-    for key, ind in sc["indicators"].items():
-        card = cards.get(key, {})
-        val, band = ind.get("value"), ind.get("pro_band")
-        if val is None or not band:
-            continue
-        in_band = band[0] <= val <= band[1]
-        unit = card.get("unit", "")
-        disp = (lambda v: f"{v:.2f} : 1" if key == "tempo_ratio" else
-                (f"{v:.1f}°" if unit == "degrees" else f"{v:.1f}"))
-        span = band[1] - band[0]
-        metrics.append({
-            "key": key,
-            "label": card.get("label", key),
-            "you": round(val, 2), "you_display": disp(val),
-            "tour": ind.get("pro_median"), "tour_display": disp(ind["pro_median"]),
-            "axis": [round(min(band[0], val) - span * .35, 2),
-                     round(max(band[1], val) + span * .35, 2)],
-            "band": band,
-            "status": "good" if in_band else "watch",
-            "blurb": card.get("plain_name", ""),
-            "why": card.get("why", ""),
-            "confidence": ind.get("confidence_tier"),
-        })
-    # front end shows 9: highest-confidence first, keep every "watch" story
-    tier = {"high": 0, "med": 1, "low": 2}
-    metrics.sort(key=lambda m: (tier.get(m["confidence"], 3), m["status"] == "good"))
-    out.write_text(json.dumps({"clip_id": str(clip),
-                               "events": sc.get("events", {}),
-                               "metrics": metrics[:9]}, indent=1),
-                   encoding="utf-8")
+    build_metrics_json(sc, out, str(clip), KB)
 
 
 def build_explanation(clip: int, sc: dict, out: Path) -> None:
-    cards = KB["indicators"]
-    goods, watches = [], []
-    for key, ind in sc["indicators"].items():
-        card = cards.get(key, {})
-        val, band = ind.get("value"), ind.get("pro_band")
-        if val is None or not band or ind.get("confidence_tier") == "low":
-            continue
-        name = card.get("plain_name", key)
-        if band[0] <= val <= band[1]:
-            goods.append(name)
-        else:
-            side = "more than" if val > band[1] else "less than"
-            watches.append(f"Your {name} measured {side} most tour swings.")
-    n_notes = len(sc.get("feedback") or [])
-    headline = ("A tour-shaped swing — the measurements mostly sit inside the pro bands."
-                if n_notes <= 1 else
-                "Solid foundations with a few clear places to look next.")
-    sections = [{
-        "title": "What lined up well", "tag": "good",
-        "body": "Inside the typical tour spread: " + ", ".join(goods[:6]) + ".",
-    }]
-    if watches:
-        sections.append({"title": "Worth a look", "tag": "watch",
-                         "body": " ".join(watches[:4])})
-    sections.append({
-        "title": "How to read this", "tag": "info",
-        "body": "Every number here is measured from your video against a 400-swing tour "
-                "reference — nothing is estimated by the AI. Ask the coach about any "
-                "metric for the full story.",
-    })
-    out.write_text(json.dumps({"clip_id": str(clip), "headline": headline,
-                               "sections": sections}, indent=1), encoding="utf-8")
+    build_explanation_json(sc, out, str(clip), KB)
 
 
 def build(clip: int) -> None:

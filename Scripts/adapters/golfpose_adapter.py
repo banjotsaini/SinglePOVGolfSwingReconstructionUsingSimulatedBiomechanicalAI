@@ -20,6 +20,7 @@ Why "3D-lifter only" not the full pipeline:
 """
 from __future__ import annotations
 
+import os
 import sys
 import time
 from pathlib import Path
@@ -39,8 +40,10 @@ from eval_utils import (
     h36m17_to_coco17_subset,
 )
 
-# GolfPose repo (cloned into C:\dev\golfpose-repo)
-GOLFPOSE_REPO = Path(r"C:\dev\golfpose-repo")
+# GolfPose repo — local dev clones it to C:\dev\golfpose-repo; the Lambda
+# container vendors just its common/ package and points here via env
+# (GOLFPOSE_REPO=/var/task/golfpose_repo, set in deploy/processing/Dockerfile).
+GOLFPOSE_REPO = Path(os.environ.get("GOLFPOSE_REPO", r"C:\dev\golfpose-repo"))
 
 
 class GolfPose3DAdapter(BaseAdapter):
@@ -197,7 +200,8 @@ class GolfPose3DAdapter(BaseAdapter):
         upstream input."""
         from eval_utils import video_info
         info = video_info(video_path)
-        clip_id = int(Path(video_path).stem)
+        # stem used verbatim as the cache key — uploads have non-numeric names
+        clip_id = Path(video_path).stem
         xy_px = self._load_upstream_xy(clip_id, Path(video_path))
         if xy_px is None:
             raise FileNotFoundError(

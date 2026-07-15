@@ -19,9 +19,17 @@ RUN pip install --no-cache-dir -r requirements.txt
 ENV APP_ROOT=/var/task
 # pipeline scripts + adapters + the modules they import (whole Scripts/ is simplest & correct)
 COPY Scripts/                 ${LAMBDA_TASK_ROOT}/Scripts/
+# vendored GolfPose common/ package (MixSTE2 model code) — the adapter imports
+# it from GOLFPOSE_REPO; locally that's the C:\dev\golfpose-repo clone
+ENV GOLFPOSE_REPO=/var/task/golfpose_repo
+COPY golfpose_repo/           ${LAMBDA_TASK_ROOT}/golfpose_repo/
 COPY deploy/processing/processing_handler.py ${LAMBDA_TASK_ROOT}/processing_handler.py
-# KB for the coaching eval step
+# KB + tour reference bands + confidence tiers + gated feature configs — the
+# small JSONs the scorecard / coaching eval / web-artifact steps read
 COPY Data/coaching/indicator_kb.json ${LAMBDA_TASK_ROOT}/Data/coaching/indicator_kb.json
+COPY Data/coaching/reference_bands.json ${LAMBDA_TASK_ROOT}/Data/coaching/reference_bands.json
+COPY Data/coaching/indicator_confidence.json ${LAMBDA_TASK_ROOT}/Data/coaching/indicator_confidence.json
+COPY Data/coaching/features/ ${LAMBDA_TASK_ROOT}/Data/coaching/features/
 # model bundle (staged from S3 by buildspec into deploy/processing/models/)
 COPY deploy/processing/models/ ${LAMBDA_TASK_ROOT}/Models/
 
