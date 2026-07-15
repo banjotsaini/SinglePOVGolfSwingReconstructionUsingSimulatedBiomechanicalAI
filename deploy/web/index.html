@@ -160,6 +160,10 @@
           <label class="chat-compare">Compare with
             <select id="chat-compare"><option value="">— none —</option></select>
           </label>
+          <button id="chat-voice" class="voice-toggle" type="button" aria-pressed="false"
+            title="Read the coach's replies aloud">🔊 Voice replies: off</button>
+          <select id="chat-voice-pick" class="voice-pick" title="Choose the reply voice"
+            aria-label="Reply voice" hidden></select>
           <span class="chat-mode" id="chat-mode">offline preview · in-page coach</span>
         </div>
         <div id="chat-stream" class="chat-stream"><!-- turns injected --></div>
@@ -170,6 +174,14 @@
         </div>
         <div class="chat-input">
           <input id="chat-q" type="text" placeholder="Ask about this swing…" autocomplete="off">
+          <button id="chat-mic" class="btn-mic" type="button" aria-label="Ask by voice" title="Ask by voice">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor"
+              stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <rect x="9" y="2" width="6" height="12" rx="3"/>
+              <path d="M5 10a7 7 0 0 0 14 0"/><line x1="12" y1="19" x2="12" y2="23"/>
+              <line x1="8" y1="23" x2="16" y2="23"/>
+            </svg>
+          </button>
           <button id="chat-send" class="btn-primary">Send</button>
         </div>
         <p class="muted small chat-foot">Describes what was measured against the tour reference —

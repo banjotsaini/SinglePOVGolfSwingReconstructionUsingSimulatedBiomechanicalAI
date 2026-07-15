@@ -230,9 +230,25 @@ li.done .check::after {
 .chip-btn { font: inherit; font-size: 13px; color: var(--green); background: #fff;
   border: 1px solid #d7e4db; border-radius: 20px; padding: 6px 12px; cursor: pointer; }
 .chip-btn:hover { background: var(--green-soft); }
+.voice-toggle { font: inherit; font-size: 11px; font-weight: 600; cursor: pointer;
+  color: var(--muted); background: #f0f1f3; border: 1px solid transparent;
+  padding: 3px 10px; border-radius: 20px; }
+.voice-toggle:hover { border-color: #dcdcd6; }
+.voice-pick { font: inherit; font-size: 11px; color: var(--muted); max-width: 150px;
+  padding: 3px 6px; border: 1px solid #dcdcd6; border-radius: 8px; background: #fff; }
+.voice-toggle[aria-pressed="true"] { color: var(--green); background: var(--green-soft); }
 .chat-input { display: flex; gap: 10px; }
 .chat-input input { flex: 1; font: inherit; padding: 11px 14px; border: 1px solid #dcdcd6;
   border-radius: 12px; background: #fff; }
+.btn-mic { flex: 0 0 auto; width: 44px; display: flex; align-items: center; justify-content: center;
+  color: var(--muted); background: #fff; border: 1px solid #dcdcd6; border-radius: 12px; cursor: pointer; }
+.btn-mic:hover { color: var(--green); border-color: var(--green); }
+.btn-mic.rec { color: #c0392b; border-color: #c0392b; background: #fdecea;
+  animation: micpulse 1.2s ease-in-out infinite; }
+@keyframes micpulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(192, 57, 43, .28); }
+  50% { box-shadow: 0 0 0 7px rgba(192, 57, 43, .10); }
+}
 .chat-input input:focus { outline: none; border-color: var(--green); }
 .chat-foot { margin-top: 12px; }
 .chat-foot code { background: #f0f1f3; padding: 1px 5px; border-radius: 5px; font-size: 12px; }

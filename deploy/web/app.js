@@ -62,6 +62,7 @@ const state = {
   bundlePromise: null,
   viewer: null,       // Replay3D instance
 };
+window.__MC_STATE__ = state;  // debug/diagnostics handle (console + tooling)
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -219,19 +220,23 @@ async function startUpload() {
 }
 
 /* poll a processed upload until its results land (only when RESULTS_BASE set).
- * "ready" requires ALL three result JSONs — metrics alone can land first. */
+ * "ready" requires ALL three result JSONs — metrics alone can land first.
+ * NB: CloudFront rewrites S3 403s to 200/index.html (see web_hosting.yaml), so
+ * r.ok alone would false-ready a job — require the real content-type too. */
 async function pollJob(jobId, tries = 40, delayMs = 15000) {
   const files = ["metrics.json", "explanation.json", "replay_3d.json"];
+  const okType = (r, type) =>
+    r.ok && (r.headers.get("content-type") || "").includes(type);
   for (let i = 0; i < tries; i++) {
     try {
       const oks = await Promise.all([
         ...files.map(f =>
           fetch(`${window.RESULTS_BASE}/${jobId}/${f}`, { cache: "no-store" })
-            .then(r => r.ok).catch(() => false)),
+            .then(r => okType(r, "json")).catch(() => false)),
         // HEAD the video so "Ready" never opens onto a broken player
         fetch(`${window.RESULTS_BASE}/${jobId}/overlay.mp4`,
               { method: "HEAD", cache: "no-store" })
-          .then(r => r.ok).catch(() => false),
+          .then(r => okType(r, "video")).catch(() => false),
       ]);
       if (oks.every(Boolean)) { libSetStatus(jobId, "ready"); return; }
     } catch (e) { /* keep polling */ }
@@ -642,9 +647,13 @@ class Replay3D {
     ctx.fillStyle = "#10231a";
     ctx.fillRect(0, 0, this.w, this.h);
 
-    // ground grid (square at the lowest point of frame 0)
-    const groundY = this.center[1] + this.radius * 0.02 +
-      Math.max(...this.data.frames[0].map(p => p[1] - this.center[1]));
+    // ground grid: grounded replays declare the floor exactly (data y=0 =
+    // leveled stance line, y-down); legacy assets fall back to the lowest
+    // point of frame 0
+    const groundY = this.data.grounded === true
+      ? (typeof this.data.floor_y === "number" ? this.data.floor_y : 0)
+      : this.center[1] + this.radius * 0.02 +
+        Math.max(...this.data.frames[0].map(p => p[1] - this.center[1]));
     ctx.strokeStyle = "rgba(127,227,172,.14)";
     ctx.lineWidth = 1;
     const G = this.radius * 0.9, N = 6;
@@ -697,6 +706,7 @@ async function init() {
   Chat.init({
     stream: $("#chat-stream"), input: $("#chat-q"), send: $("#chat-send"),
     compare: $("#chat-compare"), active: $("#chat-active"), mode: $("#chat-mode"),
+    mic: $("#chat-mic"), voice: $("#chat-voice"), voicePick: $("#chat-voice-pick"),
     chips: [...document.querySelectorAll("#view-chat .chip-btn")],
   });
 

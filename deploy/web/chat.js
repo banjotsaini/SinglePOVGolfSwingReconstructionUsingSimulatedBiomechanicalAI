@@ -285,6 +285,123 @@ const Chat = (() => {
     return res;
   }
 
+  /* ====================== voice (Web Speech API) ======================
+   * Dictation: SpeechRecognition fills the input with live interim text; the
+   * user reviews and sends (no auto-send — a mis-transcription would put the
+   * wrong question to the grounded coach). Spoken replies: speechSynthesis
+   * reads each coach answer while the header toggle is on. Both are
+   * frontend-only, so they work identically in offline-mock and live modes.
+   */
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const TTS = "speechSynthesis" in window;
+  let rec = null, recOn = false, speakOn = false, voice = null;
+
+  /* Rank voices by how human they sound: Edge's neural "Natural" set and
+   * Chrome's Google server voices are near-human; Safari's enhanced/Siri
+   * voices are good; the legacy Windows SAPI set (David/Mark/Zira) is the
+   * robotic last resort. The header dropdown lets the user override the
+   * default; the choice is remembered in localStorage. */
+  const VOICE_LS = "mc_chat_voice";
+  function rankedVoices() {
+    const vs = speechSynthesis.getVoices().filter(v => /^en([-_]|$)/i.test(v.lang));
+    const score = v => {
+      const n = v.name.toLowerCase(); let s = 0;
+      if (/natural|neural/.test(n)) s += 8;
+      if (/google/.test(n)) s += 6;
+      if (/premium|enhanced|siri/.test(n)) s += 5;
+      if (/online/.test(n)) s += 3;
+      if (/aria|jenny|ava|emma|andrew|samantha/.test(n)) s += 2;  // pick of each vendor's set
+      if (!v.localService) s += 1;                                // server voices sound better
+      if (/^en[-_]us/i.test(v.lang)) s += 1;
+      if (/david|espeak|compact/.test(n)) s -= 3;                 // stiffest of the legacy set
+      if (/zira/.test(n)) s -= 2;
+      return s;
+    };
+    return vs.sort((a, b) => score(b) - score(a));
+  }
+  function pickVoice() {
+    const vs = rankedVoices();
+    const saved = localStorage.getItem(VOICE_LS);
+    return vs.find(v => v.name === saved) || vs[0] || null;
+  }
+  const shortName = n => n.replace(/^(Microsoft|Google|Apple)\s+/i, "")
+    .replace(/\s+-\s+English\b.*$/i, "").replace(/\s+English\b.*$/i, "").trim();
+  function fillVoicePick() {
+    if (!dom.voicePick) return;
+    const vs = rankedVoices();
+    dom.voicePick.hidden = vs.length < 2;
+    dom.voicePick.innerHTML = "";
+    vs.forEach(v => {
+      const o = document.createElement("option");
+      o.value = v.name; o.textContent = shortName(v.name);
+      dom.voicePick.append(o);
+    });
+    if (voice) dom.voicePick.value = voice.name;
+  }
+
+  function speak(text, force) {
+    if ((!speakOn && !force) || !TTS || !text) return;
+    speechSynthesis.cancel();
+    // one utterance per line: bullets get a natural pause, and short utterances
+    // dodge Chrome's habit of cutting speech off around the 15-second mark
+    text.split("\n")
+      .map(l => l.replace(/^[•\-*]\s+/, "")            // list markers
+                 .replace(/\*\*?([^*]+)\*\*?/g, "$1")  // markdown emphasis (live backend uses it)
+                 .replace(/`([^`]+)`/g, "$1").trim())
+      .filter(Boolean).forEach(line => {
+      const u = new SpeechSynthesisUtterance(line);
+      if (voice) u.voice = voice;
+      u.rate = 1.02;
+      speechSynthesis.speak(u);
+    });
+  }
+  const hush = () => { if (TTS) speechSynthesis.cancel(); };
+
+  function initVoiceOut() {
+    if (!dom.voice) return;
+    if (!TTS) { dom.voice.hidden = true; return; }
+    voice = pickVoice(); fillVoicePick();
+    speechSynthesis.addEventListener("voiceschanged", () => { voice = pickVoice(); fillVoicePick(); });
+    if (dom.voicePick) dom.voicePick.addEventListener("change", () => {
+      localStorage.setItem(VOICE_LS, dom.voicePick.value);
+      voice = pickVoice();
+      speak("Hi — this is how your coach will sound.", true);   // audition even if replies are off
+    });
+    dom.voice.addEventListener("click", () => {
+      speakOn = !speakOn;
+      dom.voice.setAttribute("aria-pressed", String(speakOn));
+      dom.voice.textContent = speakOn ? "🔊 Voice replies: on" : "🔊 Voice replies: off";
+      if (!speakOn) hush();
+      else speak("Voice replies are on.");
+    });
+  }
+
+  function initDictation() {
+    if (!dom.mic) return;
+    if (!SR) { dom.mic.hidden = true; return; }   // e.g. Firefox
+    rec = new SR();
+    rec.lang = "en-US"; rec.interimResults = true; rec.continuous = false;
+    const stopUI = () => { recOn = false; dom.mic.classList.remove("rec"); };
+    rec.onresult = e => {
+      let t = ""; for (const r of e.results) t += r[0].transcript;
+      dom.input.value = t;
+    };
+    rec.onend = () => { stopUI(); if (dom.input.value.trim()) dom.input.focus(); };
+    rec.onerror = e => {
+      stopUI();
+      if (e.error === "not-allowed" || e.error === "service-not-allowed") {
+        dom.input.placeholder = "Microphone blocked — allow mic access to ask by voice";
+        setTimeout(() => { dom.input.placeholder = "Ask about this swing…"; }, 4000);
+      }
+    };
+    dom.mic.addEventListener("click", () => {
+      if (recOn) { rec.stop(); return; }
+      hush();                                     // don't transcribe our own TTS
+      dom.input.value = "";
+      try { rec.start(); recOn = true; dom.mic.classList.add("rec"); } catch (e) { stopUI(); }
+    });
+  }
+
   /* ================================ UI ================================ */
   const el = (t, c, txt) => { const e = document.createElement(t); if (c) e.className = c; if (txt != null) e.textContent = txt; return e; };
   const scroll = () => { dom.stream.scrollTop = dom.stream.scrollHeight; };
@@ -315,8 +432,10 @@ const Chat = (() => {
     gd.textContent = g.grounded ? "Grounded in fetched data"
       : `Grounding check: ${vtxt || "a claim couldn't be verified against the fetched data"}`;
     m.append(document.createElement("br"), gd); w.append(m); dom.stream.append(w); scroll();
+    speak(res.answer);
   }
   async function ask(q) {
+    hush();
     addUser(q); const typing = addTyping();
     let res;
     try { res = await askChat(q); }
@@ -345,11 +464,13 @@ const Chat = (() => {
       (dom.chips || []).forEach(c => c.addEventListener("click", () => ask(c.textContent.trim())));
       if (dom.compare) dom.compare.addEventListener("change", e => { COMPARE = e.target.value || null; });
       if (dom.mode) dom.mode.textContent = window.API_BASE ? "live · real coach" : "offline preview · in-page coach";
+      initVoiceOut(); initDictation();
     },
     setLibrary(clips, metricsByClipId) {
       for (const clip of clips) { const rows = (metricsByClipId[clip.id] || {}).metrics; if (rows) buildFromMetrics(clip, rows); }
     },
     activate(clipId) {
+      hush();
       ACTIVE = String(clipId); COMPARE = null;
       if (!CLIPDATA[ACTIVE]) return;
       if (dom.stream) dom.stream.innerHTML = "";
