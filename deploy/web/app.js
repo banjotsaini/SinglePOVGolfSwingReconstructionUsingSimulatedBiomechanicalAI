@@ -57,6 +57,7 @@ const state = {
   selectedId: null,
   mode: "demo",       // "demo" (real pre-rendered clip) | "upload" (prototype)
   upload: null,       // { name, url } for a prototype uploaded file
+  pendingJob: null,   // job id of the upload currently processing in the cloud
   uploads: [],        // this session's prototype uploads (for the dashboard)
   bundle: null,       // loaded clip bundle for the results screen
   bundlePromise: null,
@@ -209,13 +210,38 @@ async function startUpload() {
     const up = await fetch(slot.url, { method: "POST", body: form });
     if (!up.ok) throw new Error("s3 http " + up.status);
     // 3 · remember the job in the library; the cloud pipeline runs async
+    state.pendingJob = slot.job_id;
     libAdd({ jobId: slot.job_id, name: upload.name,
              date: new Date().toISOString(), status: "processing" });
     if (window.RESULTS_BASE) pollJob(slot.job_id);
   } catch (e) {
     console.warn("upload failed:", e);
+    state.pendingJob = null;
     libAdd({ jobId: "local-" + Date.now(), name: upload.name,
              date: new Date().toISOString(), status: "upload failed" });
+    setUploadBanner("failed");
+  }
+}
+
+/* ---- the results-screen banner doubles as the upload progress line ---- */
+function setUploadBanner(phase, jobId) {
+  const text = $("#results-banner-text"), btn = $("#btn-view-real");
+  if (!text || !btn) return;
+  if (phase === "ready") {
+    text.innerHTML = "<strong>Your real analysis is ready.</strong> The page below is still " +
+      "the illustrative sample — open yours to see the measured result.";
+    btn.hidden = false;
+    btn.onclick = () => { btn.hidden = true; openJob(jobId); };
+  } else if (phase === "failed") {
+    text.innerHTML = "<strong>Upload failed.</strong> The result below is an illustrative " +
+      "sample only — please check your connection and try the upload again.";
+    btn.hidden = true;
+  } else {  // processing (default copy lives in index.html)
+    text.innerHTML = "<strong>Analyzing your swing in the cloud</strong> — this usually takes " +
+      "2–3 minutes. Below is an illustrative sample result in the meantime; a " +
+      "<strong>View your real analysis</strong> button will appear here when yours is ready " +
+      "(it also lands under “Your swings”).";
+    btn.hidden = true;
   }
 }
 
@@ -240,7 +266,13 @@ async function pollJob(jobId, tries = 40, delayMs = 15000) {
               { method: "HEAD", cache: "no-store" })
           .then(okReal).catch(() => false),
       ]);
-      if (oks.every(Boolean)) { libSetStatus(jobId, "ready"); return; }
+      if (oks.every(Boolean)) {
+        libSetStatus(jobId, "ready");
+        // the uploader is (probably) still looking at the illustrative page —
+        // surface the real result right where they are
+        if (state.pendingJob === jobId) setUploadBanner("ready", jobId);
+        return;
+      }
     } catch (e) { /* keep polling */ }
     await new Promise(res => setTimeout(res, delayMs));
   }
@@ -297,6 +329,11 @@ function renderResults() {
   if (isUpload) {
     $("#results-clip-label").textContent = `Your upload · ${state.upload.name}`;
     $("#results-headline").textContent = "Illustrative result (prototype)";
+    // banner reflects THIS upload's cloud job: ready (already?) / processing / failed
+    const job = state.pendingJob && libLoad().find(i => i.jobId === state.pendingJob);
+    setUploadBanner(job && job.status === "ready" ? "ready"
+      : job && job.status === "upload failed" ? "failed" : "processing",
+      state.pendingJob);
   } else if (isJob) {
     $("#results-clip-label").textContent = "Your swing · analyzed by the real pipeline";
     $("#results-headline").textContent = explanation.headline;
@@ -306,6 +343,7 @@ function renderResults() {
   }
 
   renderPlain(explanation);
+  initListen(explanation, isUpload ? "upload-preview" : String(state.selectedId));
   renderNumbers(metrics.metrics);
   populateNumbersCompare();
   // chat's grounded backend only knows the curated demo clips today
@@ -468,6 +506,47 @@ function renderPlain(explanation) {
       <div class="chips">${chips}</div>`;
     el.appendChild(div);
   }
+}
+
+/* "Listen" — the swing explanation read by the ElevenLabs coach voice
+ * (POST /tts, mp3 via CloudFront; the server caches by content hash so
+ * replaying a swing's narration is instant). Live backend only. */
+let listenAudio = null;
+function initListen(explanation, swingId) {
+  const btn = $("#btn-listen");
+  if (!btn) return;
+  btn.hidden = !window.API_BASE;
+  if (btn.hidden) return;
+  if (listenAudio) { listenAudio.pause(); listenAudio = null; }
+  btn.textContent = "🔊 Listen";
+  btn.disabled = false;
+  btn.onclick = async () => {
+    if (listenAudio && !listenAudio.paused) {
+      listenAudio.pause(); listenAudio = null;
+      btn.textContent = "🔊 Listen";
+      return;
+    }
+    btn.disabled = true; btn.textContent = "Preparing…";
+    try {
+      const narration = [explanation.headline,
+        ...explanation.sections.map(s => `${s.title}. ${s.body}`)]
+        .filter(Boolean).join("\n").slice(0, 2400);
+      const r = await fetch(`${window.API_BASE}/tts`, {
+        method: "POST", headers: { "content-type": "application/json" },
+        body: JSON.stringify({ narration, swing_id: swingId }),
+      });
+      if (!r.ok) throw new Error("tts " + r.status);
+      const d = await r.json();
+      if (!d.audio_url) throw new Error("tts: no audio_url");
+      listenAudio = new Audio(d.audio_url);
+      listenAudio.onended = () => { listenAudio = null; btn.textContent = "🔊 Listen"; };
+      await listenAudio.play();
+      btn.textContent = "⏹ Stop";
+    } catch (e) {
+      btn.textContent = "Audio unavailable";
+      setTimeout(() => { btn.textContent = "🔊 Listen"; }, 2500);
+    } finally { btn.disabled = false; }
+  };
 }
 
 function renderNumbers(metrics, cmp = null) {
@@ -778,6 +857,7 @@ async function openJob(jobId) {
   const seq = ++navSeq;
   try {
     state.mode = "demo";                       // real results — no prototype banner
+    if (state.pendingJob === jobId) state.pendingJob = null;
     state.selectedId = jobId;
     state.upload = null;
     setHash(null);                             // job ids aren't hash-routable (yet)

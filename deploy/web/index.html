@@ -119,8 +119,12 @@
 <!-- ============================= 3 · RESULTS ============================ -->
 <section id="screen-results" class="screen" hidden>
   <div id="results-banner" class="banner" hidden>
-    <strong>Prototype.</strong> No real 3D analysis ran on your uploaded video — the metrics,
-    3D replay, and coach below are illustrative demo values.
+    <span id="results-banner-text"><strong>Analyzing your swing in the cloud</strong> — this
+    usually takes 2–3 minutes. Below is an illustrative sample result in the meantime; a
+    <strong>View your real analysis</strong> button will appear here when yours is ready
+    (it also lands under “Your swings”).</span>
+    <button type="button" id="btn-view-real" class="btn-primary small" hidden
+            style="margin-left:10px">View your real analysis</button>
   </div>
 
   <div class="results-head">
@@ -128,6 +132,8 @@
       <p class="results-clip-label" id="results-clip-label"></p>
       <h2 id="results-headline"></h2>
       <div class="results-actions">
+        <button id="btn-listen" class="btn-ghost small" type="button" hidden
+          title="Hear this feedback read by the coach">🔊 Listen</button>
         <button id="btn-share" class="btn-ghost small" type="button" title="Copy a link to this result">Share link</button>
         <a id="btn-scorecard" class="btn-ghost small" download hidden>Download scorecard</a>
       </div>
