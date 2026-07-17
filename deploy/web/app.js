@@ -185,42 +185,91 @@ async function startUpload() {
   const upload = state.upload;     // snapshot: state.upload can change mid-await
   if (!upload) return;
   state.mode = "upload";
-  state.selectedId = SAMPLE_ID;   // illustrative results while upload processing rolls out
-  setHash(null);
   if (!state.uploads.some(u => u.name === upload.name)) {
     state.uploads.push({ name: upload.name });
     renderDashboard();
   }
-  runAnalyze();                    // animation + illustrative bundle load in parallel
 
-  if (!window.UPLOAD_URL) return;  // offline preview: nothing to upload to
-  try {
-    // 1 · ask for a presigned slot
-    const pr = await fetch(window.UPLOAD_URL, {
-      method: "POST", headers: { "content-type": "application/json" },
-      body: JSON.stringify({ filename: upload.name,
-                             content_type: upload.file.type || "video/mp4" }),
-    });
-    if (!pr.ok) throw new Error("presign http " + pr.status);
-    const slot = await pr.json();
-    // 2 · browser -> S3, direct
-    const form = new FormData();
-    for (const [k, v] of Object.entries(slot.fields)) form.append(k, v);
-    form.append("file", upload.file);
-    const up = await fetch(slot.url, { method: "POST", body: form });
-    if (!up.ok) throw new Error("s3 http " + up.status);
-    // 3 · remember the job in the library; the cloud pipeline runs async
-    state.pendingJob = slot.job_id;
-    libAdd({ jobId: slot.job_id, name: upload.name,
-             date: new Date().toISOString(), status: "processing" });
-    if (window.RESULTS_BASE) pollJob(slot.job_id);
-  } catch (e) {
-    console.warn("upload failed:", e);
-    state.pendingJob = null;
-    libAdd({ jobId: "local-" + Date.now(), name: upload.name,
-             date: new Date().toISOString(), status: "upload failed" });
-    setUploadBanner("failed");
+  // ---- REAL path: upload -> cloud pipeline -> auto-open the processed result.
+  // The illustrative sample is only the fallback (offline preview, upload
+  // failure, or a pipeline that outlasts our patience).
+  if (window.UPLOAD_URL && window.RESULTS_BASE) {
+    const seq = ++navSeq;
+    startCloudAnalyzeUI(seq);
+    try {
+      // 1 · ask for a presigned slot
+      const pr = await fetch(window.UPLOAD_URL, {
+        method: "POST", headers: { "content-type": "application/json" },
+        body: JSON.stringify({ filename: upload.name,
+                               content_type: upload.file.type || "video/mp4" }),
+      });
+      if (!pr.ok) throw new Error("presign http " + pr.status);
+      const slot = await pr.json();
+      // 2 · browser -> S3, direct
+      const form = new FormData();
+      for (const [k, v] of Object.entries(slot.fields)) form.append(k, v);
+      form.append("file", upload.file);
+      const up = await fetch(slot.url, { method: "POST", body: form });
+      if (!up.ok) throw new Error("s3 http " + up.status);
+      // 3 · library entry + wait for the pipeline (~2-3 min; poll up to 8)
+      state.pendingJob = slot.job_id;
+      libAdd({ jobId: slot.job_id, name: upload.name,
+               date: new Date().toISOString(), status: "processing" });
+      const ready = await pollJob(slot.job_id, 96, 5000);
+      if (seq !== navSeq) return;              // user navigated away meanwhile
+      if (ready) { openJob(slot.job_id); return; }
+      showIllustrativeFallback();              // still grinding — sample + banner
+      return;
+    } catch (e) {
+      console.warn("upload failed:", e);
+      const failId = "local-" + Date.now();
+      state.pendingJob = failId;               // renderResults -> "failed" banner
+      libAdd({ jobId: failId, name: upload.name,
+               date: new Date().toISOString(), status: "upload failed" });
+      if (seq === navSeq) showIllustrativeFallback();
+      return;
+    }
   }
+
+  // ---- offline preview: no backend wired, illustrative only
+  showIllustrativeFallback();
+}
+
+/* the pre-cloud behavior: illustrative sample + honesty banner */
+function showIllustrativeFallback() {
+  state.mode = "upload";
+  state.selectedId = SAMPLE_ID;
+  setHash(null);
+  runAnalyze();
+}
+
+/* analyze screen paced for the REAL pipeline: steps advance slowly, the last
+ * one keeps pulsing until the result opens (or the wait falls back). */
+function startCloudAnalyzeUI(seq) {
+  goto("analyze");
+  const note = $("#analyze-cloud-note"), elapsed = $("#analyze-elapsed");
+  if (note) note.hidden = false;
+  const items = [...document.querySelectorAll("#analyze-steps li")];
+  items.forEach(li => li.classList.remove("doing", "done"));
+  const t0 = Date.now();
+  const timer = setInterval(() => {
+    if (seq !== navSeq) { clearInterval(timer); if (note) note.hidden = true; return; }
+    if (elapsed) {
+      const s = Math.round((Date.now() - t0) / 1000);
+      elapsed.textContent = `(${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")} elapsed)`;
+    }
+  }, 1000);
+  let i = 0;
+  const tick = () => {
+    if (seq !== navSeq) return;
+    if (i > 0) items[i - 1].classList.replace("doing", "done");
+    if (i < items.length) {
+      items[i].classList.add("doing");
+      i += 1;
+      if (i < items.length) setTimeout(tick, 15000);   // ~90s across 7 real steps
+    }
+  };
+  tick();
 }
 
 /* ---- the results-screen banner doubles as the upload progress line ---- */
@@ -268,15 +317,16 @@ async function pollJob(jobId, tries = 40, delayMs = 15000) {
       ]);
       if (oks.every(Boolean)) {
         libSetStatus(jobId, "ready");
-        // the uploader is (probably) still looking at the illustrative page —
-        // surface the real result right where they are
+        // if the uploader ended up on the illustrative fallback page, surface
+        // the real result right where they are
         if (state.pendingJob === jobId) setUploadBanner("ready", jobId);
-        return;
+        return true;
       }
     } catch (e) { /* keep polling */ }
     await new Promise(res => setTimeout(res, delayMs));
   }
   libSetStatus(jobId, "processing (check back)");
+  return false;
 }
 
 /* ========================== 2 · analyze screen ========================== */
