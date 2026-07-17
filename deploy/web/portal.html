@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0c5c3a">
+<title>MotionCaddie — your swing, measured</title>
+<link rel="stylesheet" href="styles.css">
+<script type="importmap">{ "imports": { "three": "./vendor/three.module.js" } }</script>
+<style>
+/* portal-only touches; everything else comes from the shared styles.css */
+.portal-badge { font-size:.72rem; letter-spacing:.06em; text-transform:uppercase;
+  opacity:.75; border:1px solid currentColor; border-radius:999px; padding:2px 8px;
+  margin-left:8px; vertical-align:middle; }
+.dev-card code { word-break:break-all; }
+.dev-card pre { overflow-x:auto; background:rgba(0,0,0,.06); border-radius:8px;
+  padding:10px 12px; font-size:.78rem; line-height:1.5; }
+.dev-endpoints { width:100%; border-collapse:collapse; font-size:.85rem; }
+.dev-endpoints td { padding:5px 8px 5px 0; vertical-align:top; }
+.dev-endpoints td:first-child { white-space:nowrap; font-family:monospace; }
+.upload-status .err { color:#a33; }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <span class="brand-mark" aria-hidden="true">⛳</span>
+    <span class="brand-name">MotionCaddie</span>
+  </div>
+  <nav class="progress-nav" aria-label="Progress">
+    <span class="pstep" data-step="pick"><span class="pnum">1</span> Upload</span>
+    <span class="psep"></span>
+    <span class="pstep" data-step="analyze"><span class="pnum">2</span> Analyze</span>
+    <span class="psep"></span>
+    <span class="pstep" data-step="results"><span class="pnum">3</span> Results</span>
+  </nav>
+  <div class="account-area" id="account-area"><!-- sign in / account, injected by auth.js --></div>
+</header>
+
+<main>
+
+<!-- ============================== 1 · HOME ============================== -->
+<section id="screen-pick" class="screen">
+  <div class="hero">
+    <h1>Your swing, measured.</h1>
+    <p class="hero-sub" id="hero-sub">Upload one phone video. MotionCaddie runs the full 3D
+    pipeline in the cloud and returns a stabilized pose overlay, a 3D replay you can spin,
+    tour-reference metrics, and a coach you can ask about any of it.</p>
+    <div class="hero-actions">
+      <button id="btn-upload" class="btn-primary btn-lg" type="button">Upload swing video</button>
+      <button id="btn-record" class="btn-secondary btn-lg" type="button">Record now</button>
+      <input id="file-input" type="file" accept="video/*" hidden>
+      <input id="camera-input" type="file" accept="video/*" capture="environment" hidden>
+    </div>
+    <p class="upload-hint muted small" id="upload-hint">MP4 or MOV, up to 200&nbsp;MB. Analysis
+    runs on the real cloud pipeline and usually takes 2–3 minutes.</p>
+    <div id="upload-status" class="upload-status" hidden></div>
+  </div>
+
+  <!-- your swings (persistent library — the product surface) -->
+  <section id="library" class="dashboard card" hidden aria-label="Your swings">
+    <div class="dash-head">
+      <h2 class="dash-title">Your swings</h2>
+      <p class="muted small">Analyses from this browser. Processing happens in the cloud —
+      you can leave and come back; links to a result can be shared.</p>
+    </div>
+    <div id="library-cards" class="dash-swings"></div>
+  </section>
+
+  <!-- capture guidance -->
+  <section class="tips">
+    <div class="tip card">
+      <span class="tip-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h16"/><path d="M6 20V8l6-4 6 4v12"/><path d="M12 4v16"/></svg>
+      </span>
+      <h3>One clean angle</h3>
+      <p>Face-on or down-the-line, camera square to you.</p>
+    </div>
+    <div class="tip card">
+      <span class="tip-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="2.4"/><path d="M12 8v7"/><path d="M8 11l4-1 4 1"/><path d="M9 21l3-6 3 6"/></svg>
+      </span>
+      <h3>Your whole body in frame</h3>
+      <p>Head to feet, club included, for the full swing.</p>
+    </div>
+    <div class="tip card">
+      <span class="tip-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5L19 19M19 5l-1.5 1.5M6.5 17.5L5 19"/></svg>
+      </span>
+      <h3>Good, even light</h3>
+      <p>Daylight or bright range light — avoid strong backlight.</p>
+    </div>
+  </section>
+
+  <!-- developer quickstart: the same API this page uses -->
+  <section class="dashboard card dev-card" aria-label="For developers">
+    <div class="dash-head">
+      <h2 class="dash-title">For developers <span class="portal-badge">API</span></h2>
+      <p class="muted small">Everything on this page runs on a public HTTP API — the same
+      endpoints are open for integration. Upload a video, poll for artifacts, done.</p>
+    </div>
+    <table class="dev-endpoints">
+      <tr><td>POST /upload-url</td><td>Request a presigned S3 upload slot →
+        <code>{job_id, url, fields}</code></td></tr>
+      <tr><td>POST (S3 form)</td><td>Send the video bytes straight to storage using
+        <code>url + fields</code></td></tr>
+      <tr><td>GET results</td><td><code>/03_outputs/&lt;job_id&gt;/metrics.json ·
+        explanation.json · replay_3d.json · overlay.mp4</code> appear when analysis
+        completes (~2–3&nbsp;min)</td></tr>
+    </table>
+    <pre id="dev-curl"><!-- filled by portal.js with the live endpoints --></pre>
+    <p class="muted small">Rate limits, API keys and a job-status endpoint are on the
+    roadmap; today the API is open and unauthenticated.</p>
+  </section>
+</section>
+
+<!-- ============================= 2 · ANALYZE ============================ -->
+<section id="screen-analyze" class="screen" hidden>
+  <div class="analyze-panel card">
+    <h2 id="analyze-title">Analyzing your swing</h2>
+    <ol id="analyze-steps" class="analyze-steps">
+      <li data-step="1"><span class="check"></span><div><strong>Reading the video</strong><span>Pulling frames from the clip</span></div></li>
+      <li data-step="2"><span class="check"></span><div><strong>Finding the body</strong><span>Placing 2D markers on every joint, every frame</span></div></li>
+      <li data-step="3"><span class="check"></span><div><strong>Steadying the motion</strong><span>Smoothing jitter between frames</span></div></li>
+      <li data-step="4"><span class="check"></span><div><strong>Splitting the swing</strong><span>Detecting address, top, impact and follow-through</span></div></li>
+      <li data-step="5"><span class="check"></span><div><strong>Adding depth</strong><span>Estimating the motion a flat video can't show</span></div></li>
+      <li data-step="6"><span class="check"></span><div><strong>Building the replay</strong><span>Rendering a 3D skeleton</span></div></li>
+      <li data-step="7"><span class="check"></span><div><strong>Reading the swing</strong><span>Translating the numbers into plain English</span></div></li>
+    </ol>
+    <p id="analyze-cloud-note" class="muted small" hidden>Running the real 3D pipeline in the
+    cloud — this usually takes 2–3 minutes. Your result opens automatically when it's ready,
+    and also lands under “Your swings” if you leave this page.
+    <span id="analyze-elapsed"></span></p>
+  </div>
+</section>
+
+<!-- ============================= 3 · RESULTS ============================ -->
+<section id="screen-results" class="screen" hidden>
+  <div id="results-banner" class="banner" hidden>
+    <span id="results-banner-text"></span>
+  </div>
+
+  <div class="results-head">
+    <div>
+      <p class="results-clip-label" id="results-clip-label"></p>
+      <h2 id="results-headline"></h2>
+      <div class="results-actions">
+        <button id="btn-listen" class="btn-ghost small" type="button" hidden
+          title="Hear this feedback read by the coach">🔊 Listen</button>
+        <button id="btn-share" class="btn-ghost small" type="button" title="Copy a link to this result">Share link</button>
+      </div>
+    </div>
+    <div class="view-toggle" role="tablist">
+      <button id="tab-plain" class="tab active" role="tab">Plain English</button>
+      <button id="tab-numbers" class="tab" role="tab">The numbers</button>
+      <button id="tab-chat" class="tab" role="tab">Ask the coach</button>
+    </div>
+  </div>
+
+  <div class="results-grid">
+    <div class="results-main">
+      <div id="view-plain" class="card view-panel"><!-- sections injected --></div>
+      <div id="view-numbers" class="card view-panel" hidden>
+        <div class="numbers-legend">
+          <span><i class="dot dot-in"></i> in tour range</span>
+          <span><i class="dot dot-watch"></i> worth a look</span>
+          <span><i class="dot dot-low"></i> low confidence</span>
+          <label class="numbers-compare">Compare with
+            <select id="numbers-compare"><option value="">— none —</option></select>
+          </label>
+        </div>
+        <div id="metrics-table"><!-- metric rows injected --></div>
+      </div>
+      <div id="view-chat" class="card view-panel" hidden>
+        <div class="chat-ctx">
+          <span class="chat-active" id="chat-active"></span>
+          <label class="chat-compare">Compare with
+            <select id="chat-compare"><option value="">— none —</option></select>
+          </label>
+          <button id="chat-voice" class="voice-toggle" type="button" aria-pressed="false"
+            title="Read the coach's replies aloud">🔊 Voice replies: off</button>
+          <select id="chat-voice-pick" class="voice-pick" title="Choose the reply voice"
+            aria-label="Reply voice" hidden></select>
+          <span class="chat-mode" id="chat-mode"></span>
+        </div>
+        <div id="chat-stream" class="chat-stream"><!-- turns injected --></div>
+        <div class="chat-suggest">
+          <button type="button" class="chip-btn">What were the biggest takeaways?</button>
+          <button type="button" class="chip-btn">How was my tempo?</button>
+          <button type="button" class="chip-btn">Did anything stand out?</button>
+        </div>
+        <div class="chat-input">
+          <input id="chat-q" type="text" placeholder="Ask about this swing…" autocomplete="off">
+          <button id="chat-mic" class="btn-mic" type="button" aria-label="Ask by voice" title="Ask by voice">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor"
+              stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <rect x="9" y="2" width="6" height="12" rx="3"/>
+              <path d="M5 10a7 7 0 0 0 14 0"/><line x1="12" y1="19" x2="12" y2="23"/>
+              <line x1="8" y1="23" x2="16" y2="23"/>
+            </svg>
+          </button>
+          <button id="chat-send" class="btn-primary">Send</button>
+        </div>
+        <p class="muted small chat-foot">Answers are grounded in this swing's measured data —
+        the coach describes what was measured against the tour reference and never
+        prescribes fixes.</p>
+      </div>
+    </div>
+
+    <aside class="results-media">
+      <div class="card media-card">
+        <h3>Pose overlay</h3>
+        <video id="overlay-video" controls muted loop playsinline></video>
+        <div id="event-markers" class="event-markers" hidden aria-label="Detected swing events"></div>
+      </div>
+      <div class="card media-card">
+        <h3>3D replay <span class="muted small">— drag to spin</span></h3>
+        <canvas id="replay-canvas" width="480" height="420"></canvas>
+        <label class="sync-toggle small"><input type="checkbox" id="replay-sync"> Lock to video</label>
+        <div class="replay-controls">
+          <button id="replay-play" class="btn-ghost" type="button" title="Play / pause" aria-label="Play or pause">
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
+          </button>
+          <input id="replay-scrub" type="range" min="0" max="0" value="0" step="1">
+          <span id="replay-frame" class="muted small">0 / 0</span>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <div id="recent-rail" class="recent-rail" hidden aria-label="Your other swings">
+    <span class="rail-label muted small">Your other swings:</span>
+    <div id="rail-cards" class="rail-cards"></div>
+  </div>
+
+  <div class="results-footer">
+    <button id="btn-restart" class="btn-secondary" type="button">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="btn-ico"><path d="M15 18l-6-6 6-6"/></svg>
+      Analyze another swing
+    </button>
+    <p class="muted small">MotionCaddie describes what was measured against the tour reference —
+    it never prescribes fixes.</p>
+  </div>
+</section>
+
+</main>
+
+<!-- ============================ account modals ============================ -->
+<div class="modal-backdrop" id="modal-signin" hidden role="dialog" aria-modal="true" aria-labelledby="signin-title">
+  <div class="modal card">
+    <div class="modal-head">
+      <h2 id="signin-title">Sign in</h2>
+      <button class="modal-x" type="button" data-close-modal aria-label="Close">×</button>
+    </div>
+    <p class="consent-microcopy modal-micro"></p>
+    <form id="form-signin" novalidate>
+      <label class="field"><span>Email-like username</span>
+        <input id="si-username" type="text" autocomplete="username" placeholder="you@example.com" required></label>
+      <label class="field"><span>Password <em>(demo only — not stored)</em></span>
+        <input id="si-password" type="password" autocomplete="current-password" placeholder="••••••••"></label>
+      <button type="submit" class="btn-primary btn-block">Sign in</button>
+      <p class="switch-line small muted">No account yet?
+        <button type="button" class="btn-text" id="switch-to-create">Create one</button></p>
+    </form>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="modal-create" hidden role="dialog" aria-modal="true" aria-labelledby="create-title">
+  <div class="modal card">
+    <div class="modal-head">
+      <h2 id="create-title">Create account</h2>
+      <button class="modal-x" type="button" data-close-modal aria-label="Close">×</button>
+    </div>
+    <p class="consent-microcopy modal-micro"></p>
+    <form id="form-create" novalidate>
+      <label class="field"><span>Display name</span>
+        <input id="ca-name" type="text" autocomplete="name" placeholder="Alex Morgan"></label>
+      <label class="field"><span>Email-like username</span>
+        <input id="ca-username" type="text" autocomplete="username" placeholder="alex@example.com" required></label>
+      <label class="field"><span>Password <em>(demo only — not stored)</em></span>
+        <input id="ca-password" type="password" autocomplete="new-password" placeholder="••••••••"></label>
+
+      <div class="consent">
+        <label class="consent-row">
+          <input type="checkbox" id="ca-consent-analysis">
+          <span><span id="consent-analysis-label"></span>
+            <em class="consent-note" id="consent-analysis-note"></em></span>
+        </label>
+        <label class="consent-row">
+          <input type="checkbox" id="ca-consent-model">
+          <span><span id="consent-model-label"></span>
+            <em class="consent-note" id="consent-model-note"></em></span>
+        </label>
+        <p class="consent-summary small muted">
+          <span id="consent-summary"></span>
+          <a class="privacy-link" href="privacy.html" target="_blank" rel="noopener"></a>.
+        </p>
+      </div>
+
+      <button type="submit" class="btn-primary btn-block" id="ca-submit" disabled>Create account</button>
+      <p class="switch-line small muted">Already have an account?
+        <button type="button" class="btn-text" id="switch-to-signin">Sign in</button></p>
+    </form>
+  </div>
+</div>
+
+<script type="module" src="replay3d.js"></script>
+<script src="config.js"></script>
+<script src="auth.js"></script>
+<script src="chat.js"></script>
+<script src="portal.js"></script>
+</body>
+</html>
