@@ -107,11 +107,13 @@
         <code>url + fields</code></td></tr>
       <tr><td>GET results</td><td><code>/03_outputs/&lt;job_id&gt;/metrics.json ·
         explanation.json · replay_3d.json · overlay.mp4</code> appear when analysis
-        completes (~2–3&nbsp;min)</td></tr>
+        completes (~2–3&nbsp;min). <strong>Private during the pilot</strong> — pass the
+        dev access code as <code>?t=&lt;code&gt;</code> (or the <code>mc_dev</code>
+        cookie).</td></tr>
     </table>
     <pre id="dev-curl"><!-- filled by portal.js with the live endpoints --></pre>
-    <p class="muted small">Rate limits, API keys and a job-status endpoint are on the
-    roadmap; today the API is open and unauthenticated.</p>
+    <p class="muted small">Results are edge-gated while we pilot with real players.
+    Per-developer API keys, rate limits and a job-status endpoint are on the roadmap.</p>
   </section>
 </section>
 
@@ -257,7 +259,7 @@
     <form id="form-signin" novalidate>
       <label class="field"><span>Email-like username</span>
         <input id="si-username" type="text" autocomplete="username" placeholder="you@example.com" required></label>
-      <label class="field"><span>Password <em>(demo only — not stored)</em></span>
+      <label class="field"><span>Password <em>(dev account: your access code)</em></span>
         <input id="si-password" type="password" autocomplete="current-password" placeholder="••••••••"></label>
       <button type="submit" class="btn-primary btn-block">Sign in</button>
       <p class="switch-line small muted">No account yet?

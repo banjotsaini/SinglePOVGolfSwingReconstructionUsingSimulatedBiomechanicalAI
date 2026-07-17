@@ -104,6 +104,41 @@ function onHashChange() {
   else if (!location.hash) goto("pick");
 }
 
+/* ======================= private-pilot access gate ======================
+ * The swings analyzed here are of real people. Their results are locked at
+ * the EDGE (CloudFront mc-results-gate: 03_outputs/* + job audio need the
+ * mc_dev access cookie), and this page keeps upload/library/results behind
+ * the dev sign-in so the lock is visible, not mysterious. */
+const devOnly = () => !!(window.Auth && Auth.isDev && Auth.isDev());
+let pendingDeepLink = null;   // a #job= link seen while locked; retried on sign-in
+
+function showPilotNotice() {
+  statusBox().innerHTML =
+    `<p><strong>Private pilot.</strong> The swings analyzed here are of real people, so
+     uploads and results are limited to the dev account for now.
+     <button type="button" class="btn-text" id="pilot-signin">Sign in</button> with the
+     dev access code to continue.</p>`;
+  const b = $("#pilot-signin");
+  if (b) b.addEventListener("click", () => Auth.openSignIn());
+}
+
+/* the access code is validated by the edge, not by JS — probe it once so a
+ * wrong code locks the UI immediately instead of failing on every fetch */
+async function verifyDevAccess() {
+  if (!devOnly() || !window.RESULTS_BASE) return;
+  try {
+    const r = await fetch(`${window.RESULTS_BASE}/__access_check__`, { cache: "no-store" });
+    if (r.status !== 204) throw new Error("denied " + r.status);
+    if (pendingDeepLink) { const j = pendingDeepLink; pendingDeepLink = null; openJob(j); }
+  } catch (e) {
+    Auth.clearDevCookie();
+    renderLibrary();
+    statusBox().innerHTML =
+      `<p class="err">That access code wasn't accepted — results stay locked.
+       Check the code and sign in again.</p>`;
+  }
+}
+
 /* ============================ upload flow ============================== */
 function statusBox() { const b = $("#upload-status"); b.hidden = false; return b; }
 
@@ -252,6 +287,11 @@ function renderLibrary() {
   const items = libLoad();
   box.hidden = !items.length;
   if (!items.length) return;
+  if (!devOnly()) {
+    wrap.innerHTML = `<p class="muted small">🔒 ${items.length} analyzed swing${items.length > 1 ? "s" : ""}
+      — private during the pilot. Sign in with the dev account to view.</p>`;
+    return;
+  }
   wrap.innerHTML = items.map(it => {
     const date = new Date(it.date).toLocaleDateString();
     const ready = it.status === "ready";
@@ -308,6 +348,13 @@ async function activateChat(jobId) {
 
 async function openJob(jobId) {
   if (!window.RESULTS_BASE) return;
+  if (!devOnly()) {
+    pendingDeepLink = jobId;      // reopened automatically after dev sign-in
+    goto("pick");
+    showPilotNotice();
+    Auth.openSignIn();
+    return;
+  }
   const seq = ++navSeq;
   try {
     if (state.pendingJob === jobId) state.pendingJob = null;
@@ -725,17 +772,20 @@ curl -s -X POST ${window.API_BASE}/upload-url \\
 # 2 · send the video straight to storage (form fields, then the file)
 curl -s -X POST <url> -F key=<fields.key> ... -F file=@swing.mp4
 
-# 3 · poll for results (ready when all four exist)
-curl -sI ${window.RESULTS_BASE}/<job_id>/metrics.json`;
+# 3 · poll for results (private during the pilot — needs the dev access code)
+curl -sI "${window.RESULTS_BASE}/<job_id>/metrics.json?t=<access-code>"`;
 }
 
 function renderHeroGreeting() {
   const sub = $("#hero-sub");
   if (!sub) return;
   const u = window.Auth && Auth.isSignedIn() ? Auth.currentUser() : null;
-  if (u) {
+  if (u && devOnly()) {
     sub.textContent = `Welcome back, ${u.displayName || u.username}. Upload a swing to add ` +
       `a new analysis — everything you've measured is under “Your swings” below.`;
+  } else if (u) {
+    sub.textContent = `Hi ${u.displayName || u.username} — MotionCaddie is in a private ` +
+      `pilot with real players, so uploads and results are limited to the dev account for now.`;
   } else {
     sub.textContent = "Upload one phone video. MotionCaddie runs the full 3D pipeline in " +
       "the cloud and returns a stabilized pose overlay, a 3D replay you can spin, " +
@@ -751,8 +801,14 @@ function init() {
     chips: [...document.querySelectorAll("#view-chat .chip-btn")],
   });
 
-  $("#btn-upload").addEventListener("click", () => $("#file-input").click());
-  $("#btn-record").addEventListener("click", () => $("#camera-input").click());
+  $("#btn-upload").addEventListener("click", () => {
+    if (!devOnly()) { showPilotNotice(); Auth.openSignIn(); return; }
+    $("#file-input").click();
+  });
+  $("#btn-record").addEventListener("click", () => {
+    if (!devOnly()) { showPilotNotice(); Auth.openSignIn(); return; }
+    $("#camera-input").click();
+  });
   $("#file-input").addEventListener("change", (e) => onFileChosen(e.target.files[0]));
   $("#camera-input").addEventListener("change", (e) => onFileChosen(e.target.files[0]));
 
@@ -770,9 +826,14 @@ function init() {
   $("#tab-chat").addEventListener("click", () => showTab("chat"));
 
   if (window.Auth) Auth.init();
-  document.addEventListener("mc-auth-change", renderHeroGreeting);
+  document.addEventListener("mc-auth-change", () => {
+    renderHeroGreeting();
+    renderLibrary();
+    verifyDevAccess();            // edge-validates the code; retries deep links
+  });
   renderHeroGreeting();
   fillDevCurl();
+  verifyDevAccess();
 
   // resume any still-processing jobs from a previous visit
   if (window.RESULTS_BASE) {

@@ -69,6 +69,29 @@ const Auth = (() => {
   const PROFILE_KEY = "mc_profile";     // persisted demo account (localStorage)
   const SESSION_KEY = "mc_session";     // "1" while signed in (sessionStorage)
 
+  /* ---- dev access (REAL, edge-enforced) ----
+   * Uploaded swings are of real people, so their results (03_outputs/* and
+   * job audio) are locked at CloudFront by the mc-results-gate function: it
+   * requires an `mc_dev` cookie holding the access code. Signing in as the
+   * dev account stores the entered code in that cookie — the page never
+   * validates or embeds the code; the EDGE does. Wrong code => every private
+   * fetch 403s and the UI stays locked. */
+  const DEV_USER = "dev@motioncaddie.dev";
+  const DEV_COOKIE = "mc_dev";
+  function setDevCookie(code) {
+    document.cookie = `${DEV_COOKIE}=${encodeURIComponent(code)}; path=/; secure; samesite=Lax; max-age=2592000`;
+  }
+  function clearDevCookie() {
+    document.cookie = `${DEV_COOKIE}=; path=/; secure; samesite=Lax; max-age=0`;
+  }
+  function hasDevCookie() {
+    return document.cookie.split(/;\s*/).some(c => c.startsWith(DEV_COOKIE + "=") && c.length > DEV_COOKIE.length + 1);
+  }
+  function isDev() {
+    const u = currentUser();
+    return !!u && u.username === DEV_USER && hasDevCookie();
+  }
+
   const q = (id) => document.getElementById(id);
 
   function getProfile() {
@@ -96,7 +119,7 @@ const Auth = (() => {
     sessionStorage.setItem(SESSION_KEY, "1");
     emit();
   }
-  function signIn({ username }) {
+  function signIn({ username, password }) {
     let p = getProfile();
     if (!p || p.username !== (username || "").trim()) {
       // returning-user demo: no stored match, mint a minimal session profile.
@@ -105,10 +128,19 @@ const Auth = (() => {
             consentVersion: CONSENT_COPY.version };
       saveProfile(p);
     }
+    // dev account: the password IS the results access code — it goes into the
+    // edge-checked cookie (never into localStorage) and nowhere else.
+    if ((username || "").trim() === DEV_USER && (password || "").length) {
+      setDevCookie(password);
+    }
     sessionStorage.setItem(SESSION_KEY, "1");
     emit();
   }
-  function signOut() { sessionStorage.removeItem(SESSION_KEY); emit(); }
+  function signOut() {
+    sessionStorage.removeItem(SESSION_KEY);
+    clearDevCookie();                       // locking the UI also drops edge access
+    emit();
+  }
 
   /* ------------------------------ modals ------------------------------ */
   let lastFocus = null;
@@ -181,12 +213,14 @@ const Auth = (() => {
       });
     }
 
-    // sign-in (mock; password read + ignored)
+    // sign-in (password is ignored for demo accounts; for the dev account it
+    // is the results access code and feeds the edge-checked cookie)
     const signinForm = q("form-signin");
     if (signinForm) {
       signinForm.addEventListener("submit", e => {
         e.preventDefault();
-        signIn({ username: q("si-username") ? q("si-username").value : "" });
+        signIn({ username: q("si-username") ? q("si-username").value : "",
+                 password: q("si-password") ? q("si-password").value : "" });
         signinForm.reset(); closeModals();
       });
     }
@@ -196,14 +230,15 @@ const Auth = (() => {
     const toSignin = q("switch-to-signin"); if (toSignin) toSignin.addEventListener("click", () => { closeModals(); openModal("modal-signin"); });
   }
 
-  /* dev quick-login: open the site at #dev-login to seed a consented dev
-   * profile and sign straight in. Prototype-only convenience — there is no
-   * server auth here at all (see header), so this grants nothing real; it
-   * just skips the form for repeated testing. */
+  /* dev quick-login: open the site at #dev-login. Real swing results are now
+   * edge-gated behind the dev access code, so this no longer signs anyone in
+   * by itself — it opens the sign-in form with the dev username prefilled and
+   * the access code left for the human to type. */
   function devLogin() {
-    createAccount({ displayName: "Dev (test)", username: "dev@motioncaddie.dev",
-                    consentGiven: true, modelUseConsent: true });
     history.replaceState(null, "", location.pathname + location.search);
+    openModal("modal-signin");
+    const u = q("si-username"); if (u) u.value = DEV_USER;
+    const p = q("si-password"); if (p) p.focus();
   }
 
   function init() {
@@ -215,6 +250,7 @@ const Auth = (() => {
     if (location.hash === "#dev-login") setTimeout(devLogin, 0);
   }
 
-  return { init, isSignedIn, currentUser, signOut, openCreate: () => openModal("modal-create"), openSignIn: () => openModal("modal-signin") };
+  return { init, isSignedIn, currentUser, signOut, isDev, clearDevCookie,
+           DEV_USER, openCreate: () => openModal("modal-create"), openSignIn: () => openModal("modal-signin") };
 })();
 if (typeof window !== "undefined") window.Auth = Auth;
