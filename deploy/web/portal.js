@@ -812,12 +812,14 @@ function init() {
   $("#file-input").addEventListener("change", (e) => onFileChosen(e.target.files[0]));
   $("#camera-input").addEventListener("change", (e) => onFileChosen(e.target.files[0]));
 
-  $("#btn-restart").addEventListener("click", () => {
+  const goHome = () => {
     if (state.viewer) { state.viewer.destroy(); state.viewer = null; }
     $("#overlay-video").pause();
     setHash(null);
     goto("pick");
-  });
+  };
+  $("#btn-restart").addEventListener("click", goHome);
+  $("#btn-home").addEventListener("click", goHome);   // brand = back to home
 
   window.addEventListener("hashchange", onHashChange);
   reconcileLibrary();

@@ -41,6 +41,9 @@ main { max-width: 1120px; margin: 0 auto; padding: 24px 24px 80px; }
 }
 .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 20px; color: var(--green); }
 .brand-mark { font-size: 22px; }
+/* the brand doubles as a "back to home" button */
+button.brand { background: none; border: 0; padding: 0; font: inherit; cursor: pointer; }
+button.brand:hover .brand-name { text-decoration: underline; }
 
 .progress-nav { display: flex; align-items: center; gap: 10px; font-size: 14px; color: var(--muted); }
 .pstep { display: flex; align-items: center; gap: 7px; padding: 6px 12px; border-radius: 999px; transition: all .25s; }
