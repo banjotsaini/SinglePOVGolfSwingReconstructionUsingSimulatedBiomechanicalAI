@@ -196,11 +196,23 @@ const Auth = (() => {
     const toSignin = q("switch-to-signin"); if (toSignin) toSignin.addEventListener("click", () => { closeModals(); openModal("modal-signin"); });
   }
 
+  /* dev quick-login: open the site at #dev-login to seed a consented dev
+   * profile and sign straight in. Prototype-only convenience — there is no
+   * server auth here at all (see header), so this grants nothing real; it
+   * just skips the form for repeated testing. */
+  function devLogin() {
+    createAccount({ displayName: "Dev (test)", username: "dev@motioncaddie.dev",
+                    consentGiven: true, modelUseConsent: true });
+    history.replaceState(null, "", location.pathname + location.search);
+  }
+
   function init() {
     fillConsentCopy();
     wire();
     renderAccountArea();
     document.addEventListener("mc-auth-change", renderAccountArea);
+    // defer so app.js has registered its own mc-auth-change listeners
+    if (location.hash === "#dev-login") setTimeout(devLogin, 0);
   }
 
   return { init, isSignedIn, currentUser, signOut, openCreate: () => openModal("modal-create"), openSignIn: () => openModal("modal-signin") };
