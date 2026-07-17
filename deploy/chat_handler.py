@@ -36,6 +36,32 @@ ALLOWED_CLIPS = set(json.loads(os.environ.get("ALLOWED_CLIPS", "[]")))
 # where the demo path writes per-clip scorecards (built CPU-only from cached pose)
 SCORECARD_DIR = ROOT / "Data" / "demo"
 
+# processed UPLOADS: the pipeline publishes 03_outputs/<job>/scorecard.json,
+# served publicly through the site's CloudFront distribution — fetch over HTTPS
+# (no cross-bucket IAM needed) and cache in /tmp for the warm Lambda.
+JOB_SCORECARD_BASE = os.environ.get("JOB_SCORECARD_BASE", "").rstrip("/")
+_JOB_ID = __import__("re").compile(r"^[0-9a-f]{32}$")
+
+
+def job_scorecard_path(job_id: str):
+    """Fetch + cache an uploaded swing's scorecard. Returns a Path or None.
+    CloudFront rewrites unknown paths to 200/index.html, so a JSON parse is the
+    existence check — HTML means 'no scorecard for this job'."""
+    import urllib.request
+    cache = Path("/tmp") / f"job_scorecard_{job_id}.json"
+    if cache.exists():
+        return cache
+    try:
+        with urllib.request.urlopen(f"{JOB_SCORECARD_BASE}/{job_id}/scorecard.json",
+                                    timeout=10) as r:
+            raw = r.read()
+        json.loads(raw)                      # reject the index.html rewrite
+        cache.write_bytes(raw)
+        return cache
+    except Exception as e:
+        print(f"[chat] job scorecard fetch failed for {job_id}: {e}")
+        return None
+
 
 def _sanitize_history(raw) -> list[dict]:
     """Keep only alternating user/assistant TEXT turns. Drop tool blocks and any
@@ -101,12 +127,24 @@ def handler(event, _ctx=None):
     except json.JSONDecodeError:
         return _resp(400, {"error": "invalid JSON"})
 
-    try:
-        clip_id = int(body.get("clip_id"))
-    except (TypeError, ValueError):
-        return _resp(400, {"error": "clip_id required"})
-    if ALLOWED_CLIPS and clip_id not in ALLOWED_CLIPS:
-        return _resp(400, {"error": f"clip {clip_id} not in demo set"})
+    raw_id = body.get("clip_id")
+    clip_id: int | str
+    sc = None
+    if isinstance(raw_id, str) and _JOB_ID.match(raw_id):
+        # a processed UPLOAD (hex job id) — scorecard comes from 03_outputs
+        if not JOB_SCORECARD_BASE:
+            return _resp(400, {"error": "uploaded-swing chat not enabled"})
+        clip_id = raw_id
+        sc = job_scorecard_path(raw_id)
+        if sc is None:
+            return _resp(404, {"error": "no scorecard for this upload (yet)"})
+    else:
+        try:
+            clip_id = int(raw_id)
+        except (TypeError, ValueError):
+            return _resp(400, {"error": "clip_id required"})
+        if ALLOWED_CLIPS and clip_id not in ALLOWED_CLIPS:
+            return _resp(400, {"error": f"clip {clip_id} not in demo set"})
 
     question = (body.get("question") or "").strip()
     if not question:
@@ -114,7 +152,8 @@ def handler(event, _ctx=None):
     if len(question) > MAX_QUESTION_CHARS:
         return _resp(400, {"error": f"question exceeds {MAX_QUESTION_CHARS} chars"})
 
-    sc = scorecard_path(clip_id)
+    if sc is None:
+        sc = scorecard_path(clip_id)
     if not sc.exists():
         return _resp(404, {"error": f"no scorecard for clip {clip_id}"})
 

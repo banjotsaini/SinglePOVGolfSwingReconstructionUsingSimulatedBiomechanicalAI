@@ -48,7 +48,10 @@ _rd = boto3.client("rds-data") if DB_CLUSTER_ARN else None
 # + swap/jitter metrics) — not consumed by the app UI but kept with every job so
 # limb-crossing and jitter reports can be triaged from S3 alone.
 ARTIFACTS = ["overlay.mp4", "replay_3d.json", "metrics.json", "explanation.json",
-             "pose_debug.mp4", "pose_diag.json"]
+             "pose_debug.mp4", "pose_diag.json",
+             # full scorecard: the chat Lambda reads it (via CloudFront) so the
+             # coach can answer questions about uploaded swings too
+             "scorecard.json"]
 # the web app's pollJob() marks a job ready only once ALL of these exist — fail
 # the message loudly (SQS retry) rather than leave a job that never completes
 REQUIRED_ARTIFACTS = {"overlay.mp4", "replay_3d.json", "metrics.json", "explanation.json"}

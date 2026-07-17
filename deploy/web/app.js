@@ -423,9 +423,12 @@ function renderResults() {
   initListen(explanation, isUpload ? "upload-preview" : String(state.selectedId));
   renderNumbers(metrics.metrics);
   populateNumbersCompare();
-  // chat's grounded backend only knows the curated demo clips today
-  $("#tab-chat").hidden = isJob;
-  if (!isJob) Chat.activate(state.selectedId);
+  // chat works on demo clips AND processed uploads (the backend fetches an
+  // upload's scorecard from 03_outputs by its job id)
+  let chatOk = true;
+  if (isJob) chatOk = Chat.registerJob(state.selectedId, metrics);
+  $("#tab-chat").hidden = !chatOk;
+  if (chatOk) Chat.activate(state.selectedId);
 
   // share link + scorecard download (demo clips only — uploads have no baked card,
   // and the hash router only resolves curated clip ids)

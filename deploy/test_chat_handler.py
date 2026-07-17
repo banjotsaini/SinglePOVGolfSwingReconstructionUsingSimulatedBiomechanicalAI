@@ -100,5 +100,26 @@ H.ALLOWED_CLIPS = set()
 r = H.handler({"body": json.dumps({"clip_id": 8888, "question": "hi"})})
 check("missing scorecard -> 404", r["statusCode"] == 404)
 
+print("\n[6] Handler: uploaded-swing (hex job id) path")
+JOB = "5b2907dd23c247b99c5f7eb9fa9af795"
+_orig2, H.chat_once = H.chat_once, (lambda *a, **k: {"answer": "ok", "grounded": True,
+    "violations": [], "tools_used": [], "iterations": 1, "stop": "end_turn"})
+H.JOB_SCORECARD_BASE = ""    # feature off -> refuse cleanly
+r = H.handler({"body": json.dumps({"clip_id": JOB, "question": "hi"})})
+check("job id with feature disabled -> 400", r["statusCode"] == 400, str(r))
+H.JOB_SCORECARD_BASE = "https://example.test/03_outputs"
+_orig_fetch, H.job_scorecard_path = H.job_scorecard_path, (lambda j: SC)  # cached hit
+r = H.handler({"body": json.dumps({"clip_id": JOB, "question": "How was my tempo?"})})
+check("valid job id -> 200 (allow-list not applied)", r["statusCode"] == 200, str(r))
+check("response echoes the job id", json.loads(r["body"])["clip_id"] == JOB)
+H.job_scorecard_path = lambda j: None                      # no scorecard published
+r = H.handler({"body": json.dumps({"clip_id": JOB, "question": "hi"})})
+check("job without scorecard -> 404", r["statusCode"] == 404)
+r = H.handler({"body": json.dumps({"clip_id": "5b2907dd-nope", "question": "hi"})})
+check("malformed job id -> 400 (not treated as int either)", r["statusCode"] == 400)
+r = H.handler({"body": json.dumps({"clip_id": "A" * 32, "question": "hi"})})
+check("uppercase/invalid hex -> 400", r["statusCode"] == 400)
+H.chat_once, H.job_scorecard_path = _orig2, _orig_fetch
+
 print(f"\n{'='*46}\n  {_PASS} passed, {_FAIL} failed\n{'='*46}")
 sys.exit(1 if _FAIL else 0)

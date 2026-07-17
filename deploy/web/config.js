@@ -7,6 +7,9 @@
  * bk7s56lvq3) — single origin, real paths, CORS handled at the gateway:
  *   POST /chat        -> motion-caddie-chat        (grounded coaching chatbot)
  *   POST /upload-url  -> motion-caddie-upload-url  (presigned S3 POST issuer)
+ *   POST /tts         -> motioncaddie-elevenlabs-tts (studio coach narration;
+ *                        mp3 lands in the artifacts bucket under audio/* and
+ *                        is served back through CloudFront — deploy/tts/)
  * chat.js appends `/chat` to API_BASE, which matches this routing exactly.
  *
  * (History: Lambda Function URLs were tried first but an account SCP blocks

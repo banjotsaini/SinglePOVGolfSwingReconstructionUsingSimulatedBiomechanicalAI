@@ -434,6 +434,12 @@ check("no club recorded -> estimated False", miss.get("estimated") is False)
 told = C.dispatch_tool(ctx_single(), "estimate_ball_flight", {"club": "driver"})
 check("golfer-stated club rescues a club-less scorecard", told.get("estimated") is True)
 check("job-id player defaults to amateur tier", told.get("skill_tier") == "amateur", str(told))
+# upload scorecards carry a filename stem as "player" — never a tour tier
+for fake in ("IMG_8107", "TheoClip1", "5b2907dd23c247b99c5f7eb9fa9af795", "e2e_debug"):
+    ctx_up = C.SwingContext(a={"meta": {"player": fake, "club": "driver"}, "indicators": {}},
+                            kb=C.v2.load_kb())
+    t = C.dispatch_tool(ctx_up, "estimate_ball_flight", {})
+    check(f"player '{fake}' -> amateur tier", t.get("skill_tier") == "amateur", str(t.get("skill_tier")))
 
 # =========================================================================== #
 print(f"\n{'='*50}\n  {_PASS} passed, {_FAIL} failed\n{'='*50}")

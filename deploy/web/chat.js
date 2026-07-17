@@ -267,12 +267,22 @@ const Chat = (() => {
     return { grounded: v.length === 0, violations: v };
   }
 
-  /* ======= askChat seam: live backend if window.API_BASE set, else mock ======= */
+  /* ======= askChat seam: live backend if window.API_BASE set, else mock =======
+   * The live /chat Lambda knows the curated demo clips (ALLOWED_CLIPS, integer
+   * ids) AND processed uploads (32-hex job ids — it fetches that job's
+   * scorecard from 03_outputs). Anything else falls back to the in-page engine
+   * grounded in the swing's own metrics.json. */
+  const liveFor = (id) => !!window.API_BASE &&
+    (/^[0-9a-f]{32}$/.test(String(id)) ||
+     (/^\d+$/.test(String(id)) &&
+      (!Array.isArray(window.DEMO_CLIPS) || window.DEMO_CLIPS.includes(Number(id)))));
   async function askChat(q) {
-    if (window.API_BASE) {
+    if (liveFor(ACTIVE)) {
       const hist = HIST[ACTIVE] || (HIST[ACTIVE] = []);
-      const body = { clip_id: Number(ACTIVE), question: q, history: hist.slice() };
-      if (COMPARE != null) body.compare_clip_id = Number(COMPARE);
+      // demo clips post an int id; processed uploads post their hex job id
+      const wireId = (id) => (/^\d+$/.test(String(id)) ? Number(id) : String(id));
+      const body = { clip_id: wireId(ACTIVE), question: q, history: hist.slice() };
+      if (COMPARE != null) body.compare_clip_id = wireId(COMPARE);
       const r = await fetch(`${window.API_BASE}/chat`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
       if (!r.ok) throw new Error("http " + r.status);
       const d = await r.json();
@@ -288,13 +298,18 @@ const Chat = (() => {
   /* ====================== voice (Web Speech API) ======================
    * Dictation: SpeechRecognition fills the input with live interim text; the
    * user reviews and sends (no auto-send — a mis-transcription would put the
-   * wrong question to the grounded coach). Spoken replies: speechSynthesis
-   * reads each coach answer while the header toggle is on. Both are
-   * frontend-only, so they work identically in offline-mock and live modes.
+   * wrong question to the grounded coach). Spoken replies: while the header
+   * toggle is on, the live default is the ElevenLabs studio coach voice
+   * (POST /tts, Scottish — see deploy/tts/), with the browser's
+   * speechSynthesis voices as picker alternatives and as the offline/error
+   * fallback. Dictation works identically in offline-mock and live modes.
    */
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   const TTS = "speechSynthesis" in window;
-  let rec = null, recOn = false, speakOn = false, voice = null;
+  const COACH_ID = "__coach_elevenlabs__";          // studio narration via POST /tts
+  const coachAvailable = () => !!window.API_BASE;
+  let rec = null, recOn = false, speakOn = false, voice = null, useCoach = false;
+  let coachAudio = null, speakGen = 0;              // gen guards stale /tts fetches after hush()
 
   /* Rank voices by how human they sound: Edge's neural "Natural" set and
    * Chrome's Google server voices are near-human; Safari's enhanced/Siri
@@ -320,48 +335,86 @@ const Chat = (() => {
     return vs.sort((a, b) => score(b) - score(a));
   }
   function pickVoice() {
-    const vs = rankedVoices();
     const saved = localStorage.getItem(VOICE_LS);
+    useCoach = coachAvailable() && (saved === COACH_ID || !saved);  // studio voice is the live default
+    const vs = TTS ? rankedVoices() : [];
     return vs.find(v => v.name === saved) || vs[0] || null;
   }
   const shortName = n => n.replace(/^(Microsoft|Google|Apple)\s+/i, "")
     .replace(/\s+-\s+English\b.*$/i, "").replace(/\s+English\b.*$/i, "").trim();
   function fillVoicePick() {
     if (!dom.voicePick) return;
-    const vs = rankedVoices();
-    dom.voicePick.hidden = vs.length < 2;
+    const vs = TTS ? rankedVoices() : [];
+    dom.voicePick.hidden = vs.length + (coachAvailable() ? 1 : 0) < 2;
     dom.voicePick.innerHTML = "";
+    if (coachAvailable()) {
+      const o = document.createElement("option");
+      o.value = COACH_ID; o.textContent = "Coach · Scottish (studio)";
+      dom.voicePick.append(o);
+    }
     vs.forEach(v => {
       const o = document.createElement("option");
       o.value = v.name; o.textContent = shortName(v.name);
       dom.voicePick.append(o);
     });
-    if (voice) dom.voicePick.value = voice.name;
+    dom.voicePick.value = useCoach ? COACH_ID : (voice ? voice.name : "");
   }
 
   function speak(text, force) {
-    if ((!speakOn && !force) || !TTS || !text) return;
-    speechSynthesis.cancel();
-    // one utterance per line: bullets get a natural pause, and short utterances
-    // dodge Chrome's habit of cutting speech off around the 15-second mark
-    text.split("\n")
+    if ((!speakOn && !force) || !text) return;
+    hush();
+    const lines = text.split("\n")
       .map(l => l.replace(/^[•\-*]\s+/, "")            // list markers
                  .replace(/\*\*?([^*]+)\*\*?/g, "$1")  // markdown emphasis (live backend uses it)
                  .replace(/`([^`]+)`/g, "$1").trim())
-      .filter(Boolean).forEach(line => {
+      .filter(Boolean);
+    if (!lines.length) return;
+    if (useCoach) speakCoach(lines);
+    else if (TTS) speakBrowser(lines);
+  }
+  // one utterance per line: bullets get a natural pause, and short utterances
+  // dodge Chrome's habit of cutting speech off around the 15-second mark
+  function speakBrowser(lines) {
+    lines.forEach(line => {
       const u = new SpeechSynthesisUtterance(line);
       if (voice) u.voice = voice;
       u.rate = 1.02;
       speechSynthesis.speak(u);
     });
   }
-  const hush = () => { if (TTS) speechSynthesis.cancel(); };
+  /* Studio narration: POST /tts renders the reply with the ElevenLabs coach
+   * voice (server caches by content hash, so repeats are instant) and we play
+   * the mp3 from CloudFront. Any failure falls back to the browser voice. */
+  async function speakCoach(lines) {
+    const gen = ++speakGen;
+    try {
+      const r = await fetch(`${window.API_BASE}/tts`, {
+        method: "POST", headers: { "content-type": "application/json" },
+        body: JSON.stringify({ narration: lines.join("\n").slice(0, 2400),
+                               swing_id: String(ACTIVE != null ? ACTIVE : "chat") })
+      });
+      if (!r.ok) throw new Error("tts " + r.status);
+      const d = await r.json();
+      if (!d.audio_url) throw new Error("tts: no audio_url");
+      if (gen !== speakGen) return;                   // hushed or superseded meanwhile
+      if (!coachAudio) coachAudio = new Audio();
+      coachAudio.src = d.audio_url;
+      await coachAudio.play();
+    } catch (e) {
+      if (gen === speakGen && TTS) speakBrowser(lines);
+    }
+  }
+  const hush = () => {
+    speakGen++;
+    if (TTS) speechSynthesis.cancel();
+    if (coachAudio) { coachAudio.pause(); coachAudio.removeAttribute("src"); }
+  };
 
   function initVoiceOut() {
     if (!dom.voice) return;
-    if (!TTS) { dom.voice.hidden = true; return; }
+    if (!TTS && !coachAvailable()) { dom.voice.hidden = true; return; }
     voice = pickVoice(); fillVoicePick();
-    speechSynthesis.addEventListener("voiceschanged", () => { voice = pickVoice(); fillVoicePick(); });
+    if (TTS) speechSynthesis.addEventListener("voiceschanged", () => { voice = pickVoice(); fillVoicePick(); });
     if (dom.voicePick) dom.voicePick.addEventListener("change", () => {
       localStorage.setItem(VOICE_LS, dom.voicePick.value);
       voice = pickVoice();
@@ -472,7 +525,10 @@ const Chat = (() => {
   function greet() {
     const c = CLIPDATA[ACTIVE];
     const w = el("div", "chat-turn"); w.append(el("div", "who", "MotionCaddie"));
-    w.append(el("div", "msg bot", `You're looking at ${c.name}'s swing (${c.club}, ${c.view}). Ask me anything about it — a metric like tempo or weight shift, the biggest takeaways, or pick a second swing to compare.`));
+    const intro = c.club
+      ? `You're looking at ${c.name}'s swing (${c.club}, ${c.view}).`
+      : `You're looking at ${c.name} — measured by the real pipeline.`;
+    w.append(el("div", "msg bot", `${intro} Ask me anything about it — a metric like tempo or weight shift, the biggest takeaways, or pick a second swing to compare.`));
     dom.stream.append(w); scroll();
   }
   function populateCompare() {
@@ -496,12 +552,24 @@ const Chat = (() => {
     setLibrary(clips, metricsByClipId) {
       for (const clip of clips) { const rows = (metricsByClipId[clip.id] || {}).metrics; if (rows) buildFromMetrics(clip, rows); }
     },
+    /* a processed UPLOAD: same registration as a demo clip, from its metrics.json */
+    registerJob(jobId, metricsJson) {
+      const rows = (metricsJson || {}).metrics;
+      if (!rows) return false;
+      buildFromMetrics({ id: String(jobId), title: "Your uploaded swing",
+                         club: "your club", view: "uploaded video" }, rows);
+      return true;
+    },
     activate(clipId) {
       hush();
       ACTIVE = String(clipId); COMPARE = null;
       if (!CLIPDATA[ACTIVE]) return;
       if (dom.stream) dom.stream.innerHTML = "";
-      if (dom.active) dom.active.textContent = `${CLIPDATA[ACTIVE].name} · ${CLIPDATA[ACTIVE].view}`;
+      const c = CLIPDATA[ACTIVE];
+      if (dom.active) dom.active.textContent = c.view ? `${c.name} · ${c.view}` : c.name;
+      if (dom.mode) dom.mode.textContent = liveFor(ACTIVE) ? "live · real coach"
+        : (window.API_BASE ? "grounded · this swing's measured data"
+                           : "offline preview · in-page coach");
       populateCompare(); greet();
     },
   };

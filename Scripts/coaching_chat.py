@@ -216,10 +216,13 @@ def _t_estimate_ball_flight(ctx: SwingContext, inp: dict) -> dict:
     club = inp.get("club") or meta.get("club")
     tier = inp.get("skill_tier")
     if tier not in BF.TIERS:
-        # GolfDB demo clips carry a tour player's NAME (+ sex) -> tour/lpga launch
-        # numbers; uploads carry nothing or a numeric job id -> amateur.
+        # GolfDB demo clips carry a tour player's NAME (letters + spaces, e.g.
+        # "TIGER WOODS") -> tour/lpga launch numbers. Uploads carry a filename
+        # stem ("IMG_8107"), a job id, or nothing -> amateur.
         player = str(meta.get("player") or "").strip().lower()
-        is_name = any(c.isalpha() for c in player) and player != "unknown"
+        is_name = (player and player != "unknown"
+                   and any(c.isalpha() for c in player)
+                   and all(c.isalpha() or c.isspace() for c in player))
         tier = ("lpga" if str(meta.get("sex", "")).lower().startswith("f") else "tour") \
             if is_name else "amateur"
     overrides = {k: inp[k] for k in ("ball_speed_mph", "launch_angle_deg",
@@ -726,6 +729,12 @@ def verify_chat_grounding(ctx: SwingContext, result: TurnResult) -> dict:
         r = model_visible(entry["result"])  # UI-only payloads can't ground an answer
         if entry["name"] == "estimate_ball_flight" and r.get("estimated"):
             sim_ok = True
+        if entry["name"] == "get_flagged_observations":
+            # each flag IS a tool-asserted out-of-range judgment for its metric,
+            # so narrating it with range words is grounded
+            for f in r.get("flagged", []):
+                if f.get("key"):
+                    fetched_ok.add(f["key"])
         if entry["name"] in ("get_indicator", "compare_indicator"):
             key = r.get("key", "")
             if r.get("reliable") is False or r.get("confidence_tier") == "low":
