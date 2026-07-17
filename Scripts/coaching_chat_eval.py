@@ -42,7 +42,7 @@ def looks_like_refusal(answer: str) -> bool:
 def gold_bank() -> list[dict]:
     """Build (question, gold_category, expected_key) from the coaching_qa gold sets,
     INTERLEAVED by category so a `--limit N` samples variety, not just answerables."""
-    groups: list[list[dict]] = [[], [], [], []]
+    groups: list[list[dict]] = [[], [], [], [], []]
     for key, phrasings in QA.ANSWERABLE.items():
         for q in phrasings:
             groups[0].append({"q": q, "gold": "answer", "key": key})
@@ -53,6 +53,8 @@ def gold_bank() -> list[dict]:
         groups[2].append({"q": q, "gold": "refuse_unmeasured", "key": None})
     for q in QA.SCOPE:
         groups[3].append({"q": q, "gold": "refuse_scope", "key": None})
+    for q in QA.SIMULATED:
+        groups[4].append({"q": q, "gold": "sim_estimate", "key": None})
     items: list[dict] = []
     for i in range(max(len(g) for g in groups)):
         for g in groups:
@@ -63,6 +65,16 @@ def gold_bank() -> list[dict]:
 
 def grade(item: dict, ctx: "C.SwingContext", res: "C.TurnResult") -> dict:
     refused = looks_like_refusal(res.answer)
+    if item["gold"] == "sim_estimate":
+        # honest sim answers legitimately echo refusal cues ("not measured, but a
+        # simulation estimates..."), so grade by behavior: called the sim tool and
+        # gave a number. Grounding still runs as usual.
+        used_sim = any(e["name"] == "estimate_ball_flight" for e in res.tool_log)
+        gave_number = bool(re.search(r"\d", res.answer or ""))
+        g = C.verify_chat_grounding(ctx, res)
+        return {"gold": item["gold"], "refused": refused,
+                "decision_ok": used_sim and gave_number, "grounded": g["grounded"],
+                "violations": [v["type"] for v in g["violations"]], "tool_ok": used_sim}
     should_answer = item["gold"] == "answer"
     # a low-conf item is only *gradeable as answerable* if that metric is actually
     # low-conf in THIS clip; otherwise it's legitimately answerable (mirror qa builder).
@@ -142,6 +154,20 @@ def self_test() -> int:
         ({"q": "What should I fix?", "gold": "refuse_scope", "key": None},
          [say("I can describe your swing but I don't give fixes.")],
          lambda r: r["decision_ok"]),
+    ]
+    # sim-estimate: answering via the sim tool with its numbers is correct...
+    # (the 1292 fixture has no recorded club, so the scripted call states one)
+    est = C.dispatch_tool(ctx, "estimate_ball_flight", {"club": "driver"})
+    cases += [
+        ({"q": "How far did the ball go?", "gold": "sim_estimate", "key": None},
+         [use("estimate_ball_flight", {"club": "driver"}),
+          say(f"The ball isn't tracked, but a simulation for a typical {est['club']} swing "
+              f"estimates about {est['carry_yd']} yards of carry.")],
+         lambda r: r["decision_ok"] and r["grounded"] and r["tool_ok"]),
+        # ...refusing without simulating is a decision failure
+        ({"q": "How far did the ball go?", "gold": "sim_estimate", "key": None},
+         [say("I can't tell how far the ball went from what was measured.")],
+         lambda r: not r["decision_ok"]),
     ]
     for item, turns, ok in cases:
         r = run(item, turns)

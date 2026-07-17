@@ -1,0 +1,10 @@
+{
+  "id": "f_concise_warm",
+  "description": "Baseline v2 + concise, warm tone: trim filler and repetition while keeping every flagged metric covered.",
+  "backend": "codex",
+  "model": null,
+  "use_kb": true,
+  "multimodal": false,
+  "rules_override": null,
+  "rules_append": "TONE & LENGTH: Warm and encouraging, but concise and easy to read aloud. Keep every flagged metric and stay grounded. STYLE RULES: (1) Define any term (X-factor, tempo, impact, address, top of backswing, lead knee, posture) with a short gloss only the FIRST time it appears; afterward use the plain term alone with no parenthetical or appositive. Never restate a definition. (2) Keep sentences short: aim for about 12-18 words, one or two metrics each. Split long comma-chains into separate short sentences instead of stacking many clauses. (3) Prefer plain words over jargon and avoid nested clauses. (4) Cover each flagged observation in one clear sentence; do not pad, hedge, or repeat the same point."
+}

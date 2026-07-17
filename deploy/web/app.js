@@ -225,18 +225,20 @@ async function startUpload() {
  * r.ok alone would false-ready a job — require the real content-type too. */
 async function pollJob(jobId, tries = 40, delayMs = 15000) {
   const files = ["metrics.json", "explanation.json", "replay_3d.json"];
-  const okType = (r, type) =>
-    r.ok && (r.headers.get("content-type") || "").includes(type);
+  // a real S3 object serves as its stored type (json/video/octet-stream); only
+  // the CloudFront 403->index.html rewrite comes back as text/html
+  const okReal = (r) =>
+    r.ok && !(r.headers.get("content-type") || "").includes("html");
   for (let i = 0; i < tries; i++) {
     try {
       const oks = await Promise.all([
         ...files.map(f =>
           fetch(`${window.RESULTS_BASE}/${jobId}/${f}`, { cache: "no-store" })
-            .then(r => okType(r, "json")).catch(() => false)),
+            .then(okReal).catch(() => false)),
         // HEAD the video so "Ready" never opens onto a broken player
         fetch(`${window.RESULTS_BASE}/${jobId}/overlay.mp4`,
               { method: "HEAD", cache: "no-store" })
-          .then(r => okType(r, "video")).catch(() => false),
+          .then(okReal).catch(() => false),
       ]);
       if (oks.every(Boolean)) { libSetStatus(jobId, "ready"); return; }
     } catch (e) { /* keep polling */ }

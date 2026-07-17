@@ -3,7 +3,8 @@
     "clip_id": 830,
     "player": "TIGER WOODS",
     "club": "driver",
-    "view": "face-on"
+    "view": "face-on",
+    "sex": "m"
   },
   "events": {
     "address": 184,
@@ -165,6 +166,16 @@
         4.1
       ],
       "confidence_tier": "high"
+    },
+    "hand_speed_impact_bs": {
+      "value": 7.07,
+      "percentile": 51,
+      "pro_median": 7.0,
+      "pro_band": [
+        5.9,
+        8.0
+      ],
+      "confidence_tier": "low"
     }
   },
   "feedback": [

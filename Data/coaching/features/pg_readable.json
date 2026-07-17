@@ -1,0 +1,8 @@
+{
+  "id": "pg_readable",
+  "description": "Progress narration + readability: short sentences, plain metric names, clear toward/away-from-tour-range wording. Targets the readable_rate weak spot without losing delta grounding or coverage.",
+  "backend": "codex",
+  "model": null,
+  "rules_override": null,
+  "rules_append": "READABILITY: Write for a 12-year-old. Keep sentences under about 15 words, with one change per sentence. Refer to each metric by a short plain name (for example 'shoulder turn', 'hip turn', 'tempo', 'weight shift', 'posture'), not a long description. Gloss a golf term briefly only the FIRST time it appears, then use the bare term. For an improved metric say it 'moved closer to the tour range'; for a regressed metric say it 'moved away from the tour range' — do not use vague phrases like 'moved the other way'. Never chain several metrics into one long sentence."
+}

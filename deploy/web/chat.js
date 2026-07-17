@@ -426,6 +426,8 @@ const Chat = (() => {
     }
     const w = el("div", "chat-turn"); w.append(el("div", "who", "MotionCaddie"));
     const m = el("div", "msg bot" + (res.refuse ? " refuse" : ""), res.answer);
+    const flight = tcs.map(e => e.result).find(r => r && Array.isArray(r._ui_trajectory) && r._ui_trajectory.length > 2);
+    if (flight) m.append(flightArc(flight));
     const g = grade(res); const gd = el("span", "grade" + (g.grounded ? "" : " warn"));
     const vtxt = (g.violations || []).map(v => typeof v === "string" ? v
       : v.type + (v.value != null ? ` (${v.value})` : "")).join(", ");
@@ -434,6 +436,31 @@ const Chat = (() => {
     m.append(document.createElement("br"), gd); w.append(m); dom.stream.append(w); scroll();
     speak(res.answer);
   }
+  /* Simulated ball-flight arc (side view) from estimate_ball_flight's UI-only
+   * trajectory ([downrange_yd, height_yd, side_yd] points). Pure SVG, themed
+   * off currentColor so it works in both palettes. */
+  function flightArc(r) {
+    const pts = r._ui_trajectory;
+    const W = 300, H = 96, PAD = 10, GY = H - 16;            // ground baseline
+    const maxX = Math.max(...pts.map(p => p[0])) || 1;
+    const maxY = Math.max(...pts.map(p => p[1])) || 1;
+    const sx = x => PAD + (x / maxX) * (W - 2 * PAD);
+    const sy = y => GY - (y / maxY) * (GY - PAD);
+    const path = pts.map((p, i) => `${i ? "L" : "M"}${sx(p[0]).toFixed(1)},${sy(p[1]).toFixed(1)}`).join(" ");
+    const land = pts[pts.length - 1];
+    const box = el("div", "flight-arc");
+    box.style.cssText = "margin-top:8px;opacity:.9";
+    box.innerHTML =
+      `<svg viewBox="0 0 ${W} ${H}" width="100%" style="max-width:340px;display:block" role="img"` +
+      ` aria-label="Simulated ball flight: about ${Math.round(land[0])} yards carry, apex ${Math.round(maxY)} yards">` +
+      `<line x1="${PAD}" y1="${GY}" x2="${W - PAD}" y2="${GY}" stroke="currentColor" stroke-opacity=".25"/>` +
+      `<path d="${path}" fill="none" stroke="currentColor" stroke-width="1.8" stroke-opacity=".8"/>` +
+      `<circle cx="${sx(land[0])}" cy="${sy(land[1])}" r="2.6" fill="currentColor"/>` +
+      `<text x="${PAD}" y="${H - 3}" font-size="9" fill="currentColor" fill-opacity=".65">` +
+      `simulated flight — ≈${Math.round(land[0])} yd carry, apex ${Math.round(maxY)} yd</text></svg>`;
+    return box;
+  }
+
   async function ask(q) {
     hush();
     addUser(q); const typing = addTyping();

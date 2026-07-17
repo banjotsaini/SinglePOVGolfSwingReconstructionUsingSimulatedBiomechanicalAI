@@ -73,9 +73,15 @@ def _body_scale(frame_xyz) -> float:
 # main: indicators for one clip
 # ---------------------------------------------------------------------------
 
-def compute_indicators(xyz: np.ndarray, events_local: np.ndarray) -> dict:
+def compute_indicators(xyz: np.ndarray, events_local: np.ndarray,
+                       fps: float | None = None) -> dict:
     """xyz: (T, 17, 3) 3D landmarks. events_local: 8 frame indices.
-    Returns a flat dict of named indicators."""
+    Returns a flat dict of named indicators.
+
+    fps: real-time capture rate of the underlying video. Only needed for the
+    time-based hand-speed indicator, which is OMITTED when fps is unknown or
+    the clip is slow-motion (pass fps=None) — frame-based speeds would be
+    meaningless there."""
     ev = {name: int(np.clip(events_local[i], 0, xyz.shape[0] - 1))
           for i, name in enumerate(EVENTS)}
 
@@ -141,6 +147,19 @@ def compute_indicators(xyz: np.ndarray, events_local: np.ndarray) -> dict:
     downswing = max(1, ev["impact"] - ev["top"])
     out["tempo_ratio"] = float(backswing / downswing)
 
+    # ---- hand speed through impact (body-scales / second) ----
+    # Peak speed of the hands (wrist midpoint) over the late downswing into
+    # impact. Body-scale normalization keeps it size-invariant (MotionBERT pose
+    # is normalized — absolute m/s is NOT recoverable); dividing frames by fps
+    # makes it per-second, so it is only computed for real-time clips.
+    if fps and fps > 0:
+        lo = min(ev["mid_downswing"], ev["impact"])
+        hi = min(ev["impact"] + 2, xyz.shape[0] - 1)
+        if hi - lo >= 2:
+            hands = (xyz[lo:hi + 1, L_WRI] + xyz[lo:hi + 1, R_WRI]) / 2
+            step = np.linalg.norm(np.diff(hands, axis=0), axis=1)  # per frame
+            out["hand_speed_impact_bs"] = float(step.max() / scale * fps)
+
     return out
 
 
@@ -151,4 +170,5 @@ INDICATOR_NAMES = [
     "left_arm_bend_top_deg", "right_arm_bend_top_deg",
     "lead_knee_flex_address_deg", "lead_knee_flex_impact_deg",
     "hip_lateral_shift_pct", "tempo_ratio",
+    "hand_speed_impact_bs",   # only present when fps was known (real-time clips)
 ]

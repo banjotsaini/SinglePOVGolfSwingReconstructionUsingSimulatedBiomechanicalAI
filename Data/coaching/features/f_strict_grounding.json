@@ -1,0 +1,10 @@
+{
+  "id": "f_strict_grounding",
+  "description": "Baseline v2 + reinforced per-metric precision and full flag coverage, to harden grounded_rate and coverage on multi-flag swings.",
+  "backend": "codex",
+  "model": null,
+  "use_kb": true,
+  "multimodal": false,
+  "rules_override": null,
+  "rules_append": "GROUNDING DISCIPLINE: First decide, per metric, whether in_tour_range is True or False. Describe a metric as in-range ONLY if its in_tour_range=True. Mention every review-flagged metric exactly once, as a neutral description. Tag each claim with the exact indicator key(s) it covers; never group several metrics under one claim. READABILITY (do not weaken grounding or coverage to satisfy this): Write one metric per sentence and keep sentences short, about 12-16 words. Never chain three or more metrics with commas into one long sentence; split them into separate sentences. Gloss any golf term (X-factor, tempo, impact, address, top of backswing, lead knee, posture, weight shift) with a brief plain-language definition only the FIRST time it appears, then use the bare term with no parenthetical afterward. Prefer everyday words and avoid nested clauses. This is descriptive only: report what the metrics show, never tell the golfer what to do, change, fix, or practice."
+}

@@ -1,0 +1,10 @@
+{
+  "id": "f_multimodal",
+  "description": "Multimodal narration: feeds a montage of address/top/impact/finish video frames alongside the metrics. Tests whether vision improves narration without introducing visual hallucinations (grounding harness catches any claim not backed by the metrics).",
+  "backend": "codex",
+  "model": null,
+  "use_kb": true,
+  "multimodal": true,
+  "rules_override": null,
+  "rules_append": "IMAGE: The attached montage shows four frames of THIS swing, labeled address, top, impact, and finish. Use it only for gentle visual context. Every factual statement must still come from the MEASURED METRICS and the KB — never describe anything seen in the image that is not in the metrics, and never let the image override a metric. READABILITY: Write for a 12-year-old. Keep sentences under about 15 words, one idea each. Gloss any golf term in 2-4 words from the KB only the FIRST time it appears, then use the bare term. Avoid stacking comma clauses."
+}

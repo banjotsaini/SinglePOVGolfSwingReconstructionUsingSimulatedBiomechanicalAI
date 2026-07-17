@@ -76,6 +76,10 @@
    "confidence": 1.0,
    "tier": "high",
    "basis": "event-timing only (no depth)"
+  },
+  "hand_speed_impact_bs": {
+   "tier": "low",
+   "note": "single-camera wrist tracking at the fastest, most-blurred frames; used only as a capped nudge to the simulated ball flight, never stated"
   }
  }
 }

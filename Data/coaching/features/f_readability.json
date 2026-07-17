@@ -1,0 +1,10 @@
+{
+  "id": "f_readability",
+  "description": "Baseline v2 + readability push: shorter sentences, simpler words, to lift Flesch >=60 without losing grounding or coverage.",
+  "backend": "codex",
+  "model": null,
+  "use_kb": true,
+  "multimodal": false,
+  "rules_override": null,
+  "rules_append": "READABILITY: Write for a 12-year-old reader. Keep sentences under about 15 words and put one idea in each sentence. Use everyday words; when a golf term is needed, gloss it in 2-4 words using the KB. Avoid stacking several comma clauses in one sentence."
+}

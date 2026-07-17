@@ -35,6 +35,9 @@ def main():
     p.add_argument("--out-dir", required=True)
     p.add_argument("--stem", required=True)
     p.add_argument("--meta-json", default=None)
+    p.add_argument("--fps", type=float, default=None,
+                   help="real-time capture fps of the source video; enables the "
+                        "time-based hand-speed indicator (omit for slow-motion)")
     p.add_argument("--no-smooth", action="store_true",
                    help="disable One-Euro smoothing on the coaching-measurement branch")
     args = p.parse_args()
@@ -66,10 +69,11 @@ def main():
     if args.meta_json and Path(args.meta_json).exists():
         meta = json.loads(Path(args.meta_json).read_text())
     meta.setdefault("player", args.stem)
+    fps = args.fps if args.fps else meta.get("fps")
 
     from coaching_scorecard import build_scorecard
     from render_scorecard import render
-    sc = build_scorecard(xyz_measure, events_local, meta)
+    sc = build_scorecard(xyz_measure, events_local, meta, fps=fps)
 
     json_path = out_dir / f"{args.stem}_scorecard.json"
     png_path  = out_dir / f"{args.stem}_scorecard.png"

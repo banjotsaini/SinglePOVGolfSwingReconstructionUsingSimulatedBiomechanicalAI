@@ -1,0 +1,8 @@
+{
+  "id": "qa_readable",
+  "description": "Swing Q&A + readability: keep answers and refusals short and plain, without weakening the answerable/refuse decision or faithfulness.",
+  "backend": "codex",
+  "model": null,
+  "rules_override": null,
+  "rules_append": "READABILITY: Answer in 1-2 short sentences, each under about 15 words. Use everyday words; gloss any golf term briefly the first time. Keep refusals short and kind (one sentence). Do not weaken the answerable/refuse decision or invent anything to satisfy this."
+}

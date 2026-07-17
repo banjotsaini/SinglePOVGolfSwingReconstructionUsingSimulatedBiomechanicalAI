@@ -9,16 +9,18 @@ set -euo pipefail
 OUT="${1:-./build}"; ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 PKG="$OUT/chat-pkg"; rm -rf "$PKG"; mkdir -p "$PKG"
 
-# 1. Linux wheels for the one third-party dep (anthropic SDK + transitive)
-python -m pip install "anthropic>=0.111,<1.0" \
+# 1. Linux wheels: anthropic SDK + numpy (Phys-NN ball-flight forward pass)
+python -m pip install "anthropic>=0.111,<1.0" "numpy>=1.26" \
   --platform manylinux2014_x86_64 --python-version 3.12 --only-binary=:all: \
   --target "$PKG" --quiet
 
-# 2. handler + the two Scripts modules it imports + KB (relative to v2 module)
+# 2. handler + the Scripts modules it imports + KB (relative to v2 module)
 cp "$ROOT/deploy/chat_handler.py" "$PKG/chat_handler.py"
 mkdir -p "$PKG/Scripts" "$PKG/Data/coaching"
-cp "$ROOT/Scripts/coaching_chat.py" "$ROOT/Scripts/coaching_llm_summary_v2.py" "$PKG/Scripts/"
+cp "$ROOT/Scripts/coaching_chat.py" "$ROOT/Scripts/coaching_llm_summary_v2.py" \
+   "$ROOT/Scripts/ball_flight.py" "$PKG/Scripts/"
 cp "$ROOT/Data/coaching/indicator_kb.json" "$PKG/Data/coaching/"
+cp "$ROOT/Data/coaching/ball_flight_nn.json" "$PKG/Data/coaching/"   # Phys-NN weights
 
 # 3. cached demo scorecards only (skip mp4s/frames — not read by /chat)
 find "$ROOT/Data/demo" -name "*_scorecard.json" | while read -r f; do

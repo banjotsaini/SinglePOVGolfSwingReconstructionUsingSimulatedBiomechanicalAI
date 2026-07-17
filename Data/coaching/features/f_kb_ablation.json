@@ -1,0 +1,10 @@
+{
+  "id": "f_kb_ablation",
+  "description": "CONTROL (not a ship candidate): KB disabled. Measures how much the knowledge base contributes to grounding/coverage by comparing grounded_rate and coverage_mean against baseline_v2 on the same held-out clips. Expected to score LOWER — that drop is the KB's value.",
+  "backend": "codex",
+  "model": null,
+  "use_kb": false,
+  "multimodal": false,
+  "rules_override": null,
+  "rules_append": null
+}

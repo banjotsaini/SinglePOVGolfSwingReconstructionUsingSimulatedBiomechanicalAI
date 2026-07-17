@@ -3,7 +3,8 @@
     "clip_id": 269,
     "player": "TIGER WOODS",
     "club": "driver",
-    "view": "down-the-line"
+    "view": "down-the-line",
+    "sex": "m"
   },
   "events": {
     "address": 44,
@@ -165,6 +166,16 @@
         4.1
       ],
       "confidence_tier": "high"
+    },
+    "hand_speed_impact_bs": {
+      "value": 6.97,
+      "percentile": 49,
+      "pro_median": 7.0,
+      "pro_band": [
+        5.9,
+        8.0
+      ],
+      "confidence_tier": "low"
     }
   },
   "feedback": [

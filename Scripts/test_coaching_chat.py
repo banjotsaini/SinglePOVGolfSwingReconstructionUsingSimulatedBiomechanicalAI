@@ -96,9 +96,9 @@ print("\n[3] Refusal: unmeasured topic -> list, then no number")
 ctx = ctx_single()
 backend = C.ScriptedBackend([
     use("list_indicators", {}),
-    say("I can't tell how far the ball went — ball flight isn't something this swing analysis measures."),
+    say("I can't tell whether your club face was open — that isn't something this swing analysis measures."),
 ])
-res = C.Conversation(ctx, backend).ask("How far did the ball go?")
+res = C.Conversation(ctx, backend).ask("Was my club face open at impact?")
 g = C.verify_chat_grounding(ctx, res)
 check("unmeasured refusal is grounded (no range claim)", g["grounded"], str(g["violations"]))
 check("no indicator fetched", g["fetched_reliable"] == [])
@@ -335,6 +335,105 @@ if abs(round(lc_val)) >= 13 and all(abs(round(lc_val) - round(b)) > 1 for b in (
     g = C.verify_chat_grounding(ctx, C.Conversation(ctx, backend).ask("lead arm?"))
     check("stating the ROUNDED low-conf value is still a leak",
           any(v["type"] == "low_confidence_leak" for v in g["violations"]), str(g["violations"]))
+
+# =========================================================================== #
+print("\n[14] Simulated ball flight: estimate tool answers 'how far' grounded")
+# clip 0 has meta.club="driver" + a pro player; clip 1292 (ctx_single) has neither
+ctx = C.SwingContext.from_files(ROOT / "Data" / "demo" / "0" / "0_scorecard.json")
+check("estimate_ball_flight offered without a 2nd clip",
+      "estimate_ball_flight" in [t["name"] for t in C.tool_specs(with_compare=False)])
+est = C.dispatch_tool(ctx, "estimate_ball_flight", {})
+check("tool simulates from the scorecard's club", est.get("estimated") is True, str(est))
+check("female pro (Sandra Gal) defaults to lpga tier", est.get("skill_tier") == "lpga", str(est))
+est_m = C.dispatch_tool(C.SwingContext.from_files(ROOT / "Data" / "demo" / "830" / "830_scorecard.json"),
+                        "estimate_ball_flight", {})
+check("male pro (Tiger) defaults to tour tier", est_m.get("skill_tier") == "tour", str(est_m))
+check("carry/apex are ints, launch conditions included",
+      isinstance(est["carry_yd"], int) and "assumed_launch" in est)
+backend = C.ScriptedBackend([
+    use("estimate_ball_flight", {}),
+    say(f"The ball isn't tracked in the video, but a physics simulation for a typical "
+        f"{est['club']} swing estimates about {est['carry_yd']} yards of carry, peaking "
+        f"around {est['apex_yd']} yards up."),
+])
+res = C.Conversation(ctx, backend).ask("How far did the ball go?")
+g = C.verify_chat_grounding(ctx, res)
+check("simulated-estimate answer is grounded", g["grounded"], str(g["violations"]))
+check("sim tool call logged", res.tool_log[0]["name"] == "estimate_ball_flight")
+# an invented carry number must still be caught
+backend = C.ScriptedBackend([
+    use("estimate_ball_flight", {}),
+    say(f"It carried about {est['carry_yd'] + 37} yards."),
+])
+g = C.verify_chat_grounding(ctx, C.Conversation(ctx, backend).ask("How far?"))
+check("invented carry number is flagged ungrounded",
+      any(v["type"] == "ungrounded_number" for v in g["violations"]), str(g["violations"]))
+# golfer-stated launch numbers flow through as overrides
+ov = C.dispatch_tool(ctx, "estimate_ball_flight", {"ball_speed_mph": 150, "skill_tier": "amateur"})
+check("golfer override recorded in result",
+      ov["assumed_launch"]["ball_speed_mph"] == 150 and
+      "ball_speed_mph" in ov["assumed_launch"]["overridden_by_golfer"])
+# UI-only trajectory: kept in the tool result for the frontend, hidden from the model
+check("_ui_trajectory present for the UI", isinstance(est.get("_ui_trajectory"), list))
+check("_ui payload stripped from the model-visible view",
+      "_ui_trajectory" not in C.model_visible(est))
+# numbers that exist ONLY in the UI payload must not ground an answer
+visible_nums = {round(n, 2) for n in C._numbers_in(C.model_visible(est))}
+hidden = next((p[0] for p in est["_ui_trajectory"]
+               if abs(p[0]) >= 13 and round(p[0], 2) not in visible_nums), None)
+if hidden is not None:
+    backend = C.ScriptedBackend([
+        use("estimate_ball_flight", {}),
+        say(f"At one point the ball was {hidden} yards downrange."),
+    ])
+    g = C.verify_chat_grounding(ctx, C.Conversation(ctx, backend).ask("How far?"))
+    check("UI-only trajectory numbers cannot ground an answer",
+          any(v["type"] == "ungrounded_number" for v in g["violations"]), str(g["violations"]))
+
+# narrating the tool's own adjustment note ("above tour-typical") must not
+# trip the range-claim check (live-endpoint repro: ungrounded_range_claim)
+backend = C.ScriptedBackend([
+    use("estimate_ball_flight", {}),
+    say(f"Simulated estimate: about {est['carry_yd']} yards of carry. The model nudged "
+        f"ball speed up because this swing's hand speed measured above tour-typical."),
+])
+g = C.verify_chat_grounding(ctx, C.Conversation(ctx, backend).ask("How far did it go?"))
+check("sim answer narrating the speed nudge is grounded", g["grounded"], str(g["violations"]))
+# ...but range words with NO successful tool at all stay a violation
+backend = C.ScriptedBackend([say("Your turn was well within the tour range.")])
+g = C.verify_chat_grounding(ctx, C.Conversation(ctx, backend).ask("was it in range?"))
+check("range claim without any tool is still flagged",
+      any(v["type"] == "ungrounded_range_claim" for v in g["violations"]), str(g["violations"]))
+
+# swing-aware speed nudge: clip 0's measured hand speed (8.22 bs/s vs pro
+# median 7.0) scales the assumed ball speed, capped at +12%, and says so
+hs_view = ctx.a["indicators"]["hand_speed_impact_bs"]
+check("hand-speed indicator present + low confidence",
+      hs_view["confidence_tier"] == "low" and hs_view["value"] > 0)
+base_speed = 140.0  # lpga driver table default (clip 0 is Sandra Gal)
+check("assumed ball speed scaled up for fast hands",
+      est["assumed_launch"]["ball_speed_mph"] > base_speed,
+      str(est["assumed_launch"]))
+check("scale capped at +12%",
+      est["assumed_launch"]["ball_speed_mph"] <= round(base_speed * 1.12, 1) + 0.1)
+check("adjustment disclosed in the result",
+      "hand" in est.get("swing_speed_adjustment", ""), str(est.get("swing_speed_adjustment")))
+# a golfer-stated ball speed wins over the nudge
+ov2 = C.dispatch_tool(ctx, "estimate_ball_flight", {"ball_speed_mph": 150})
+check("stated ball speed overrides the nudge",
+      ov2["assumed_launch"]["ball_speed_mph"] == 150 and "swing_speed_adjustment" not in ov2)
+# get_indicator on the hand-speed metric stays refusal-shaped (low confidence)
+gi_hs = C._t_get_indicator(ctx, {"key": "hand_speed_impact_bs"})
+check("hand speed metric is refuse-only in chat", gi_hs.get("reliable") is False)
+
+# a scorecard with no club recorded (clip 1292, upload-style meta) declines
+miss = C.dispatch_tool(ctx_single(), "estimate_ball_flight", {})
+check("no club recorded -> estimated False", miss.get("estimated") is False)
+# but the golfer telling us the club rescues it — and a numeric "player" (a job
+# id, not a name) must default to amateur, not tour
+told = C.dispatch_tool(ctx_single(), "estimate_ball_flight", {"club": "driver"})
+check("golfer-stated club rescues a club-less scorecard", told.get("estimated") is True)
+check("job-id player defaults to amateur tier", told.get("skill_tier") == "amateur", str(told))
 
 # =========================================================================== #
 print(f"\n{'='*50}\n  {_PASS} passed, {_FAIL} failed\n{'='*50}")

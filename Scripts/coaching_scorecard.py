@@ -149,10 +149,11 @@ def generate_feedback(indicators: dict, reference: dict, confidence: dict | None
     return feedback
 
 
-def build_scorecard(xyz: np.ndarray, events_local, clip_meta: dict | None = None) -> dict:
+def build_scorecard(xyz: np.ndarray, events_local, clip_meta: dict | None = None,
+                    fps: float | None = None) -> dict:
     reference = load_reference()
     confidence = load_confidence()
-    indicators = compute_indicators(xyz, np.asarray(events_local))
+    indicators = compute_indicators(xyz, np.asarray(events_local), fps=fps)
     feedback = generate_feedback(indicators, reference, confidence)
 
     # status line — count only real coaching flags (not low-confidence notes)
@@ -165,7 +166,7 @@ def build_scorecard(xyz: np.ndarray, events_local, clip_meta: dict | None = None
 
     scored = {}
     for name in INDICATOR_NAMES:
-        if name in reference:
+        if name in reference and name in indicators:
             scored[name] = {
                 "value": round(indicators[name], 2),
                 "percentile": round(percentile_of(indicators[name], reference[name])),

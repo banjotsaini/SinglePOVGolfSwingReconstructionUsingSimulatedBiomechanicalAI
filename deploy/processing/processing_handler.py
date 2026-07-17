@@ -90,6 +90,21 @@ def _run(cmd: list[str], desc: str, extra_env: dict | None = None) -> None:
                            f"stderr={res.stderr[-1200:]} stdout={res.stdout[-400:]}")
 
 
+def _probe_fps(video: Path) -> float | None:
+    """Container frame rate of the upload (phone videos play in real time, so
+    this is the motion rate too). None on failure -> hand-speed indicator is
+    simply omitted, never wrong."""
+    try:
+        import cv2
+        cap = cv2.VideoCapture(str(video))
+        fps = float(cap.get(cv2.CAP_PROP_FPS) or 0)
+        cap.release()
+        return fps if 10 <= fps <= 120 else None
+    except Exception as e:
+        print(f"[proc] fps probe failed ({e}) — skipping hand-speed indicator", flush=True)
+        return None
+
+
 def _pipeline(video: Path, work: Path) -> dict:
     """Run the 3-step pipeline; return the paths of the produced artifacts."""
     stem = video.stem
@@ -111,8 +126,12 @@ def _pipeline(video: Path, work: Path) -> dict:
         raise RuntimeError(f"pipeline produced no 3D parquet for {stem} in {work} or {cache}")
     parquet_3d = cands[0]
     scorecard = work / f"{stem}_scorecard.json"
-    _run([PY, str(SCRIPTS / "scorecard_step.py"), "--parquet", str(parquet_3d),
-          "--out-dir", str(work), "--stem", stem], "event detection + scorecard")
+    sc_cmd = [PY, str(SCRIPTS / "scorecard_step.py"), "--parquet", str(parquet_3d),
+              "--out-dir", str(work), "--stem", stem]
+    fps = _probe_fps(video)
+    if fps:
+        sc_cmd += ["--fps", str(fps)]  # enables the time-based hand-speed indicator
+    _run(sc_cmd, "event detection + scorecard")
     # grounded Claude eval (needs ANTHROPIC_API_KEY in env) — writes the LLM
     # explanation back INTO the scorecard JSON; non-fatal if it fails
     try:
@@ -137,15 +156,33 @@ def _upload_artifacts(work: Path, stem: str, job_id: str) -> list[str]:
         for cand in (work / name, work / f"{stem}_{name}"):
             if cand.exists():
                 dest = f"03_outputs/{job_id}/{name}"
-                _s3.upload_file(str(cand), ARTIFACTS_BUCKET, dest)
+                # explicit ContentType: upload_file defaults to octet-stream,
+                # and the browser serves these straight from CloudFront
+                ctype = ("video/mp4" if name.endswith(".mp4") else "application/json")
+                _s3.upload_file(str(cand), ARTIFACTS_BUCKET, dest,
+                                ExtraArgs={"ContentType": ctype})
                 uploaded.append(dest)
                 break
     return uploaded
 
 
 def _sql(sql: str, params: list) -> None:
-    _rd.execute_statement(resourceArn=DB_CLUSTER_ARN, secretArn=DB_SECRET_ARN,
-                          database=DB_NAME, sql=sql, parameters=params)
+    # Aurora Serverless scales to zero (DbMinCapacity=0); the first Data API
+    # call while it wakes throws DatabaseResumingException — wait it out
+    # (resume is typically ~15-30s) instead of failing the whole job.
+    import time
+    from botocore.exceptions import ClientError
+    for attempt in range(8):
+        try:
+            _rd.execute_statement(resourceArn=DB_CLUSTER_ARN, secretArn=DB_SECRET_ARN,
+                                  database=DB_NAME, sql=sql, parameters=params)
+            return
+        except ClientError as e:
+            if (e.response.get("Error", {}).get("Code") != "DatabaseResumingException"
+                    or attempt == 7):
+                raise
+            print(f"[proc] DB resuming; retry {attempt + 1}/7 in 5s", flush=True)
+            time.sleep(5)
 
 
 def _p(name: str, **kv):
@@ -154,7 +191,19 @@ def _p(name: str, **kv):
 
 
 def _write_db(job_id: str, scorecard: Path, raw_key: str) -> None:
-    """Insert swings + analyses + indicators rows for the uploaded swing."""
+    """Insert swings + analyses + indicators rows for the uploaded swing.
+
+    Never raises: by this point the artifacts are uploaded and the job IS done
+    for the player — a DB hiccup (schema not migrated yet, wake-up timeout)
+    must not fail the SQS message and burn a retry on a finished job.
+    """
+    try:
+        _write_db_rows(job_id, scorecard, raw_key)
+    except Exception as e:
+        print(f"[proc] DB row write skipped ({type(e).__name__}): {e}", flush=True)
+
+
+def _write_db_rows(job_id: str, scorecard: Path, raw_key: str) -> None:
     if _rd is None:
         print("[proc] no DB configured; skipping row write", flush=True)
         return

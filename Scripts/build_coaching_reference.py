@@ -58,7 +58,19 @@ def main():
         if (ev < 0).any() or (ev >= xyz.shape[0]).any():
             continue
         try:
-            ind = compute_indicators(xyz, ev)
+            # GolfDB real-time clips are 30 fps; slow-motion clips get fps=None
+            # so the time-based hand-speed indicator is omitted for them.
+            fps = None if int(df.loc[cid, "slow"]) else 30.0
+            ind = compute_indicators(xyz, ev, fps=fps)
+            if "hand_speed_impact_bs" in ind:
+                # a raw-pose PEAK speed is jitter-inflated (up to ~36% on sample
+                # clips) — measure it on the same One-Euro-smoothed pose the
+                # scorecard step uses, so band and user value are comparable.
+                from smoothing import smooth_sequence
+                sm = smooth_sequence(xyz, method="oneeuro", min_cutoff=0.3,
+                                     beta=0.4, bone_lock=False)
+                ind["hand_speed_impact_bs"] = compute_indicators(
+                    sm, ev, fps=fps)["hand_speed_impact_bs"]
         except Exception as e:
             continue
         ind["clip_id"] = int(cid)
@@ -74,6 +86,8 @@ def main():
     # Reference bands: robust percentiles per indicator (whole corpus)
     bands = {}
     for name in INDICATOR_NAMES:
+        if name not in out.columns:
+            continue
         vals = out[name].replace([np.inf, -np.inf], np.nan).dropna()
         bands[name] = {
             "p10": float(vals.quantile(0.10)),

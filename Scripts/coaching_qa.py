@@ -48,13 +48,22 @@ LOWCONF = {
 # Topics we do NOT measure -> gold REFUSE_UNMEASURED.
 UNMEASURED = [
     "How was my grip?",
-    "How far did the ball go?",
     "Did the ball start left or right?",
     "Was my club face open or closed at impact?",
     "How was my swing plane?",
     "Did I hinge my wrists enough?",
     "How fast was my clubhead?",
     "What club should I be using?",
+]
+
+# Ball-flight questions the CHATBOT answers with a physics simulation
+# (estimate_ball_flight tool) -> gold SIM_ESTIMATE. The retired one-shot Q&A
+# had no tools and refused these; its frozen qa_set_*.json files keep the old
+# refuse_unmeasured gold.
+SIMULATED = [
+    "How far did the ball go?",
+    "How far would that shot carry?",
+    "How high did the ball fly?",
 ]
 
 # Prescriptive asks -> gold REFUSE_SCOPE (MVP describes, does not coach fixes).

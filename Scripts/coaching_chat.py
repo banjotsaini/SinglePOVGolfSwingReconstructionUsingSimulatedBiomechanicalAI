@@ -34,6 +34,7 @@ from typing import Any, Callable
 PROJECT_ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(Path(__file__).parent))
 import coaching_llm_summary_v2 as v2  # KB loader + KB block builder (no clip numbers)
+import ball_flight as BF  # physics ball-flight sim (McNally CVPR'23W baseline)
 
 KB_PATH = PROJECT_ROOT / "Data" / "coaching" / "indicator_kb.json"
 CONF_PATH = PROJECT_ROOT / "Data" / "coaching" / "indicator_confidence.json"
@@ -209,6 +210,42 @@ def _t_compare_indicator(ctx: SwingContext, inp: dict) -> dict:
     }
 
 
+def _t_estimate_ball_flight(ctx: SwingContext, inp: dict) -> dict:
+    inp = inp or {}
+    meta = ctx.a.get("meta", {})
+    club = inp.get("club") or meta.get("club")
+    tier = inp.get("skill_tier")
+    if tier not in BF.TIERS:
+        # GolfDB demo clips carry a tour player's NAME (+ sex) -> tour/lpga launch
+        # numbers; uploads carry nothing or a numeric job id -> amateur.
+        player = str(meta.get("player") or "").strip().lower()
+        is_name = any(c.isalpha() for c in player) and player != "unknown"
+        tier = ("lpga" if str(meta.get("sex", "")).lower().startswith("f") else "tour") \
+            if is_name else "amateur"
+    overrides = {k: inp[k] for k in ("ball_speed_mph", "launch_angle_deg",
+                                     "backspin_rpm", "sidespin_rpm") if k in inp}
+
+    # swing-aware nudge: THIS swing's measured hand speed vs the GolfDB pro
+    # median scales the assumed ball speed (capped ±12% inside estimate_for_club).
+    # Low-confidence single-camera signal — disclosed in the result, never a
+    # substitute for a golfer-stated ball speed.
+    speed_scale = 1.0
+    hs = ctx.a.get("indicators", {}).get("hand_speed_impact_bs")
+    if hs and isinstance(hs.get("value"), (int, float)) and hs.get("pro_median"):
+        speed_scale = float(hs["value"]) / float(hs["pro_median"])
+
+    res = BF.estimate_for_club(club, tier, overrides, speed_scale=speed_scale)
+    if res.get("estimated") and speed_scale != 1.0 and \
+            "ball_speed_mph" not in res["assumed_launch"]["overridden_by_golfer"]:
+        pct = round((min(max(speed_scale, 0.88), 1.12) - 1.0) * 100)
+        if abs(pct) >= 3:      # don't narrate a within-noise nudge
+            res["swing_speed_adjustment"] = (
+                f"assumed ball speed nudged {pct:+d}% because this swing's measured hand "
+                f"speed is {'above' if pct > 0 else 'below'} tour-typical (rough single-"
+                f"camera estimate)")
+    return res
+
+
 # (name -> (json-schema, fn)). Schemas are the model-facing tool contract.
 TOOLS: dict[str, tuple[dict, ToolFn]] = {
     "list_indicators": ({
@@ -251,6 +288,28 @@ TOOLS: dict[str, tuple[dict, ToolFn]] = {
                          "properties": {"key": {"type": "string"}},
                          "required": ["key"], "additionalProperties": False},
     }, _t_compare_indicator),
+    "estimate_ball_flight": ({
+        "description": "SIMULATE the likely ball flight for this swing's club with a physics "
+                       "model (McNally et al. 2023). Returns estimated carry, curve, apex and "
+                       "flight time plus the launch conditions assumed. This is an ESTIMATE "
+                       "from typical launch conditions for the club — the ball itself is not "
+                       "tracked in the video. Use it when the golfer asks how far the ball "
+                       "went / would go, or about carry or trajectory. Pass any launch numbers "
+                       "the golfer states as inputs.",
+        "input_schema": {"type": "object", "properties": {
+            "club": {"type": "string",
+                     "description": "override the recorded club (driver, 3 wood, hybrid, "
+                                    "5/7/9 iron, wedge) — e.g. for what-if questions"},
+            "skill_tier": {"type": "string", "enum": ["tour", "lpga", "amateur"],
+                           "description": "who to assume typical launch numbers for; "
+                                          "default: tour for named pros, else amateur"},
+            "ball_speed_mph": {"type": "number", "description": "golfer-stated override"},
+            "launch_angle_deg": {"type": "number", "description": "golfer-stated override"},
+            "backspin_rpm": {"type": "number", "description": "golfer-stated override"},
+            "sidespin_rpm": {"type": "number",
+                             "description": "golfer-stated override; >0 fade, <0 draw"},
+        }, "additionalProperties": False},
+    }, _t_estimate_ball_flight),
 }
 
 
@@ -267,6 +326,13 @@ def dispatch_tool(ctx: SwingContext, name: str, inp: dict) -> dict:
     if spec is None:
         return {"error": f"unknown tool {name!r}"}
     return spec[1](ctx, inp or {})
+
+
+def model_visible(result: dict) -> dict:
+    """Tool-result view sent to the model. Keys prefixed "_ui" carry UI-only
+    payloads (e.g. trajectory points) — they stay in tool_log for the frontend
+    but are stripped here, and excluded from the grounding-number pool."""
+    return {k: v for k, v in result.items() if not k.startswith("_ui")}
 
 
 # --------------------------------------------------------------------------- #
@@ -295,10 +361,17 @@ Handle broad and multi-part questions (don't punt to "which one?"):
   - FOLLOW-UPS and references ("all of the above", "and my hips?", "those"): resolve them from the
     conversation so far, then fetch and answer.
 
+SIMULATED ball-flight estimates (the one exception to "measured only"):
+  - When the golfer asks how far the ball went / would go, about carry, height, or trajectory,
+    call `estimate_ball_flight`. The ball is NOT tracked in the video — the tool runs a physics
+    simulation from typical launch conditions for the recorded club (or numbers the golfer
+    states; pass those as inputs). Quote its numbers exactly as returned, and ALWAYS say the
+    result is a simulated estimate for a typical swing with that club, not a measurement.
+
 When to REFUSE (do not guess):
-  - UNMEASURED: the question is about something not in `list_indicators` (grip, ball flight/distance,
-    ball direction, club face/path, swing plane, wrist hinge, clubhead speed, club choice, ...).
-    Say plainly you can't tell from what was measured.
+  - UNMEASURED: the question is about something not in `list_indicators` and not simulable
+    (grip, which direction the ball started, club face/path, swing plane, wrist hinge,
+    clubhead speed, club choice, ...). Say plainly you can't tell from what was measured.
   - LOW CONFIDENCE: `get_indicator` returns reliable=false (e.g. arm bend from one camera). Do not
     reveal or judge that value; say it isn't reliable enough to assess.
   - FIX / ADVICE: the golfer asks what to change, fix, drill, or practice. Say you can describe the
@@ -542,7 +615,7 @@ class Conversation:
                     res = dispatch_tool(self.ctx, tu["name"], tu.get("input", {}))
                     tool_log.append({"name": tu["name"], "input": tu.get("input", {}), "result": res})
                     results.append({"type": "tool_result", "tool_use_id": tu["id"],
-                                    "content": json.dumps(res)})
+                                    "content": json.dumps(model_visible(res))})
                 self.messages.append({"role": "user", "content": results})
                 continue
             # end_turn / stop_sequence / max_tokens / refusal → this turn is done
@@ -647,8 +720,12 @@ def verify_chat_grounding(ctx: SwingContext, result: TurnResult) -> dict:
     fetched_lowconf: set[str] = set()
     lowconf_values: dict[str, float] = {}
     grounded_nums: set[float] = set()
+    sim_ok = False   # a successful flight simulation legitimizes range phrasing
+                     # ("above tour-typical") that narrates the tool's own notes
     for entry in result.tool_log:
-        r = entry["result"]
+        r = model_visible(entry["result"])  # UI-only payloads can't ground an answer
+        if entry["name"] == "estimate_ball_flight" and r.get("estimated"):
+            sim_ok = True
         if entry["name"] in ("get_indicator", "compare_indicator"):
             key = r.get("key", "")
             if r.get("reliable") is False or r.get("confidence_tier") == "low":
@@ -688,8 +765,9 @@ def verify_chat_grounding(ctx: SwingContext, result: TurnResult) -> dict:
         if not any(_display_match(tok, g) for g in grounded_nums):
             violations.append({"type": "ungrounded_number", "value": float(tok)})
 
-    # range words present but no reliable get_indicator/compare call → ungrounded
-    if any(p in answer_l for p in _RANGE_WORDS) and not fetched_ok:
+    # range words present but no reliable get_indicator/compare call (and no
+    # successful flight simulation, whose notes use range phrasing) → ungrounded
+    if any(p in answer_l for p in _RANGE_WORDS) and not fetched_ok and not sim_ok:
         violations.append({"type": "ungrounded_range_claim"})
 
     if not is_refusal and any(re.search(p, answer_l) for p in PRESCRIPTIVE):
