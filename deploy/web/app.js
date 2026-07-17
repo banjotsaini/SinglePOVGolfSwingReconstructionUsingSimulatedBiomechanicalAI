@@ -44,6 +44,10 @@ function libSetStatus(jobId, status) {
   const it = items.find(i => i.jobId === jobId);
   if (it) { it.status = status; libSave(items); renderLibrary(); }
 }
+function libRemove(jobId) {
+  libSave(libLoad().filter(i => i.jobId !== jobId));
+  renderLibrary();
+}
 
 async function loadManifest() {
   return (await fetch("assets/clips.json").then(r => r.json())).clips;
@@ -298,24 +302,28 @@ function setUploadBanner(phase, jobId) {
  * "ready" requires ALL three result JSONs — metrics alone can land first.
  * NB: CloudFront rewrites S3 403s to 200/index.html (see web_hosting.yaml), so
  * r.ok alone would false-ready a job — require the real content-type too. */
-async function pollJob(jobId, tries = 40, delayMs = 15000) {
+async function jobIsReady(jobId) {
   const files = ["metrics.json", "explanation.json", "replay_3d.json"];
   // a real S3 object serves as its stored type (json/video/octet-stream); only
   // the CloudFront 403->index.html rewrite comes back as text/html
   const okReal = (r) =>
     r.ok && !(r.headers.get("content-type") || "").includes("html");
+  const oks = await Promise.all([
+    ...files.map(f =>
+      fetch(`${window.RESULTS_BASE}/${jobId}/${f}`, { cache: "no-store" })
+        .then(okReal).catch(() => false)),
+    // HEAD the video so "Ready" never opens onto a broken player
+    fetch(`${window.RESULTS_BASE}/${jobId}/overlay.mp4`,
+          { method: "HEAD", cache: "no-store" })
+      .then(okReal).catch(() => false),
+  ]);
+  return oks.every(Boolean);
+}
+
+async function pollJob(jobId, tries = 40, delayMs = 15000) {
   for (let i = 0; i < tries; i++) {
     try {
-      const oks = await Promise.all([
-        ...files.map(f =>
-          fetch(`${window.RESULTS_BASE}/${jobId}/${f}`, { cache: "no-store" })
-            .then(okReal).catch(() => false)),
-        // HEAD the video so "Ready" never opens onto a broken player
-        fetch(`${window.RESULTS_BASE}/${jobId}/overlay.mp4`,
-              { method: "HEAD", cache: "no-store" })
-          .then(okReal).catch(() => false),
-      ]);
-      if (oks.every(Boolean)) {
+      if (await jobIsReady(jobId)) {
         libSetStatus(jobId, "ready");
         // if the uploader ended up on the illustrative fallback page, surface
         // the real result right where they are
@@ -327,6 +335,25 @@ async function pollJob(jobId, tries = 40, delayMs = 15000) {
   }
   libSetStatus(jobId, "processing (check back)");
   return false;
+}
+
+/* refresh-proofing: polling dies with the page, so on load prune the dead
+ * "upload failed" entries and re-check every non-ready cloud job — flip the
+ * finished ones to Ready, keep watching the young ones. */
+async function reconcileLibrary() {
+  const items = libLoad();
+  const keep = items.filter(i => i.status !== "upload failed");
+  if (keep.length !== items.length) libSave(keep);
+  renderLibrary();
+  if (!window.RESULTS_BASE) return;
+  for (const it of keep) {
+    if (it.status === "ready" || String(it.jobId).startsWith("local-")) continue;
+    try {
+      if (await jobIsReady(it.jobId)) { libSetStatus(it.jobId, "ready"); continue; }
+    } catch (e) { /* fall through to polling */ }
+    if (Date.now() - new Date(it.date).getTime() < 20 * 60 * 1000) pollJob(it.jobId);
+    else libSetStatus(it.jobId, "processing (check back)");
+  }
 }
 
 /* ========================== 2 · analyze screen ========================== */
@@ -854,9 +881,9 @@ async function init() {
     goto("pick");
   });
 
-  // deep links + persistent library
+  // deep links + persistent library (reconcile: refresh kills polling)
   window.addEventListener("hashchange", onHashChange);
-  renderLibrary();
+  reconcileLibrary();
   $("#tab-plain").addEventListener("click", () => showTab("plain"));
   $("#tab-numbers").addEventListener("click", () => showTab("numbers"));
   $("#tab-chat").addEventListener("click", () => showTab("chat"));
@@ -895,10 +922,14 @@ function renderLibrary() {
       <span class="dash-swing-name" title="${esc(it.name)}">${esc(it.name)}</span>
       <span class="muted small">${esc(date)}</span>${badge}
       ${ready ? `<button type="button" class="btn-ghost small lib-open">Open result</button>` : ""}
+      <button type="button" class="btn-ghost small lib-remove" title="Remove from this list"
+              aria-label="Remove ${esc(it.name)} from this list">✕</button>
     </div>`;
   }).join("");
   wrap.querySelectorAll(".lib-open").forEach(b =>
     b.addEventListener("click", () => openJob(b.closest(".dash-swing").dataset.job)));
+  wrap.querySelectorAll(".lib-remove").forEach(b =>
+    b.addEventListener("click", () => libRemove(b.closest(".dash-swing").dataset.job)));
 }
 
 /* open a processed upload's results from RESULTS_BASE (same shape as demo clips) */
