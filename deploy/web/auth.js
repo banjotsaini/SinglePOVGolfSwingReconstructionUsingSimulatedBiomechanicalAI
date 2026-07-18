@@ -67,7 +67,7 @@ if (typeof window !== "undefined") window.CONSENT_COPY = CONSENT_COPY;
 /* ============================== Auth module ============================= */
 const Auth = (() => {
   const PROFILE_KEY = "mc_profile";     // persisted demo account (localStorage)
-  const SESSION_KEY = "mc_session";     // "1" while signed in (sessionStorage)
+  const SESSION_KEY = "mc_session";     // "1" while signed in (localStorage — persists until explicit sign-out)
 
   /* ---- dev access (REAL, edge-enforced) ----
    * Uploaded swings are of real people, so their results (03_outputs/* and
@@ -98,7 +98,7 @@ const Auth = (() => {
     try { return JSON.parse(localStorage.getItem(PROFILE_KEY) || "null"); }
     catch (e) { return null; }
   }
-  function isSignedIn() { return sessionStorage.getItem(SESSION_KEY) === "1" && !!getProfile(); }
+  function isSignedIn() { return localStorage.getItem(SESSION_KEY) === "1" && !!getProfile(); }
   function currentUser() { return isSignedIn() ? getProfile() : null; }
 
   function emit() { document.dispatchEvent(new CustomEvent("mc-auth-change")); }
@@ -116,7 +116,7 @@ const Auth = (() => {
       consentVersion: CONSENT_COPY.version,
     };
     saveProfile(profile);
-    sessionStorage.setItem(SESSION_KEY, "1");
+    localStorage.setItem(SESSION_KEY, "1");
     emit();
   }
   function signIn({ username, password }) {
@@ -133,11 +133,11 @@ const Auth = (() => {
     if ((username || "").trim() === DEV_USER && (password || "").length) {
       setDevCookie(password);
     }
-    sessionStorage.setItem(SESSION_KEY, "1");
+    localStorage.setItem(SESSION_KEY, "1");
     emit();
   }
   function signOut() {
-    sessionStorage.removeItem(SESSION_KEY);
+    localStorage.removeItem(SESSION_KEY);
     clearDevCookie();                       // locking the UI also drops edge access
     emit();
   }
