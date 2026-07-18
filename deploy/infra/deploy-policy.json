@@ -123,6 +123,16 @@
       "Resource": "arn:aws:codebuild:us-east-1:*:project/motion-caddie-*"
     },
     {
+      "Sid": "AcmForCustomDomain",
+      "Effect": "Allow",
+      "Action": [
+        "acm:RequestCertificate", "acm:DescribeCertificate", "acm:ListCertificates",
+        "acm:DeleteCertificate", "acm:AddTagsToCertificate", "acm:ListTagsForCertificate"
+      ],
+      "Resource": "*",
+      "Condition": { "StringEquals": { "aws:RequestedRegion": "us-east-1" } }
+    },
+    {
       "Sid": "IamRolesForStackOnly",
       "Effect": "Allow",
       "Action": [
