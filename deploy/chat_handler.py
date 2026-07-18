@@ -37,23 +37,40 @@ ALLOWED_CLIPS = set(json.loads(os.environ.get("ALLOWED_CLIPS", "[]")))
 SCORECARD_DIR = ROOT / "Data" / "demo"
 
 # processed UPLOADS: the pipeline publishes 03_outputs/<job>/scorecard.json,
-# served publicly through the site's CloudFront distribution — fetch over HTTPS
-# (no cross-bucket IAM needed) and cache in /tmp for the warm Lambda.
+# served through the site's CloudFront distribution. That route is PRIVATE now
+# (real players — the mc-results-gate edge function requires the dev access
+# code), so this Lambda appends the code from MC_RESULTS_TOKEN to its own
+# fetches, and REQUIRES callers to present the same code before it will talk
+# about an uploaded swing (see _access_ok). Demo clips stay public.
 JOB_SCORECARD_BASE = os.environ.get("JOB_SCORECARD_BASE", "").rstrip("/")
+MC_RESULTS_TOKEN = os.environ.get("MC_RESULTS_TOKEN", "")
 _JOB_ID = __import__("re").compile(r"^[0-9a-f]{32}$")
+
+
+def _access_ok(body: dict, event: dict) -> bool:
+    """Uploaded-swing data is private: the caller must supply the dev access
+    code (body.access_token or x-mc-access header). If MC_RESULTS_TOKEN is
+    unset the gate is not configured and job chat stays open (dev/local)."""
+    if not MC_RESULTS_TOKEN:
+        return True
+    supplied = body.get("access_token") or (event.get("headers") or {}).get("x-mc-access") or ""
+    return supplied == MC_RESULTS_TOKEN
 
 
 def job_scorecard_path(job_id: str):
     """Fetch + cache an uploaded swing's scorecard. Returns a Path or None.
     CloudFront rewrites unknown paths to 200/index.html, so a JSON parse is the
     existence check — HTML means 'no scorecard for this job'."""
+    import urllib.parse
     import urllib.request
     cache = Path("/tmp") / f"job_scorecard_{job_id}.json"
     if cache.exists():
         return cache
+    url = f"{JOB_SCORECARD_BASE}/{job_id}/scorecard.json"
+    if MC_RESULTS_TOKEN:                     # edge-gated route needs the code
+        url += "?t=" + urllib.parse.quote(MC_RESULTS_TOKEN)
     try:
-        with urllib.request.urlopen(f"{JOB_SCORECARD_BASE}/{job_id}/scorecard.json",
-                                    timeout=10) as r:
+        with urllib.request.urlopen(url, timeout=10) as r:
             raw = r.read()
         json.loads(raw)                      # reject the index.html rewrite
         cache.write_bytes(raw)
@@ -131,9 +148,11 @@ def handler(event, _ctx=None):
     clip_id: int | str
     sc = None
     if isinstance(raw_id, str) and _JOB_ID.match(raw_id):
-        # a processed UPLOAD (hex job id) — scorecard comes from 03_outputs
+        # a processed UPLOAD (hex job id) — private: requires the access code
         if not JOB_SCORECARD_BASE:
             return _resp(400, {"error": "uploaded-swing chat not enabled"})
+        if not _access_ok(body, event):
+            return _resp(403, {"error": "uploaded swings are private — sign in on the portal"})
         clip_id = raw_id
         sc = job_scorecard_path(raw_id)
         if sc is None:
@@ -158,10 +177,23 @@ def handler(event, _ctx=None):
         return _resp(404, {"error": f"no scorecard for clip {clip_id}"})
 
     compare_id = body.get("compare_clip_id")
-    compare = scorecard_path(int(compare_id)) if compare_id else None
-    if compare is not None and (not compare.exists() or
-                                (ALLOWED_CLIPS and int(compare_id) not in ALLOWED_CLIPS)):
-        return _resp(400, {"error": "invalid compare_clip_id"})
+    compare = None
+    if compare_id is not None:
+        if isinstance(compare_id, str) and _JOB_ID.match(compare_id):
+            # comparing against an uploaded swing — same privacy gate applies
+            if not _access_ok(body, event):
+                return _resp(403, {"error": "uploaded swings are private — sign in on the portal"})
+            compare = job_scorecard_path(compare_id)
+            if compare is None:
+                return _resp(400, {"error": "invalid compare_clip_id"})
+        else:
+            try:
+                cmp_int = int(compare_id)
+            except (TypeError, ValueError):
+                return _resp(400, {"error": "invalid compare_clip_id"})
+            compare = scorecard_path(cmp_int)
+            if not compare.exists() or (ALLOWED_CLIPS and cmp_int not in ALLOWED_CLIPS):
+                return _resp(400, {"error": "invalid compare_clip_id"})
 
     try:
         out = chat_once(sc, question, history=body.get("history"), compare=compare)

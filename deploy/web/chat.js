@@ -283,6 +283,10 @@ const Chat = (() => {
       const wireId = (id) => (/^\d+$/.test(String(id)) ? Number(id) : String(id));
       const body = { clip_id: wireId(ACTIVE), question: q, history: hist.slice() };
       if (COMPARE != null) body.compare_clip_id = wireId(COMPARE);
+      // uploaded swings are private: pass the dev access code (mc_dev cookie,
+      // set by dev sign-in) so the backend will talk about them
+      const devCode = (document.cookie.match(/(?:^|;\s*)mc_dev=([^;]+)/) || [])[1];
+      if (devCode) body.access_token = decodeURIComponent(devCode);
       const r = await fetch(`${window.API_BASE}/chat`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
       if (!r.ok) throw new Error("http " + r.status);
       const d = await r.json();
